@@ -118,9 +118,10 @@ export class FreezedDeclarationBlock {
 
   private setFactoryBlocks(): FreezedDeclarationBlock {
     if (this._node.kind === Kind.UNION_TYPE_DEFINITION) {
-      this._factoryBlocks = this._node.types?.map((_type: NamedTypeNode) =>
-        new FreezedFactoryBlock(this._config, this._node).init()
-      ) ?? [];
+      this._factoryBlocks =
+        this._node.types?.map((_type: NamedTypeNode) =>
+          new FreezedFactoryBlock(this._config, this._node).init()
+        ) ?? [];
     } else {
       /*
         for `ObjectTypeDefinitionNode` and `InputObjectTypeDefinitionNode` nodes,
@@ -129,12 +130,13 @@ export class FreezedDeclarationBlock {
         when we are merging inputs or generating freezed union/sealed classes
         for GraphQL union types
       */
-      this._factoryBlocks = this._node.fields?.map((_field: FieldDefinitionNode | InputValueDefinitionNode) =>
-        this._freezedFactoryBlockRepository.register(
-          this._node.name.value,
-          new FreezedFactoryBlock(this._config, this._node).init()
-        )
-      ) ?? [];
+      this._factoryBlocks =
+        this._node.fields?.map((_field: FieldDefinitionNode | InputValueDefinitionNode) =>
+          this._freezedFactoryBlockRepository.register(
+            this._node.name.value,
+            new FreezedFactoryBlock(this._config, this._node).init()
+          )
+        ) ?? [];
     }
     return this;
   }

@@ -103,9 +103,10 @@ export class FreezedFactoryBlock {
       : ['class_factory_parameter'];
 
     if (this._node.kind !== Kind.UNION_TYPE_DEFINITION) {
-      this._parameters = this._node?.fields?.map((field: FieldDefinitionNode | InputValueDefinitionNode) =>
-        new FreezedParameterBlock(this._config, appliesOn, this._node, field).init()
-      ) ?? [];
+      this._parameters =
+        this._node?.fields?.map((field: FieldDefinitionNode | InputValueDefinitionNode) =>
+          new FreezedParameterBlock(this._config, appliesOn, this._node, field).init()
+        ) ?? [];
     }
     return this;
   }

@@ -65,7 +65,7 @@ export function transformDefinition(
   node: NodeType
 ) {
   // ignore these...
-  if (['Query', 'Mutation', 'Subscription', ...config?.ignoreTypes ?? []].includes(node.name.value)) {
+  if (['Query', 'Mutation', 'Subscription', ...(config?.ignoreTypes ?? [])].includes(node.name.value)) {
     return '';
   }
 
@@ -77,7 +77,11 @@ export function transformDefinition(
  * for a specific type if given typeName
  * or else fallback to the global FreezedConfig value
  */
-export function getFreezedConfigValue(option: OptionName, config: FreezedPluginConfig, typeName?: string | undefined): any {
+export function getFreezedConfigValue(
+  option: OptionName,
+  config: FreezedPluginConfig,
+  typeName?: string | undefined
+): any {
   if (typeName) {
     return config?.typeSpecificFreezedConfig?.[typeName]?.config?.[option] ?? getFreezedConfigValue(option, config);
   }
