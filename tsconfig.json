@@ -6,7 +6,8 @@
     "noEmit": false,
     "outDir": "dist",
     "baseUrl": ".",
-    "paths": {}
+    "paths": {},
+    "lib": ["ESNext"]
   },
   "include": [
     "src",

@@ -1,10 +1,10 @@
 {
-  "name": "graphql-codegen-typescript-validation-schema",
-  "version": "0.6.0",
-  "description": "GraphQL Code Generator plugin to generate form validation schema from your GraphQL schema",
+  "name": "graphql-codegen-flutter-freezed",
+  "version": "0.3.0",
+  "description": "A stand-alone package to generate Freezed models from GraphQL schema based on the flutter-freezed plugin for GraphQL Code Generator",
   "respository": {
     "type": "git",
-    "url": "https://github.com/Code-Hex/graphql-codegen-typescript-validation-schema.git"
+    "url": "https://github.com/Parables/graphql-codegen-flutter-freezed.git"
   },
   "main": "dist/main/index.js",
   "typings": "dist/main/index.d.ts",
@@ -28,43 +28,48 @@
     "prepublish": "run-p build:*"
   },
   "keywords": [
-    "gql",
-    "generator",
-    "yup",
-    "zod",
-    "code",
-    "types",
     "graphql",
+    "gql",
+    "code",
+    "dart",
+    "generator",
+    "flutter",
+    "freezed",
+    "models",
+    "types",
+    "schema",
     "codegen",
-    "apollo",
     "node",
     "types",
-    "typings"
+    "typings",
+    "json"
   ],
-  "author": "codehex",
+  "author": {
+    "email": "parables95@gmail.com",
+    "name": "Parables Boltnoel",
+    "url": "https://github.com/Parables"
+  },
   "license": "MIT",
   "devDependencies": {
     "@graphql-codegen/cli": "2.11.3",
     "@graphql-codegen/typescript": "2.7.2",
     "@tsconfig/recommended": "1.0.1",
-    "@types/jest": "28.1.6",
+    "@types/jest": "^28.1.6",
     "@typescript-eslint/eslint-plugin": "5.32.0",
     "@typescript-eslint/parser": "5.32.0",
     "eslint": "8.21.0",
     "jest": "28.1.3",
-    "myzod": "1.8.8",
     "npm-run-all": "4.1.5",
     "prettier": "2.7.1",
     "ts-jest": "28.0.7",
-    "typescript": "4.7.4",
-    "yup": "0.32.11",
-    "zod": "3.17.10"
+    "typescript": "4.7.4"
   },
   "dependencies": {
     "@graphql-codegen/plugin-helpers": "^2.3.2",
     "@graphql-codegen/schema-ast": "^2.4.1",
     "@graphql-codegen/visitor-plugin-common": "^2.5.2",
     "@graphql-tools/utils": "^8.6.1",
+    "change-case-all": "1.0.14",
     "graphql": "^16.2.0"
   },
   "peerDependencies": {
