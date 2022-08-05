@@ -2,7 +2,7 @@ import { indent } from '@graphql-codegen/visitor-plugin-common';
 import { FieldDefinitionNode, InputValueDefinitionNode, Kind } from 'graphql';
 import { camelCase, pascalCase } from 'change-case-all';
 import { FreezedParameterBlock } from './parameter-block';
-import { ApplyDecoratorOn, FreezedPluginConfig } from '../config';
+import { ApplyDecoratorOn, FlutterFreezedPluginConfig } from '../config';
 import { FreezedConfigValue, getCustomDecorators, NodeType, transformCustomDecorators } from '../utils';
 
 export class FreezedFactoryBlock {
@@ -40,7 +40,7 @@ export class FreezedFactoryBlock {
 
   private _freezedConfigValue: FreezedConfigValue;
 
-  constructor(private _config: FreezedPluginConfig, private _node: NodeType) {
+  constructor(private _config: FlutterFreezedPluginConfig, private _node: NodeType) {
     this._config = _config;
     this._node = _node;
     this._freezedConfigValue = new FreezedConfigValue(_config, _node.name.value);

@@ -1,3 +1,7 @@
+/**
+ * @name
+ * @description Values that are passed to the `DecoratorToFreezed.applyOn` field that specifies where the custom decorator should be applied
+ */
 export type ApplyDecoratorOn =
   | 'enum'
   | 'class'
@@ -10,7 +14,7 @@ export type DecoratorToFreezed = {
   /**
    * @name arguments
    * @description arrange the arguments of the directive in order of how the should be outputted
-   * @default null
+   * @default undefined
    * @exampleMarkdown
    * ```yml
    * arguments: [$0] # $0 is the first argument, $1 is the 2nd ...
@@ -355,39 +359,6 @@ export interface FieldConfig {
    */
 
   customDecorators?: CustomDecorator;
-
-  /**
-   * @name constraints
-   * @description TODO: support  https://github.com/confuser/graphql-constraint-directive
-   * @exampleMarkdown
-   * ```yml
-   * # THis requires that a validation library is installed in your flutter project
-   * # see: https://github.com/confuser/graphql-constraint-directive
-   * constraint:
-   *   minLength: min # same as ['min', '$1']
-   *   maxLength: max
-   *   startsWith: ["matches", "/^$1/"]
-   *   endsWith: ["matches", "/$1$/"]
-   *   contains: ["matches", "/$1/"]
-   *   notContains: ["matches", "/^((?!$1).)*$/"]
-   *   pattern: ["matches", "/$1/"]
-   *   format:
-   *     # For example, `@constraint(format: "uri")`. this case $1 will be "uri".
-   *     # Therefore the generator generates an @Assert(field.isUri) decorator
-   *     # If $1 does not match anywhere, the generator will ignore.
-   *     uri: url
-   *     email: email
-   *     uuid: uuid
-   *     ipv4: ipv4
-   *   min: ["min", "$1 - 1"]
-   *   max: ["max", "$1 + 1"]
-   *   exclusiveMin: min
-   *   exclusiveMax: max
-   * ```
-   *
-   */
-
-  constraints?: Record<string, any>;
 }
 
 export interface TypeSpecificFreezedConfig {
@@ -404,7 +375,7 @@ export interface TypeSpecificFreezedConfig {
   fields?: Record<string, FieldConfig>;
 }
 
-export interface FreezedPluginConfig /* extends TypeScriptPluginConfig */ {
+export interface FlutterFreezedPluginConfig /* extends TypeScriptPluginConfig */ {
   /**
    * @name customScalars
    * @description map custom Scalars to Dart built-in types
@@ -523,42 +494,6 @@ export interface FreezedPluginConfig /* extends TypeScriptPluginConfig */ {
   ignoreTypes?: string[];
 
   /**
-   * @name interfaceNamePrefix
-   * @description append this string to the abstract class name for Interface Types
-   * @default ""
-   *
-   * @exampleMarkdown
-   * ```yml
-   * generates:
-   *   flutter_app/lib/data/models/app_models.dart
-   *     plugins:
-   *       - flutter-freezed
-   *     config:
-   *       interfaceNamePrefix: "I_"
-   * ```
-   */
-
-  interfaceNamePrefix?: string; // TODO:
-
-  /**
-   * @name interfaceNameSuffix
-   * @description prepend this string to the abstract class name for Interface Types
-   * @default "Interface"
-   *
-   * @exampleMarkdown
-   * ```yml
-   * generates:
-   *   flutter_app/lib/data/models/app_models.dart
-   *     plugins:
-   *       - flutter-freezed
-   *     config:
-   *       interfaceNameSuffix: "Interface"
-   * ```
-   */
-
-  interfaceNameSuffix?: string; // TODO:
-
-  /**
    * @name lowercaseEnums
    * @description make enum fields lowercase
    * @default true
@@ -575,22 +510,4 @@ export interface FreezedPluginConfig /* extends TypeScriptPluginConfig */ {
    */
 
   lowercaseEnums?: boolean;
-
-  /**
-   * @name modular
-   * @description if true, generates each Freezed class in the baseDir
-   * @default true
-   *
-   * @exampleMarkdown
-   * ```yml
-   * generates:
-   *   flutter_app/lib/data/models/app_models.dart
-   *     plugins:
-   *       - flutter-freezed
-   *     config:
-   *       modular: false
-   * ```
-   */
-
-  modular?: boolean; // TODO: Figure out how to make it modular
 }

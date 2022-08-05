@@ -12,7 +12,7 @@ import {
   ApplyDecoratorOn,
   CustomDecorator,
   FreezedConfig,
-  FreezedPluginConfig,
+  FlutterFreezedPluginConfig,
   TypeSpecificFreezedConfig,
 } from './config';
 import { FreezedDeclarationBlock, FreezedFactoryBlock } from './freezed-declaration-blocks';
@@ -42,7 +42,7 @@ export type OptionName =
   | 'unionValueCase';
 
 export function transformDefinition(
-  config: FreezedPluginConfig,
+  config: FlutterFreezedPluginConfig,
   freezedFactoryBlockRepository: FreezedFactoryBlockRepository,
   node: NodeType
 ) {
@@ -61,7 +61,7 @@ export function transformDefinition(
  */
 export function getFreezedConfigValue(
   option: OptionName,
-  config: FreezedPluginConfig,
+  config: FlutterFreezedPluginConfig,
   typeName?: string | undefined
 ): any {
   if (typeName) {
@@ -74,7 +74,7 @@ export function getFreezedConfigValue(
  * @description filters the customDirectives to return those that are applied on a list of blocks
  */
 export function getCustomDecorators(
-  config: FreezedPluginConfig,
+  config: FlutterFreezedPluginConfig,
   appliesOn: ApplyDecoratorOn[],
   nodeName?: string | undefined,
   fieldName?: string | undefined
@@ -197,7 +197,7 @@ function argToInt(arg: string) {
  * or else fallback to the global FreezedConfig value
  */
 export class FreezedConfigValue {
-  constructor(private _config: FreezedPluginConfig, private _typeName: string | undefined) {
+  constructor(private _config: FlutterFreezedPluginConfig, private _typeName: string | undefined) {
     this._config = _config;
     this._typeName = _typeName;
   }
@@ -218,7 +218,7 @@ export class FreezedImportBlock {
   _jsonSerializable?: boolean;
 
   // TODO: the constructor should accept a node, and extract it shape and store it but return itself
-  constructor(private _config: FreezedPluginConfig, private _fileName?: string) {}
+  constructor(private _config: FlutterFreezedPluginConfig, private _fileName?: string) {}
 
   string(): string {
     return [
@@ -261,7 +261,7 @@ export class FreezedFactoryBlockRepository {
 }
 
 /** initializes a FreezedPluginConfig with the defaults values */
-export class DefaultFreezedPluginConfig implements FreezedPluginConfig {
+export class DefaultFreezedPluginConfig implements FlutterFreezedPluginConfig {
   customScalars?: { [name: string]: string };
   fileName?: string;
   globalFreezedConfig?: FreezedConfig;
@@ -272,7 +272,7 @@ export class DefaultFreezedPluginConfig implements FreezedPluginConfig {
   lowercaseEnums?: boolean;
   modular?: boolean;
 
-  constructor(config: FreezedPluginConfig = {}) {
+  constructor(config: FlutterFreezedPluginConfig = {}) {
     Object.assign(this, {
       customScalars: config.customScalars ?? {},
       fileName: config.fileName ?? 'app_models',
