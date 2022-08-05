@@ -1,4 +1,5 @@
 import {
+  EnumTypeDefinitionNode,
   GraphQLSchema,
   InputObjectTypeDefinitionNode,
   ObjectTypeDefinitionNode,
@@ -11,6 +12,9 @@ export const schemaVisitor = (_schema: GraphQLSchema, config: FreezedPluginConfi
   const freezedFactoryBlockRepository = new FreezedFactoryBlockRepository();
   return {
     freezedFactoryBlockRepository,
+
+    EnumTypeDefinition: (node: EnumTypeDefinitionNode) =>
+      transformDefinition(config, freezedFactoryBlockRepository, node),
 
     UnionTypeDefinition: (node: UnionTypeDefinitionNode) =>
       transformDefinition(config, freezedFactoryBlockRepository, node),

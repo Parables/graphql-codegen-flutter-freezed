@@ -1,4 +1,40 @@
-import { CustomDecorator } from './utils';
+export type ApplyDecoratorOn =
+  | 'enum'
+  | 'class'
+  | 'class_factory'
+  | 'union_factory'
+  | 'class_factory_parameter'
+  | 'union_factory_parameter';
+
+export type DecoratorToFreezed = {
+  /**
+   * @name arguments
+   * @description arrange the arguments of the directive in order of how the should be outputted
+   * @default null
+   * @exampleMarkdown
+   * ```yml
+   * arguments: [$0] # $0 is the first argument, $1 is the 2nd ...
+   * ```
+   */
+  arguments?: string[]; //['$0']
+
+  /**
+   * @name applyOn
+   * @description Specify where the decorator should be applied
+   * @exampleMarkdown
+   * ```yml
+   * applyOn: ['class_factory','union_factory'], # applies this decorator on both class and union factory blocks
+   * ```
+   */
+  applyOn: ApplyDecoratorOn[];
+
+  /**
+   * @name mapsToFreezedAs
+   * @description maps to a Freezed decorator or use `custom` to use a custom decorator */
+  mapsToFreezedAs: '@Default' | '@deprecated' | 'final' | 'directive' | 'custom';
+};
+
+export type CustomDecorator = Record<string, DecoratorToFreezed>;
 
 export interface FreezedConfig {
   /**
@@ -21,28 +57,9 @@ export interface FreezedConfig {
   alwaysUseJsonKeyName?: boolean;
 
   /**
-   * @name assertNonNullableFields
-   * @description makes non-nullable fields optional properties in the Freezed class but uses Frezed's @Assert decorators to enforce them as required fields
-   * @default false
-   *
-   * @exampleMarkdown
-   * ```yml
-   * generates:
-   *   flutter_app/lib/data/models/app_models.dart
-   *     plugins:
-   *       - flutter-freezed
-   *     config:
-   *       assertNonNullableFields: true
-   *
-   * ```
-   */
-
-  assertNonNullableFields?: boolean; // TODO:
-
-  /**
    * @name copyWith
    * @description set to false to disable Freezed copyWith method helper
-   * @default null
+   * @default undefined
    *
    * @exampleMarkdown
    * ```yml
@@ -73,19 +90,27 @@ export interface FreezedConfig {
    *          'default' : {
    *             mapsToFreezedAs: '@Default',
    *             arguments: ['$0'],
-   *          },
-   *          'deprecated' : {
-   *             mapsToFreezedAs: '@deprecated',
-   *          },
-   *      'readonly' : {
-   *          mapsToFreezedAs: 'final',
-   *       },
+   *            },
+   *           'deprecated' : {
+   *              mapsToFreezedAs: '@deprecated',
+   *           },
+   *          'readonly' : {
+   *              mapsToFreezedAs: 'final',
+   *           },
+   *          '@Assert' : {
+   *              mapsToFreezedAs: 'custom',
+   *              applyOn: ['class_factory','union_factory'], # @Assert should ONLY be used on factories
+   *              arguments: [
+   *                  '(email != null && email != "") || (phoneNumber != null && phoneNumber != "")',
+   *                  'provide either an email or a phoneNumber',
+   *              ],
+   *           }, # custom are used just as it given
    *       }
    *
    * ```
    */
 
-  customDecorators?: CustomDecorator; // TODO:
+  customDecorators?: CustomDecorator;
 
   /**
    * @name defaultUnionConstructor
@@ -108,7 +133,7 @@ export interface FreezedConfig {
   /**
    * @name equal
    * @description set to false to disable Freezed equal method helper
-   * @default null
+   * @default undefined
    *
    * @exampleMarkdown
    * ```yml
@@ -164,7 +189,7 @@ export interface FreezedConfig {
   /**
    * @name makeCollectionsUnmodifiable
    * @description allows collections(lists/maps) to be modified even if class is immutable
-   * @default null
+   * @default undefined
    *
    * @exampleMarkdown
    * ```yml
@@ -239,7 +264,7 @@ export interface FreezedConfig {
   /**
    * @name unionKey
    * @description specify the key to be used for Freezed union/sealed classes
-   * @default null
+   * @default undefined
    *
    * @exampleMarkdown
    * ```yml
@@ -258,7 +283,7 @@ export interface FreezedConfig {
   /**
    * @name unionValueCase
    * @description specify the casing style to be used for Freezed union/sealed classes
-   * @default null
+   * @default undefined
    *
    * @exampleMarkdown
    * ```yml
@@ -276,58 +301,107 @@ export interface FreezedConfig {
 }
 
 export interface FieldConfig {
-  // TODO: apply it on the parameter block
-
-  /** marks a field as final */
+  /**
+   * @name final
+   * @description marks a field as final
+   * @default undefined
+   */
 
   final?: boolean;
 
-  /** marks a field as deprecated */
+  /**
+   * @name deprecated
+   * @description marks a field as deprecated
+   * @default undefined
+   */
 
   deprecated?: boolean;
 
-  /** annotate a field with a @Default(value: defaultValue) decorator */
+  /**
+   * @name defaultValue
+   * @description annotate a field with a @Default(value: defaultValue) decorator
+   * @default undefined
+   */
 
   defaultValue?: any;
+
   /**
    * @name customDecorators
    * @description specific directives to apply to the field. All `mapsToFreezedAs` values except `custom` are parsed so use the name of the directive without the `@` symbol as the key of the customDecorators. With the `custom` value, whatever you use as the key of the custom directive is used just as it is, and the arguments spread into a parenthesis ()
-   * @default null
+   * @default undefined
    * @exampleMarkdown
    * ```yml
    * customDecorators: {
    *    'default' : {
    *        mapsToFreezedAs: '@Default',
+   *          applyOn: ['class_factory_parameter],
    *        arguments: ['$0'],
    *      },
    *      'deprecated' : {
    *          mapsToFreezedAs: '@deprecated',
+   *          applyOn: ['union_factory_parameter],
    *       },
    *      'readonly' : {
    *          mapsToFreezedAs: 'final',
+   *          applyOn: ['class_factory_parameter','union_factory_parameter'],
    *       },
    *      '@HiveField' : {
    *          mapsToFreezedAs: 'custom',
+   *          applyOn: ['class_factory_parameter'],
    *          arguments: ['1'],
    *       }, # custom are used just as it given
    * }
    * ```
    */
 
-  customDecorators?: CustomDecorator; // TODO:
+  customDecorators?: CustomDecorator;
+
+  /**
+   * @name constraints
+   * @description TODO: support  https://github.com/confuser/graphql-constraint-directive
+   * @exampleMarkdown
+   * ```yml
+   * # THis requires that a validation library is installed in your flutter project
+   * # see: https://github.com/confuser/graphql-constraint-directive
+   * constraint:
+   *   minLength: min # same as ['min', '$1']
+   *   maxLength: max
+   *   startsWith: ["matches", "/^$1/"]
+   *   endsWith: ["matches", "/$1$/"]
+   *   contains: ["matches", "/$1/"]
+   *   notContains: ["matches", "/^((?!$1).)*$/"]
+   *   pattern: ["matches", "/$1/"]
+   *   format:
+   *     # For example, `@constraint(format: "uri")`. this case $1 will be "uri".
+   *     # Therefore the generator generates an @Assert(field.isUri) decorator
+   *     # If $1 does not match anywhere, the generator will ignore.
+   *     uri: url
+   *     email: email
+   *     uuid: uuid
+   *     ipv4: ipv4
+   *   min: ["min", "$1 - 1"]
+   *   max: ["max", "$1 + 1"]
+   *   exclusiveMin: min
+   *   exclusiveMax: max
+   * ```
+   *
+   */
+
+  constraints?: Record<string, any>;
 }
 
 export interface TypeSpecificFreezedConfig {
   /** marks a type as deprecated */
 
-  deprecated?: boolean; // TODO: apply on the class and factory block
+  deprecated?: boolean;
 
   /** overrides the `globalFreezedConfig` for this type */
 
   config?: FreezedConfig;
 
   /** configure fields for this type */
-  fields?: Record<string, FieldConfig>; // TODO: apply on the class and factory block
+
+  fields?: Record<string, FieldConfig>;
 }
 
 export interface FreezedPluginConfig /* extends TypeScriptPluginConfig */ {
@@ -376,7 +450,7 @@ export interface FreezedPluginConfig /* extends TypeScriptPluginConfig */ {
   /**
    * @name globalFreezedConfig
    * @description use the same Freezed configuration for every generated output
-   * @default null
+   * @default undefined
    *
    * @exampleMarkdown
    * ```yml
@@ -399,7 +473,7 @@ export interface FreezedPluginConfig /* extends TypeScriptPluginConfig */ {
   /**
    * @name typeSpecificFreezedConfig
    * @description override the `globalFreezedConfig` for specific types
-   * @default null
+   * @default undefined
    *
    * @exampleMarkdown
    * ```yml
@@ -500,7 +574,7 @@ export interface FreezedPluginConfig /* extends TypeScriptPluginConfig */ {
    * ```
    */
 
-  lowercaseEnums?: boolean; // TODO:
+  lowercaseEnums?: boolean;
 
   /**
    * @name modular
