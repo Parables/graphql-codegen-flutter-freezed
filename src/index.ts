@@ -4,7 +4,7 @@ import { GraphQLSchema } from 'graphql';
 import { FlutterFreezedPluginConfig } from './config';
 import { FreezedDeclarationBlock } from './freezed-declaration-blocks';
 import { schemaVisitor } from './schema-visitor';
-import { DefaultFreezedPluginConfig } from './utils';
+import { buildImportStatements, DefaultFreezedPluginConfig } from './utils';
 
 export const plugin: PluginFunction<FlutterFreezedPluginConfig> = (
   schema: GraphQLSchema,
@@ -24,15 +24,20 @@ export const plugin: PluginFunction<FlutterFreezedPluginConfig> = (
   );
 
   return (
+    buildImportStatements(config.fileName) +
     generated
-      .map(freezedDeclarationBlock =>
-        freezedDeclarationBlock.toString().replaceAll(/==>factory==>.+/gm, s => {
+      /*       .map(freezedDeclarationBlock =>
+        freezedDeclarationBlock.toString().replace(/==>factory==>.+\n/gm, s => {
           const pattern = s.replace('==>factory==>', '').trim();
+          // console.log('pattern:-->', pattern);
           const [key, appliesOn, name, typeName] = pattern.split('==>');
-          return freezedFactoryBlockRepository.retrieve(key, appliesOn, name, typeName ?? null).toString();
+          if (appliesOn === 'class_factory') {
+            return freezedFactoryBlockRepository.retrieve(key, appliesOn, name);
+          }
+          return freezedFactoryBlockRepository.retrieve(key, appliesOn, name, typeName);
         })
-      )
+      ) */
       .join('')
-      .trim() + '\n'
+      .trim()
   );
 };
