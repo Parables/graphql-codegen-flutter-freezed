@@ -339,7 +339,7 @@ describe('flutter-freezed-plugin-utils', () => {
         );
       });
     });
- */
+ 
     test('withSuffixConfig: case-sensitive: valid Dart Language Keyword', () => {
       const withSuffix = mergeConfig(config, {
         globalFreezedConfig: { dartKeywordEscapePrefix: undefined, dartKeywordEscapeSuffix: '_k' },
@@ -367,5 +367,6 @@ describe('flutter-freezed-plugin-utils', () => {
         'k_factory_k'
       );
     });
+    */
   });
 });

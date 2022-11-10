@@ -220,7 +220,7 @@ describe('flutter-freezed-plugin-utils', () => {
 
   describe('methods: escapeDartKey() and buildBlockName() => ', () => {
     const config = mergeConfig();
-
+    /* 
     const withoutCasing: Partial<FlutterFreezedPluginConfig> = {
       globalFreezedConfig: { dartKeywordEscapeCasing: undefined },
     };
@@ -233,7 +233,7 @@ describe('flutter-freezed-plugin-utils', () => {
     const withPascalCasing: Partial<FlutterFreezedPluginConfig> = {
       globalFreezedConfig: { dartKeywordEscapeCasing: 'PascalCase' },
     };
-
+ */
     const prefixConfig = mergeConfig(config, {
       globalFreezedConfig: { dartKeywordEscapePrefix: 'k_', dartKeywordEscapeSuffix: undefined },
     });
@@ -440,103 +440,4 @@ describe('flutter-freezed-plugin-utils', () => {
       );
     });
   });
-
-  /* 
-      test('method: buildBlockName() => should ignore buildBlockName casing if casedBlockName is still a valid Dart Language Keyword', () => {
-        expect(buildBlockName(config, 'void')).toBe('void_');
-        expect(buildBlockName(config, 'void', undefined, undefined)).toBe('void_');
-        expect(buildBlockName(config, 'void', undefined, undefined, true)).toBe(`@JsonKey(name: 'void') void_`);
-
-        expect(buildBlockName(config, 'void', undefined, 'snake_case')).toBe('void_');
-        expect(buildBlockName(config, 'void', undefined, 'snake_case', true)).toBe(`@JsonKey(name: 'void') void_`);
-
-        expect(buildBlockName(config, 'void', undefined, 'camelCase')).toBe('void_');
-        expect(buildBlockName(config, 'void', undefined, 'camelCase', true)).toBe(`@JsonKey(name: 'void') void_`);
-
-        expect(buildBlockName(config, 'void', undefined, 'PascalCase')).toBe('Void');
-        expect(buildBlockName(config, 'void', undefined, 'PascalCase', true)).toBe(`@JsonKey(name: 'void') Void`);
-      });
-    });
-
-    describe('withPrefixConfig: case-sensitive: valid Dart Language Keyword', () => {
-      const withPrefix = mergeConfig(config, {
-        globalFreezedConfig: { dartKeywordEscapePrefix: 'k_', dartKeywordEscapeSuffix: undefined },
-      });
-      test('method: escapeDartKeyword() => it should escape Dart Language Keywords', () => {
-        expect(escapeDartKeyword(withPrefix, 'void')).toBe('k_void');
-        expect(escapeDartKeyword(mergeConfig(withPrefix, withoutCasing), 'in')).toBe('k_in');
-        expect(escapeDartKeyword(mergeConfig(withPrefix, withSnakeCasing), 'if')).toBe('k_if');
-        expect(escapeDartKeyword(mergeConfig(withPrefix, withCamelCasing), 'else')).toBe('kElse');
-        expect(escapeDartKeyword(mergeConfig(withPrefix, withPascalCasing), 'switch')).toBe('KSwitch');
-        expect(escapeDartKeyword(mergeConfig(withPrefix, withSnakeCasing), 'factory', undefined)).toBe('k_factory');
-      });
-
-      test('method: buildBlockName() => should ignore buildBlockName casing if casedBlockName is still a valid Dart Language Keyword', () => {
-        expect(buildBlockName(withPrefix, 'void')).toBe('k_void');
-        expect(buildBlockName(withPrefix, 'void', undefined, undefined)).toBe('k_void');
-        expect(buildBlockName(withPrefix, 'void', undefined, undefined, true)).toBe(`@JsonKey(name: 'void') k_void`);
-
-        expect(buildBlockName(mergeConfig(withPrefix, withoutCasing), 'void')).toBe('k_void');
-        expect(buildBlockName(mergeConfig(withPrefix, withoutCasing), 'void', undefined, undefined)).toBe('k_void');
-        expect(buildBlockName(mergeConfig(withPrefix, withoutCasing), 'void', undefined, undefined, true)).toBe(
-          `@JsonKey(name: 'void') k_void`
-        );
-
-        expect(buildBlockName(withPrefix, 'void', undefined, 'snake_case')).toBe('k_void');
-        expect(buildBlockName(withPrefix, 'void', undefined, 'snake_case', true)).toBe(`@JsonKey(name: 'void') k_void`);
-
-        expect(buildBlockName(mergeConfig(withPrefix, withSnakeCasing), 'void', undefined, 'snake_case')).toBe(
-          'k_void'
-        );
-        expect(buildBlockName(mergeConfig(withPrefix, withSnakeCasing), 'void', undefined, 'snake_case', true)).toBe(
-          `@JsonKey(name: 'void') k_void`
-        );
-
-        expect(buildBlockName(withPrefix, 'void', undefined, 'camelCase')).toBe('kVoid');
-        expect(buildBlockName(withPrefix, 'void', undefined, 'camelCase', true)).toBe(`@JsonKey(name: 'void') kVoid`);
-
-        expect(buildBlockName(mergeConfig(withPrefix, withCamelCasing), 'void', undefined, 'camelCase')).toBe('kVoid');
-        expect(buildBlockName(mergeConfig(withPrefix, withCamelCasing), 'void', undefined, 'camelCase', true)).toBe(
-          `@JsonKey(name: 'void') kVoid`
-        );
-
-        expect(buildBlockName(withPrefix, 'void', undefined, 'PascalCase')).toBe('KVoid');
-        expect(buildBlockName(withPrefix, 'void', undefined, 'PascalCase', true)).toBe(`@JsonKey(name: 'void') KVoid`);
-
-        expect(buildBlockName(mergeConfig(withPrefix, withPascalCasing), 'void', undefined, 'PascalCase')).toBe(
-          'KVoid'
-        );
-        expect(buildBlockName(mergeConfig(withPrefix, withPascalCasing), 'void', undefined, 'PascalCase', true)).toBe(
-          `@JsonKey(name: 'void') KVoid`
-        );
-      });
-    });
-
-    test('withSuffixConfig: case-sensitive: valid Dart Language Keyword', () => {
-      const withSuffix = mergeConfig(config, {
-        globalFreezedConfig: { dartKeywordEscapePrefix: undefined, dartKeywordEscapeSuffix: '_k' },
-      });
-
-      expect(escapeDartKeyword(withSuffix, 'void')).toBe('void_k');
-      expect(escapeDartKeyword(mergeConfig(withSuffix, withoutCasing), 'in')).toBe('in_k');
-      expect(escapeDartKeyword(mergeConfig(withSuffix, withSnakeCasing), 'if')).toBe('if_k');
-      expect(escapeDartKeyword(mergeConfig(withSuffix, withCamelCasing), 'else')).toBe('elseK');
-      expect(escapeDartKeyword(mergeConfig(withSuffix, withPascalCasing), 'switch')).toBe('SwitchK');
-      expect(escapeDartKeyword(mergeConfig(withSuffix, withSnakeCasing), 'factory', undefined)).toBe('factory_k');
-    });
-
-    test('withPrefixSuffixConfig: case-sensitive: valid Dart Language Keyword', () => {
-      const withPrefixSuffix = mergeConfig(config, {
-        globalFreezedConfig: { dartKeywordEscapePrefix: 'k_', dartKeywordEscapeSuffix: '_k' },
-      });
-
-      expect(escapeDartKeyword(withPrefixSuffix, 'void')).toBe('k_void_k');
-      expect(escapeDartKeyword(mergeConfig(withPrefixSuffix, withoutCasing), 'in')).toBe('k_in_k');
-      expect(escapeDartKeyword(mergeConfig(withPrefixSuffix, withSnakeCasing), 'if')).toBe('k_if_k');
-      expect(escapeDartKeyword(mergeConfig(withPrefixSuffix, withCamelCasing), 'else')).toBe('kElseK');
-      expect(escapeDartKeyword(mergeConfig(withPrefixSuffix, withPascalCasing), 'switch')).toBe('KSwitchK');
-      expect(escapeDartKeyword(mergeConfig(withPrefixSuffix, withSnakeCasing), 'factory', undefined)).toBe(
-        'k_factory_k'
-      );
-    }); */
 });
