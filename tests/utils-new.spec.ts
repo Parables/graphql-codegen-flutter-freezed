@@ -238,6 +238,14 @@ describe('flutter-freezed-plugin-utils', () => {
       globalFreezedConfig: { dartKeywordEscapePrefix: 'k_', dartKeywordEscapeSuffix: undefined },
     });
 
+    const suffixConfig = mergeConfig(config, {
+      globalFreezedConfig: { dartKeywordEscapePrefix: undefined, dartKeywordEscapeSuffix: '_k' },
+    });
+
+    const prefixSuffixConfig = mergeConfig(config, {
+      globalFreezedConfig: { dartKeywordEscapePrefix: 'k_', dartKeywordEscapeSuffix: '_k' },
+    });
+
     type T = {
       title: string;
       args: {
@@ -308,6 +316,56 @@ describe('flutter-freezed-plugin-utils', () => {
           };
         }),
       },
+      {
+        title:
+          'suffixConfig => withCasing => should ignore both dartKeywordEscapeCasing and buildBlockName casing if casedBlockName is still a valid Dart Language Keyword',
+        args: [undefined, 'snake_case', 'camelCase'].map(casing => {
+          return {
+            config: suffixConfig,
+            blockName: 'void',
+            casing: casing,
+            expected: 'void_k',
+          };
+        }),
+      },
+      {
+        title:
+          'suffixConfig => decorateWithAtJsonKey => should ignore both dartKeywordEscapeCasing and buildBlockName casing if casedBlockName is still a valid Dart Language Keyword',
+        args: [undefined, 'snake_case', 'camelCase'].map(casing => {
+          return {
+            config: suffixConfig,
+            blockName: 'void',
+            casing: casing,
+            decorateWithAtJsonKey: true,
+            expected: `@JsonKey(name: 'void') void_k`,
+          };
+        }),
+      },
+      {
+        title:
+          'prefixSuffixConfig => withCasing => should ignore both dartKeywordEscapeCasing and buildBlockName casing if casedBlockName is still a valid Dart Language Keyword',
+        args: [undefined, 'snake_case', 'camelCase'].map(casing => {
+          return {
+            config: prefixSuffixConfig,
+            blockName: 'void',
+            casing: casing,
+            expected: 'k_void_k',
+          };
+        }),
+      },
+      {
+        title:
+          'prefixSuffixConfig => decorateWithAtJsonKey => should ignore both dartKeywordEscapeCasing and buildBlockName casing if casedBlockName is still a valid Dart Language Keyword',
+        args: [undefined, 'snake_case', 'camelCase'].map(casing => {
+          return {
+            config: prefixSuffixConfig,
+            blockName: 'void',
+            casing: casing,
+            decorateWithAtJsonKey: true,
+            expected: `@JsonKey(name: 'void') k_void_k`,
+          };
+        }),
+      },
     ];
 
     test.each(data[0].args)(data[0].title, ({ config, blockName, expected }) => {
@@ -347,6 +405,38 @@ describe('flutter-freezed-plugin-utils', () => {
       );
       expect(buildBlockName(config, blockName, undefined, 'PascalCase', decorateWithAtJsonKey)).toBe(
         `@JsonKey(name: 'void') KVoid`
+      );
+    });
+
+    test.each(data[6].args)(data[6].title, ({ config, blockName, casing, expected }) => {
+      expect(escapeDartKeyword(config, blockName)).toBe(expected);
+      expect(buildBlockName(config, blockName, undefined, casing)).toBe(casing === 'camelCase' ? 'voidK' : expected);
+      expect(buildBlockName(config, blockName, undefined, 'PascalCase')).toBe('VoidK');
+    });
+
+    test.each(data[7].args)(data[7].title, ({ config, blockName, casing, decorateWithAtJsonKey, expected }) => {
+      expect(escapeDartKeyword(config, blockName)).toBe('void_k');
+      expect(buildBlockName(config, blockName, undefined, casing, decorateWithAtJsonKey)).toBe(
+        casing === 'camelCase' ? `@JsonKey(name: 'void') voidK` : expected
+      );
+      expect(buildBlockName(config, blockName, undefined, 'PascalCase', decorateWithAtJsonKey)).toBe(
+        `@JsonKey(name: 'void') VoidK`
+      );
+    });
+
+    test.each(data[8].args)(data[8].title, ({ config, blockName, casing, expected }) => {
+      expect(escapeDartKeyword(config, blockName)).toBe(expected);
+      expect(buildBlockName(config, blockName, undefined, casing)).toBe(casing === 'camelCase' ? 'kVoidK' : expected);
+      expect(buildBlockName(config, blockName, undefined, 'PascalCase')).toBe('KVoidK');
+    });
+
+    test.each(data[9].args)(data[9].title, ({ config, blockName, casing, decorateWithAtJsonKey, expected }) => {
+      expect(escapeDartKeyword(config, blockName)).toBe('k_void_k');
+      expect(buildBlockName(config, blockName, undefined, casing, decorateWithAtJsonKey)).toBe(
+        casing === 'camelCase' ? `@JsonKey(name: 'void') kVoidK` : expected
+      );
+      expect(buildBlockName(config, blockName, undefined, 'PascalCase', decorateWithAtJsonKey)).toBe(
+        `@JsonKey(name: 'void') KVoidK`
       );
     });
   });
