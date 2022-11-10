@@ -5,3 +5,6 @@ package-lock.json
 .DS_Store
 tsconfig.tsbuildinfo
 .history/
+.yarn
+coverage/
+.lh/

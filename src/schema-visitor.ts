@@ -6,20 +6,19 @@ import {
   UnionTypeDefinitionNode,
 } from 'graphql';
 import { FlutterFreezedPluginConfig } from './config';
-import { FreezedFactoryBlockRepository, buildBlock } from './utils';
+import { buildBlock, NodeRepository } from './utils';
 
 export const schemaVisitor = (_schema: GraphQLSchema, config: FlutterFreezedPluginConfig) => {
-  const freezedFactoryBlockRepository = new FreezedFactoryBlockRepository();
+  const nodeRepository = new NodeRepository();
   return {
-    freezedFactoryBlockRepository,
+    nodeRepository,
 
-    EnumTypeDefinition: (node: EnumTypeDefinitionNode) => buildBlock(config, freezedFactoryBlockRepository, node),
+    EnumTypeDefinition: (node: EnumTypeDefinitionNode) => buildBlock(config, node, nodeRepository),
 
-    UnionTypeDefinition: (node: UnionTypeDefinitionNode) => buildBlock(config, freezedFactoryBlockRepository, node),
+    UnionTypeDefinition: (node: UnionTypeDefinitionNode) => buildBlock(config, node, nodeRepository),
 
-    ObjectTypeDefinition: (node: ObjectTypeDefinitionNode) => buildBlock(config, freezedFactoryBlockRepository, node),
+    ObjectTypeDefinition: (node: ObjectTypeDefinitionNode) => buildBlock(config, node, nodeRepository),
 
-    InputObjectTypeDefinition: (node: InputObjectTypeDefinitionNode) =>
-      buildBlock(config, freezedFactoryBlockRepository, node),
+    InputObjectTypeDefinition: (node: InputObjectTypeDefinitionNode) => buildBlock(config, node, nodeRepository),
   };
 };

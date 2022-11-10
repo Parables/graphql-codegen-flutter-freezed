@@ -16,10 +16,10 @@ export class FreezedDeclarationBlock {
     let block = '';
 
     block += buildBlockComment(node);
-    block += buildBlockDecorators(node, config);
-    block += buildBlockHeader(blockType, config, node);
-    block += buildBlockBody(blockType, config, node);
-    block += buildBlockFooter(blockType, config, node);
+    block += buildBlockDecorators(config, node);
+    block += buildBlockHeader(config, node, blockType);
+    block += buildBlockBody(config, node, blockType);
+    block += buildBlockFooter(config, node, blockType);
     return block;
   }
 }

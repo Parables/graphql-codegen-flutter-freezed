@@ -10,18 +10,20 @@ import {
 
 export class FreezedFactoryBlock {
   public static build(
-    blockType: 'factory' | 'named_factory',
     config: FlutterFreezedPluginConfig,
     node: NodeType,
+    blockType: 'factory' | 'named_factory',
     namedConstructor = ''
   ): string {
     let block = '';
 
-    block += buildBlockComment(node);
-    block += buildBlockDecorators(node, config);
-    block += buildBlockHeader(blockType, config, node, undefined, namedConstructor);
-    block += buildBlockBody(blockType, config, node);
-    block += buildBlockFooter(blockType, config, node);
+    // TODO: Implement comments(multi-line) and decoratos
+
+    // block += buildBlockComment(node);
+    // block += buildBlockDecorators(node, config);
+    block += buildBlockHeader(config, node, blockType, undefined, namedConstructor);
+    block += buildBlockBody(config, node, blockType);
+    block += buildBlockFooter(config, node, blockType);
     return block;
   }
 
@@ -34,7 +36,7 @@ export class FreezedFactoryBlock {
   };
 
   public static buildFromFactory = (config: FlutterFreezedPluginConfig, node: NodeType): string => {
-    return FreezedFactoryBlock.build('factory', config, node);
+    return FreezedFactoryBlock.build(config, node, 'factory');
   };
 
   public static buildFromNamedFactory = (
@@ -42,6 +44,6 @@ export class FreezedFactoryBlock {
     node: NodeType,
     namedConstructor: string
   ): string => {
-    return FreezedFactoryBlock.build('named_factory', config, node, namedConstructor);
+    return FreezedFactoryBlock.build(config, node, 'named_factory', namedConstructor);
   };
 }

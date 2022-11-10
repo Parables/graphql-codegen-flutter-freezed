@@ -2,30 +2,28 @@ import { oldVisit, PluginFunction, Types } from '@graphql-codegen/plugin-helpers
 import { transformSchemaAST } from '@graphql-codegen/schema-ast';
 import { GraphQLSchema } from 'graphql';
 import { FlutterFreezedPluginConfig } from './config';
-import { FreezedDeclarationBlock } from './freezed-declaration-blocks';
 import { schemaVisitor } from './schema-visitor';
-import { buildImportStatements, DefaultFreezedPluginConfig } from './utils';
+import { buildImportStatements, defaultFreezedPluginConfig } from './utils';
 
 export const plugin: PluginFunction<FlutterFreezedPluginConfig> = (
   schema: GraphQLSchema,
   _documents: Types.DocumentFile[],
-  config: FlutterFreezedPluginConfig
+  _config: FlutterFreezedPluginConfig
 ): string => {
   // sets the defaults for the config
-  config = { ...new DefaultFreezedPluginConfig(config) };
+  const config = { ...defaultFreezedPluginConfig, ..._config };
 
   const { schema: _schema, ast } = transformSchemaAST(schema, config);
-  const { freezedFactoryBlockRepository, ...visitor } = schemaVisitor(_schema, config);
+  const { nodeRepository, ...visitor } = schemaVisitor(_schema, config);
 
   const visitorResult = oldVisit(ast, { leave: visitor });
 
-  const generated: FreezedDeclarationBlock[] = visitorResult.definitions.filter(
-    (def: any) => def instanceof FreezedDeclarationBlock
-  );
+  const generated: string[] = visitorResult.definitions.filter((def: any) => typeof def === 'string' && def.length > 0);
+  console.log('🚀 ~ file: index.ts ~ line 23 ~ generated', generated);
 
   return (
     buildImportStatements(config.fileName) +
-    generated
+    generated // TODO: replace placeholders with factory blocks
       /*       .map(freezedDeclarationBlock =>
         freezedDeclarationBlock.toString().replace(/==>factory==>.+\n/gm, s => {
           const pattern = s.replace('==>factory==>', '').trim();
