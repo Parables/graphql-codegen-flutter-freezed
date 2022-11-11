@@ -103,6 +103,9 @@ export const starWarsSchema = buildSchema(/* GraphQL */ `
     switch
     FACTORY
     factory
+    male
+    female
+    phoneNumber
   }
 
   type Movie {

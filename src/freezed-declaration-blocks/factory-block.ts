@@ -1,3 +1,4 @@
+import { indent } from '@graphql-codegen/visitor-plugin-common';
 import { FlutterFreezedPluginConfig } from '../config';
 import {
   buildBlockComment,
@@ -23,16 +24,16 @@ export class FreezedFactoryBlock {
     // block += buildBlockDecorators(node, config);
     block += buildBlockHeader(config, node, blockType, undefined, namedConstructor);
     block += buildBlockBody(config, node, blockType);
-    block += buildBlockFooter(config, node, blockType);
+    block += buildBlockFooter(config, node, blockType, blockType === 'factory' ? node.name.value : namedConstructor);
     return block;
   }
 
   public static factoryPlaceholder = (blockName: string): string => {
-    return `==>factory==>${blockName}`;
+    return indent(`==>factory==>${blockName}\n`);
   };
 
   public static namedFactoryPlaceholder = (blockName: string, namedConstructor: string): string => {
-    return `==>named_factory==>${blockName}==>${namedConstructor}`;
+    return indent(`==>named_factory==>${blockName}==>${namedConstructor}\n`);
   };
 
   public static buildFromFactory = (config: FlutterFreezedPluginConfig, node: NodeType): string => {
@@ -42,6 +43,7 @@ export class FreezedFactoryBlock {
   public static buildFromNamedFactory = (
     config: FlutterFreezedPluginConfig,
     node: NodeType,
+    blockName: string,
     namedConstructor: string
   ): string => {
     return FreezedFactoryBlock.build(config, node, 'named_factory', namedConstructor);

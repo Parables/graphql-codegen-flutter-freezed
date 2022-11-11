@@ -171,20 +171,27 @@ export const buildBlockName = (
   casing?: DartIdentifierCasing,
   decorateWithAtJsonKey?: boolean
 ): string => {
+  console.log('🚀 ~ file: utils.ts ~ line 174 ~ blockName', blockName);
   // TODO: check the order of preference for the casing.
   // TODO: Test and expect `camelCased` to have precedence over the casing of the `escapedBlockName`
 
   const escapedBlockName = escapeDartKeyword(config, blockName, typeName);
-  const nameEscaped = blockName !== escapedBlockName;
-  if (nameEscaped) {
-    const casedBlockName = dartCasing(escapedBlockName, casing);
-    if (Object.hasOwn(DART_KEYWORDS, casedBlockName)) {
-      return decorateWithAtJsonKey ? `@JsonKey(name: '${blockName}') ${escapedBlockName}` : escapedBlockName;
-    }
-    return decorateWithAtJsonKey ? `@JsonKey(name: '${blockName}') ${casedBlockName}` : casedBlockName;
+
+  const casedBlockName = dartCasing(escapedBlockName, casing);
+
+  if (isDartKeyword(casedBlockName)) {
+    const escapedBlockName = escapeDartKeyword(config, casedBlockName, typeName);
+    return decorateWithAtJsonKey ? `@JsonKey(name: '${blockName}') ${escapedBlockName}` : escapedBlockName;
   }
-  return blockName;
+  return decorateWithAtJsonKey ? `@JsonKey(name: '${blockName}') ${casedBlockName}` : casedBlockName;
 };
+
+/**
+ * checks whether name is a Dart Language keyword
+ * @param name The name or identifier to be checked
+ * @returns `true` if name is a Dart Language keyword, otherwise `false`
+ */
+export const isDartKeyword = (name: string) => Object.hasOwn(DART_KEYWORDS, name);
 
 /**
  * Ensures that the `blockName` isn't a valid Dart language reserved keyword. It wraps the `blockName` the `dartKeywordEscapePrefix`, `dartKeywordEscapeSuffix` and `dartKeywordEscapeCasing` specified in the config
@@ -194,8 +201,7 @@ export const buildBlockName = (
  * @returns
  */
 export const escapeDartKeyword = (config: FlutterFreezedPluginConfig, blockName: string, typeName?: string): string => {
-  if (Object.hasOwn(DART_KEYWORDS, blockName)) {
-    console.log(blockName, ' is a dart keyword');
+  if (isDartKeyword(blockName)) {
     const prefix = getFreezedConfigValue<string>('dartKeywordEscapePrefix', config, typeName, '');
     const suffix = getFreezedConfigValue<string>('dartKeywordEscapeSuffix', config, typeName, '');
     const casing = getFreezedConfigValue<DartIdentifierCasing>('dartKeywordEscapeCasing', config, typeName);
@@ -216,6 +222,25 @@ export const dartCasing = (name: string, casing?: DartIdentifierCasing): string 
     return snakeCase(name);
   }
   return name;
+};
+
+export const shouldDecorateWithAtJsonKey = (
+  blockType: 'enum_field' | 'parameter_field',
+  config: FlutterFreezedPluginConfig,
+  blockName: string,
+  typeName: string
+): boolean => {
+  const alwaysUseJsonKeyName = getFreezedConfigValue('alwaysUseJsonKeyName', config, typeName, false);
+  const alreadyCamelCased = !isDartKeyword(blockName) && camelCase(blockName) === blockName;
+
+  if (alwaysUseJsonKeyName) {
+    return true;
+  } else if (alreadyCamelCased) {
+    return false;
+  } else if (blockType === 'enum_field') {
+    return config.camelCasedEnums ?? true;
+  }
+  return false;
 };
 //#endregion
 
@@ -506,6 +531,8 @@ export const buildBlockBody = (
   node: NodeType,
   blockType: 'enum' | 'class' | 'factory' | 'named_factory'
 ): string => {
+  console.log('🚀 ~ file: utils.ts ~ line 509 ~ buildBlockBody ~ blockType', blockType);
+
   if (blockType === 'enum' && node.kind === Kind.ENUM_TYPE_DEFINITION) {
     return buildEnumBody(config, node);
   } else if (blockType === 'class') {
@@ -529,9 +556,9 @@ export const buildBlockFooter = (
     return buildEnumFooter();
   } else if (blockType === 'class') {
     const fromJsonToJson = getFreezedConfigValue<boolean>('fromJsonToJson', config, typeName);
-    return buildClassFooter(blockName, fromJsonToJson);
+    return buildClassFooter(config, blockName, fromJsonToJson);
   } else if (blockType === 'factory' || (blockType === 'named_factory' && namedConstructor.length > 0)) {
-    return buildFactoryFooter(config, namedConstructor);
+    return buildFactoryFooter(config, blockType, namedConstructor);
   }
   return '';
 };
@@ -547,13 +574,22 @@ export const buildEnumBody = (config: FlutterFreezedPluginConfig, node: EnumType
   return (
     node.values
       ?.map((enumValue: EnumValueDefinitionNode) => {
-        const camelCased = config.camelCasedEnums ?? true;
-        const casing: DartIdentifierCasing | undefined = camelCased ? 'camelCase' : undefined;
         const blockName = enumValue.name.value;
         const typeName = node.name.value;
-        const decorateWithAtJsonKey = camelCased; // if camelCased === true, then use decorateWithAtJsonKey
+        const camelCased = config.camelCasedEnums ?? true;
+        const casing: DartIdentifierCasing | undefined = camelCased ? 'camelCase' : undefined;
+        const decorateWithAtJsonKey = shouldDecorateWithAtJsonKey('enum_field', config, blockName, typeName);
         const enumField = buildBlockName(config, blockName, typeName, casing, decorateWithAtJsonKey);
 
+        console.log(
+          '🚀 ~ file: utils.ts ~ line 557 ~ buildEnumBody ~ args',
+          camelCased,
+          casing,
+          blockName,
+          typeName,
+          decorateWithAtJsonKey,
+          enumField
+        );
         return indent(`${buildBlockComment(enumValue)}${enumField},\n`);
       })
       .join('') ?? ''
@@ -595,9 +631,16 @@ export const buildClassBody = (config: FlutterFreezedPluginConfig, node: NodeTyp
   return '';
 };
 
-export const buildClassFooter = (blockName: string, fromJsonToJson = true): string => {
+export const buildClassFooter = (
+  config: FlutterFreezedPluginConfig,
+  blockName: string,
+  fromJsonToJson = true
+): string => {
+  const typeName = blockName;
+  const className = buildBlockName(config, blockName, typeName, 'PascalCase', false);
+
   if (fromJsonToJson) {
-    return indent(`factory ${blockName}.fromJson(Map<String, dynamic> json) => _$${blockName}FromJson(json);\n}\n\n`);
+    return indent(`factory ${className}.fromJson(Map<String, dynamic> json) => _$${className}FromJson(json);\n}\n\n`);
   }
   return '}\n\n';
 };
@@ -633,11 +676,17 @@ export const buildFactoryBody = (config: FlutterFreezedPluginConfig, node: Objec
   return node.fields?.map(field => FreezedParameterBlock.build(config, node, 'parameter', field)).join('') ?? '';
 };
 
-export const buildFactoryFooter = (config: FlutterFreezedPluginConfig, namedConstructor: string) => {
+export const buildFactoryFooter = (
+  config: FlutterFreezedPluginConfig,
+  blockType: 'factory' | 'named_factory',
+  namedConstructor: string
+) => {
   const blockName = namedConstructor;
   const typeName = namedConstructor;
   const decorateWithAtJsonKey = false;
-  return `}) = ${buildBlockName(config, blockName, typeName, 'PascalCase', decorateWithAtJsonKey)};\n`;
+  const prefix = blockType === 'factory' ? '_' : '';
+  const factoryFooterName = buildBlockName(config, blockName, typeName, 'PascalCase', decorateWithAtJsonKey);
+  return `}) = ${prefix}${factoryFooterName};\n`;
 };
 
 //#endregion
@@ -656,7 +705,7 @@ export const buildParameterHeader = (config: FlutterFreezedPluginConfig, node: N
   const type = parameterType(config, field.type);
   const blockName = field.name.value;
   const typeName = node.name.value;
-  const decorateWithAtJsonKey = true;
+  const decorateWithAtJsonKey = shouldDecorateWithAtJsonKey('parameter_field', config, blockName, typeName);
   const name = buildBlockName(config, blockName, typeName, 'camelCase', decorateWithAtJsonKey);
 
   return indent(`${required}${final} ${type} ${name},\n`, 2);

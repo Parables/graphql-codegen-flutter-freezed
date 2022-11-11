@@ -1,7 +1,15 @@
 import { transformSchemaAST } from '@graphql-codegen/schema-ast';
-import { FlutterFreezedPluginConfig } from '../src/config';
+import { indent } from '@graphql-codegen/visitor-plugin-common';
+import { Kind } from 'graphql';
+import { DartIdentifierCasing, FlutterFreezedPluginConfig } from '../src/config';
+import { FreezedFactoryBlock } from '../src/freezed-declaration-blocks';
 import {
+  buildBlock,
   buildBlockName,
+  buildClassFooter,
+  buildClassHeader,
+  buildEnumFooter,
+  buildEnumHeader,
   buildImportStatements,
   dartCasing,
   defaultFreezedConfig,
@@ -10,6 +18,8 @@ import {
   getFreezedConfigValue,
   mergeConfig,
   nodeIsObjectType,
+  NodeRepository,
+  NodeType,
 } from '../src/utils';
 import { customDecoratorsConfig, fullDemoConfig, typeConfig } from './config';
 import { starWarsSchema } from './schema';
@@ -17,6 +27,31 @@ import { starWarsSchema } from './schema';
 const {
   ast: { definitions: astNodesList },
 } = transformSchemaAST(starWarsSchema, fullDemoConfig);
+
+const prefixConfig = mergeConfig({
+  globalFreezedConfig: { dartKeywordEscapePrefix: 'k_', dartKeywordEscapeSuffix: undefined },
+});
+
+const suffixConfig = mergeConfig({
+  globalFreezedConfig: { dartKeywordEscapePrefix: undefined, dartKeywordEscapeSuffix: '_k' },
+});
+
+const prefixSuffixConfig = mergeConfig({
+  globalFreezedConfig: { dartKeywordEscapePrefix: 'k_', dartKeywordEscapeSuffix: '_k' },
+});
+
+const withoutCasingConfig: Partial<FlutterFreezedPluginConfig> = {
+  globalFreezedConfig: { dartKeywordEscapeCasing: undefined },
+};
+const withSnakeCasingConfig: Partial<FlutterFreezedPluginConfig> = {
+  globalFreezedConfig: { dartKeywordEscapeCasing: 'snake_case' },
+};
+const withCamelCasingConfig: Partial<FlutterFreezedPluginConfig> = {
+  globalFreezedConfig: { dartKeywordEscapeCasing: 'camelCase' },
+};
+const withPascalCasingConfig: Partial<FlutterFreezedPluginConfig> = {
+  globalFreezedConfig: { dartKeywordEscapeCasing: 'PascalCase' },
+};
 
 describe('flutter-freezed-plugin-utils', () => {
   describe('default values for plugin config', () => {
@@ -218,155 +253,316 @@ describe('flutter-freezed-plugin-utils', () => {
     expect(dartCasing('lE-AvE mE A-l_o_n-e')).toBe('lE-AvE mE A-l_o_n-e');
   });
 
-  const withoutCasing: Partial<FlutterFreezedPluginConfig> = {
-    globalFreezedConfig: { dartKeywordEscapeCasing: undefined },
-  };
-  const withSnakeCasing: Partial<FlutterFreezedPluginConfig> = {
-    globalFreezedConfig: { dartKeywordEscapeCasing: 'snake_case' },
-  };
-  const withCamelCasing: Partial<FlutterFreezedPluginConfig> = {
-    globalFreezedConfig: { dartKeywordEscapeCasing: 'camelCase' },
-  };
-  const withPascalCasing: Partial<FlutterFreezedPluginConfig> = {
-    globalFreezedConfig: { dartKeywordEscapeCasing: 'PascalCase' },
-  };
-
-  describe('method: escapeDartKey() => ', () => {
+  describe('methods: escapeDartKey() and buildBlockName() => ', () => {
     const config = mergeConfig();
-    /*    
-   test('defaultConfig: NOT a valid Dart Language Keyword', () => {
-      expect(escapeDartKeyword(config, 'NEWHOPE')).toBe('NEWHOPE');
-      expect(escapeDartKeyword(config, 'EMPIRE')).toBe('EMPIRE');
-      expect(escapeDartKeyword(config, 'JEDI')).toBe('JEDI');
 
-      expect(buildBlockName(config, 'NEWHOPE')).toBe('NEWHOPE');
-      expect(buildBlockName(config, 'EMPIRE')).toBe('EMPIRE');
-      expect(buildBlockName(config, 'JEDI')).toBe('JEDI');
+    type T = {
+      title: string;
+      args: {
+        config: FlutterFreezedPluginConfig;
+        blockName: string;
+        typeName?: string | undefined;
+        expected: string;
+        casing?: DartIdentifierCasing | undefined;
+        decorateWithAtJsonKey?: boolean | undefined;
+      }[];
+    }[];
+
+    const data: T = [
+      {
+        title: 'defaultConfig => NOT a valid Dart Language Keywords => it should NOT escape it',
+        args: ['NEWHOPE', 'EMPIRE', 'JEDI', 'VOID', 'IN', 'IF', 'ELSE', 'SWITCH', 'FACTORY'].map(v => {
+          return { config: config, blockName: v, expected: v };
+        }),
+      },
+      {
+        title: 'defaultConfig => valid Dart Language Keywords => it should escape it',
+        args: ['void', 'in', 'if', 'else', 'switch', 'factory'].map(v => {
+          return { config: config, blockName: v, expected: `${v}_` };
+        }),
+      },
+      {
+        title:
+          'defaultConfig => withCasing => should ignore both dartKeywordEscapeCasing and buildBlockName casing if casedBlockName is still a valid Dart Language Keyword',
+        args: [undefined, 'snake_case', 'camelCase'].map(casing => {
+          return { config: config, blockName: 'void', casing: casing, expected: 'void_' };
+        }),
+      },
+      {
+        title:
+          'defaultConfig => decorateWithAtJsonKey => should ignore both dartKeywordEscapeCasing and buildBlockName casing if casedBlockName is still a valid Dart Language Keyword',
+        args: [undefined, 'snake_case', 'camelCase'].map(casing => {
+          return {
+            config: config,
+            blockName: 'void',
+            casing: casing,
+            decorateWithAtJsonKey: true,
+            expected: `@JsonKey(name: 'void') void_`,
+          };
+        }),
+      },
+      {
+        title:
+          'prefixConfig => withCasing => should ignore both dartKeywordEscapeCasing and buildBlockName casing if casedBlockName is still a valid Dart Language Keyword',
+        args: [undefined, 'snake_case', 'camelCase'].map(casing => {
+          return {
+            config: prefixConfig,
+            blockName: 'void',
+            casing: casing,
+            expected: 'k_void',
+          };
+        }),
+      },
+      {
+        title:
+          'prefixConfig => decorateWithAtJsonKey => should ignore both dartKeywordEscapeCasing and buildBlockName casing if casedBlockName is still a valid Dart Language Keyword',
+        args: [undefined, 'snake_case', 'camelCase'].map(casing => {
+          return {
+            config: prefixConfig,
+            blockName: 'void',
+            casing: casing,
+            decorateWithAtJsonKey: true,
+            expected: `@JsonKey(name: 'void') k_void`,
+          };
+        }),
+      },
+      {
+        title:
+          'suffixConfig => withCasing => should ignore both dartKeywordEscapeCasing and buildBlockName casing if casedBlockName is still a valid Dart Language Keyword',
+        args: [undefined, 'snake_case', 'camelCase'].map(casing => {
+          return {
+            config: suffixConfig,
+            blockName: 'void',
+            casing: casing,
+            expected: 'void_k',
+          };
+        }),
+      },
+      {
+        title:
+          'suffixConfig => decorateWithAtJsonKey => should ignore both dartKeywordEscapeCasing and buildBlockName casing if casedBlockName is still a valid Dart Language Keyword',
+        args: [undefined, 'snake_case', 'camelCase'].map(casing => {
+          return {
+            config: suffixConfig,
+            blockName: 'void',
+            casing: casing,
+            decorateWithAtJsonKey: true,
+            expected: `@JsonKey(name: 'void') void_k`,
+          };
+        }),
+      },
+      {
+        title:
+          'prefixSuffixConfig => withCasing => should ignore both dartKeywordEscapeCasing and buildBlockName casing if casedBlockName is still a valid Dart Language Keyword',
+        args: [undefined, 'snake_case', 'camelCase'].map(casing => {
+          return {
+            config: prefixSuffixConfig,
+            blockName: 'void',
+            casing: casing,
+            expected: 'k_void_k',
+          };
+        }),
+      },
+      {
+        title:
+          'prefixSuffixConfig => decorateWithAtJsonKey => should ignore both dartKeywordEscapeCasing and buildBlockName casing if casedBlockName is still a valid Dart Language Keyword',
+        args: [undefined, 'snake_case', 'camelCase'].map(casing => {
+          return {
+            config: prefixSuffixConfig,
+            blockName: 'void',
+            casing: casing,
+            decorateWithAtJsonKey: true,
+            expected: `@JsonKey(name: 'void') k_void_k`,
+          };
+        }),
+      },
+    ];
+
+    test.each(data[0].args)(data[0].title, ({ config, blockName, expected }) => {
+      expect(escapeDartKeyword(config, blockName)).toBe(expected);
+      expect(buildBlockName(config, blockName)).toBe(expected);
     });
 
-    test('defaultConfig: case-sensitive: NOT valid Dart Language Keyword', () => {
-      expect(escapeDartKeyword(config, 'VOID')).toBe('VOID');
-      expect(escapeDartKeyword(config, 'IN')).toBe('IN');
-      expect(escapeDartKeyword(config, 'IF')).toBe('IF');
-      expect(escapeDartKeyword(config, 'ELSE')).toBe('ELSE');
-      expect(escapeDartKeyword(config, 'SWITCH')).toBe('SWITCH');
-      expect(escapeDartKeyword(config, 'FACTORY')).toBe('FACTORY');
-
-      expect(buildBlockName(config, 'VOID')).toBe('VOID');
-      expect(buildBlockName(config, 'IN')).toBe('IN');
-      expect(buildBlockName(config, 'IF')).toBe('IF');
-      expect(buildBlockName(config, 'ELSE')).toBe('ELSE');
-      expect(buildBlockName(config, 'SWITCH')).toBe('SWITCH');
-      expect(buildBlockName(config, 'FACTORY')).toBe('FACTORY');
-    });
-    
-    describe('defaultConfig: case-sensitive: valid Dart Language Keywords', () => {
-      test('method: escapeDartKeyword() => it should escape Dart Language Keywords', () => {
-        expect(escapeDartKeyword(config, 'void')).toBe('void_');
-        expect(escapeDartKeyword(config, 'in')).toBe('in_');
-        expect(escapeDartKeyword(config, 'if')).toBe('if_');
-        expect(escapeDartKeyword(config, 'else')).toBe('else_');
-        expect(escapeDartKeyword(config, 'switch')).toBe('switch_');
-        expect(escapeDartKeyword(config, 'factory')).toBe('factory_');
-      });
-
-      test('method: buildBlockName() => should ignore buildBlockName casing if casedBlockName is still a valid Dart Language Keyword', () => {
-        expect(buildBlockName(config, 'void')).toBe('void_');
-        expect(buildBlockName(config, 'void', undefined, undefined)).toBe('void_');
-        expect(buildBlockName(config, 'void', undefined, undefined, true)).toBe(`@JsonKey(name: 'void') void_`);
-
-        expect(buildBlockName(config, 'void', undefined, 'snake_case')).toBe('void_');
-        expect(buildBlockName(config, 'void', undefined, 'snake_case', true)).toBe(`@JsonKey(name: 'void') void_`);
-
-        expect(buildBlockName(config, 'void', undefined, 'camelCase')).toBe('void_');
-        expect(buildBlockName(config, 'void', undefined, 'camelCase', true)).toBe(`@JsonKey(name: 'void') void_`);
-
-        expect(buildBlockName(config, 'void', undefined, 'PascalCase')).toBe('Void');
-        expect(buildBlockName(config, 'void', undefined, 'PascalCase', true)).toBe(`@JsonKey(name: 'void') Void`);
-      });
+    test.each(data[1].args)(data[1].title, ({ config, blockName, expected }) => {
+      expect(escapeDartKeyword(config, blockName)).toBe(expected);
+      expect(buildBlockName(config, blockName)).toBe(expected);
     });
 
-    describe('withPrefixConfig: case-sensitive: valid Dart Language Keyword', () => {
-      const withPrefix = mergeConfig(config, {
-        globalFreezedConfig: { dartKeywordEscapePrefix: 'k_', dartKeywordEscapeSuffix: undefined },
-      });
-      test('method: escapeDartKeyword() => it should escape Dart Language Keywords', () => {
-        expect(escapeDartKeyword(withPrefix, 'void')).toBe('k_void');
-        expect(escapeDartKeyword(mergeConfig(withPrefix, withoutCasing), 'in')).toBe('k_in');
-        expect(escapeDartKeyword(mergeConfig(withPrefix, withSnakeCasing), 'if')).toBe('k_if');
-        expect(escapeDartKeyword(mergeConfig(withPrefix, withCamelCasing), 'else')).toBe('kElse');
-        expect(escapeDartKeyword(mergeConfig(withPrefix, withPascalCasing), 'switch')).toBe('KSwitch');
-        expect(escapeDartKeyword(mergeConfig(withPrefix, withSnakeCasing), 'factory', undefined)).toBe('k_factory');
-      });
-
-      test('method: buildBlockName() => should ignore buildBlockName casing if casedBlockName is still a valid Dart Language Keyword', () => {
-        expect(buildBlockName(withPrefix, 'void')).toBe('k_void');
-        expect(buildBlockName(withPrefix, 'void', undefined, undefined)).toBe('k_void');
-        expect(buildBlockName(withPrefix, 'void', undefined, undefined, true)).toBe(`@JsonKey(name: 'void') k_void`);
-
-        expect(buildBlockName(mergeConfig(withPrefix, withoutCasing), 'void')).toBe('k_void');
-        expect(buildBlockName(mergeConfig(withPrefix, withoutCasing), 'void', undefined, undefined)).toBe('k_void');
-        expect(buildBlockName(mergeConfig(withPrefix, withoutCasing), 'void', undefined, undefined, true)).toBe(
-          `@JsonKey(name: 'void') k_void`
-        );
-
-        expect(buildBlockName(withPrefix, 'void', undefined, 'snake_case')).toBe('k_void');
-        expect(buildBlockName(withPrefix, 'void', undefined, 'snake_case', true)).toBe(`@JsonKey(name: 'void') k_void`);
-
-        expect(buildBlockName(mergeConfig(withPrefix, withSnakeCasing), 'void', undefined, 'snake_case')).toBe(
-          'k_void'
-        );
-        expect(buildBlockName(mergeConfig(withPrefix, withSnakeCasing), 'void', undefined, 'snake_case', true)).toBe(
-          `@JsonKey(name: 'void') k_void`
-        );
-
-        expect(buildBlockName(withPrefix, 'void', undefined, 'camelCase')).toBe('kVoid');
-        expect(buildBlockName(withPrefix, 'void', undefined, 'camelCase', true)).toBe(`@JsonKey(name: 'void') kVoid`);
-
-        expect(buildBlockName(mergeConfig(withPrefix, withCamelCasing), 'void', undefined, 'camelCase')).toBe('kVoid');
-        expect(buildBlockName(mergeConfig(withPrefix, withCamelCasing), 'void', undefined, 'camelCase', true)).toBe(
-          `@JsonKey(name: 'void') kVoid`
-        );
-
-        expect(buildBlockName(withPrefix, 'void', undefined, 'PascalCase')).toBe('KVoid');
-        expect(buildBlockName(withPrefix, 'void', undefined, 'PascalCase', true)).toBe(`@JsonKey(name: 'void') KVoid`);
-
-        expect(buildBlockName(mergeConfig(withPrefix, withPascalCasing), 'void', undefined, 'PascalCase')).toBe(
-          'KVoid'
-        );
-        expect(buildBlockName(mergeConfig(withPrefix, withPascalCasing), 'void', undefined, 'PascalCase', true)).toBe(
-          `@JsonKey(name: 'void') KVoid`
-        );
-      });
-    });
- 
-    test('withSuffixConfig: case-sensitive: valid Dart Language Keyword', () => {
-      const withSuffix = mergeConfig(config, {
-        globalFreezedConfig: { dartKeywordEscapePrefix: undefined, dartKeywordEscapeSuffix: '_k' },
-      });
-
-      expect(escapeDartKeyword(withSuffix, 'void')).toBe('void_k');
-      expect(escapeDartKeyword(mergeConfig(withSuffix, withoutCasing), 'in')).toBe('in_k');
-      expect(escapeDartKeyword(mergeConfig(withSuffix, withSnakeCasing), 'if')).toBe('if_k');
-      expect(escapeDartKeyword(mergeConfig(withSuffix, withCamelCasing), 'else')).toBe('elseK');
-      expect(escapeDartKeyword(mergeConfig(withSuffix, withPascalCasing), 'switch')).toBe('SwitchK');
-      expect(escapeDartKeyword(mergeConfig(withSuffix, withSnakeCasing), 'factory', undefined)).toBe('factory_k');
+    test.each(data[2].args)(data[2].title, ({ config, blockName, casing, expected }) => {
+      expect(escapeDartKeyword(config, blockName)).toBe(expected);
+      expect(buildBlockName(config, blockName, undefined, casing)).toBe(expected);
+      expect(buildBlockName(config, blockName, undefined, 'PascalCase')).toBe('Void');
     });
 
-    test('withPrefixSuffixConfig: case-sensitive: valid Dart Language Keyword', () => {
-      const withPrefixSuffix = mergeConfig(config, {
-        globalFreezedConfig: { dartKeywordEscapePrefix: 'k_', dartKeywordEscapeSuffix: '_k' },
-      });
-
-      expect(escapeDartKeyword(withPrefixSuffix, 'void')).toBe('k_void_k');
-      expect(escapeDartKeyword(mergeConfig(withPrefixSuffix, withoutCasing), 'in')).toBe('k_in_k');
-      expect(escapeDartKeyword(mergeConfig(withPrefixSuffix, withSnakeCasing), 'if')).toBe('k_if_k');
-      expect(escapeDartKeyword(mergeConfig(withPrefixSuffix, withCamelCasing), 'else')).toBe('kElseK');
-      expect(escapeDartKeyword(mergeConfig(withPrefixSuffix, withPascalCasing), 'switch')).toBe('KSwitchK');
-      expect(escapeDartKeyword(mergeConfig(withPrefixSuffix, withSnakeCasing), 'factory', undefined)).toBe(
-        'k_factory_k'
+    test.each(data[3].args)(data[3].title, ({ config, blockName, casing, decorateWithAtJsonKey, expected }) => {
+      expect(escapeDartKeyword(config, blockName)).toBe('void_');
+      expect(buildBlockName(config, blockName, undefined, casing, decorateWithAtJsonKey)).toBe(expected);
+      expect(buildBlockName(config, blockName, undefined, 'PascalCase', decorateWithAtJsonKey)).toBe(
+        `@JsonKey(name: 'void') Void`
       );
     });
-    */
+
+    test.each(data[4].args)(data[4].title, ({ config, blockName, casing, expected }) => {
+      expect(escapeDartKeyword(config, blockName)).toBe(expected);
+      expect(buildBlockName(config, blockName, undefined, casing)).toBe(casing === 'camelCase' ? 'kVoid' : expected);
+      expect(buildBlockName(config, blockName, undefined, 'PascalCase')).toBe('KVoid');
+    });
+
+    test.each(data[5].args)(data[5].title, ({ config, blockName, casing, decorateWithAtJsonKey, expected }) => {
+      expect(escapeDartKeyword(config, blockName)).toBe('k_void');
+      expect(buildBlockName(config, blockName, undefined, casing, decorateWithAtJsonKey)).toBe(
+        casing === 'camelCase' ? `@JsonKey(name: 'void') kVoid` : expected
+      );
+      expect(buildBlockName(config, blockName, undefined, 'PascalCase', decorateWithAtJsonKey)).toBe(
+        `@JsonKey(name: 'void') KVoid`
+      );
+    });
+
+    test.each(data[6].args)(data[6].title, ({ config, blockName, casing, expected }) => {
+      expect(escapeDartKeyword(config, blockName)).toBe(expected);
+      expect(buildBlockName(config, blockName, undefined, casing)).toBe(casing === 'camelCase' ? 'voidK' : expected);
+      expect(buildBlockName(config, blockName, undefined, 'PascalCase')).toBe('VoidK');
+    });
+
+    test.each(data[7].args)(data[7].title, ({ config, blockName, casing, decorateWithAtJsonKey, expected }) => {
+      expect(escapeDartKeyword(config, blockName)).toBe('void_k');
+      expect(buildBlockName(config, blockName, undefined, casing, decorateWithAtJsonKey)).toBe(
+        casing === 'camelCase' ? `@JsonKey(name: 'void') voidK` : expected
+      );
+      expect(buildBlockName(config, blockName, undefined, 'PascalCase', decorateWithAtJsonKey)).toBe(
+        `@JsonKey(name: 'void') VoidK`
+      );
+    });
+
+    test.each(data[8].args)(data[8].title, ({ config, blockName, casing, expected }) => {
+      expect(escapeDartKeyword(config, blockName)).toBe(expected);
+      expect(buildBlockName(config, blockName, undefined, casing)).toBe(casing === 'camelCase' ? 'kVoidK' : expected);
+      expect(buildBlockName(config, blockName, undefined, 'PascalCase')).toBe('KVoidK');
+    });
+
+    test.each(data[9].args)(data[9].title, ({ config, blockName, casing, decorateWithAtJsonKey, expected }) => {
+      expect(escapeDartKeyword(config, blockName)).toBe('k_void_k');
+      expect(buildBlockName(config, blockName, undefined, casing, decorateWithAtJsonKey)).toBe(
+        casing === 'camelCase' ? `@JsonKey(name: 'void') kVoidK` : expected
+      );
+      expect(buildBlockName(config, blockName, undefined, 'PascalCase', decorateWithAtJsonKey)).toBe(
+        `@JsonKey(name: 'void') KVoidK`
+      );
+    });
+  });
+
+  describe('block builders => ', () => {
+    const config = mergeConfig();
+
+    const validBlockNames = [
+      'Episode',
+      'Movie',
+      'CreateMovieInput',
+      'UpsertMovieInput',
+      'UpdateMovieInput',
+      'DeleteMovieInput',
+      'Starship',
+      'Character',
+      'MovieCharacter',
+      'Human',
+      'Droid',
+      'SearchResult',
+    ];
+
+    test.each(validBlockNames)('returns a blockHeader', blockName => {
+      expect(buildEnumHeader(config, blockName)).toBe(`enum ${blockName} {\n`);
+
+      const privateEmptyConstructor = indent(`const ${blockName}._();\n\n`);
+      expect(buildClassHeader(config, blockName)).toBe(
+        `class ${blockName} with _$${blockName} {\n${privateEmptyConstructor}`
+      );
+      expect(buildClassHeader(config, blockName, false)).toBe(`class ${blockName} with _$${blockName} {\n`);
+
+      const fromJsonToJson = indent(
+        `factory ${blockName}.fromJson(Map<String, dynamic> json) => _$${blockName}FromJson(json);\n}\n\n`
+      );
+      expect(buildClassFooter(config, blockName)).toBe(fromJsonToJson);
+      expect(buildClassFooter(config, blockName, false)).toBe(`}\n\n`);
+    });
+
+    expect(buildEnumFooter()).toBe(`}\n\n`);
+
+    describe('method:  buildBlock() => enumBlock', () => {
+      const node = astNodesList[0] as NodeType;
+      const expected = [
+        `enum Episode {`,
+        indent(`@JsonKey(name: 'NEWHOPE') newhope,`),
+        indent(`@JsonKey(name: 'EMPIRE') empire,`),
+        indent(`@JsonKey(name: 'JEDI') jedi,`),
+        indent(`@JsonKey(name: 'VOID') void_,`),
+        indent(`@JsonKey(name: 'void') void_,`),
+        indent(`@JsonKey(name: 'IN') in_,`),
+        indent(`@JsonKey(name: 'in') in_,`),
+        indent(`@JsonKey(name: 'ELSE') else_,`),
+        indent(`@JsonKey(name: 'else') else_,`),
+        indent(`@JsonKey(name: 'SWITCH') switch_,`),
+        indent(`@JsonKey(name: 'switch') switch_,`),
+        indent(`@JsonKey(name: 'FACTORY') factory_,`),
+        indent(`@JsonKey(name: 'factory') factory_,`),
+      ];
+      expect(buildBlock(config, node, new NodeRepository())).toBe(
+        expected.concat([indent(`male,`), indent(`female,`), indent(`phoneNumber,`), `}\n\n`]).join('\n')
+      );
+
+      expect(
+        buildBlock(
+          mergeConfig(config, { globalFreezedConfig: { alwaysUseJsonKeyName: true } }),
+          node,
+          new NodeRepository()
+        )
+      ).toBe(
+        expected
+          .concat([
+            indent(`@JsonKey(name: 'male') male,`),
+            indent(`@JsonKey(name: 'female') female,`),
+            indent(`@JsonKey(name: 'phoneNumber') phoneNumber,`),
+            `}\n\n`,
+          ])
+          .join('\n')
+      );
+    });
+
+    describe('method:  buildBlock() => classBlock', () => {
+      const config = mergeConfig();
+      const node = astNodesList[1] as NodeType;
+      const nodeRepository = new NodeRepository();
+      const expected = [
+        `@freezed`,
+        `class Movie with _$Movie {`,
+        indent(`const Movie._();\n`),
+        indent(`==>factory==>Movie`),
+      ];
+
+      expect(buildBlock(config, node, nodeRepository)).toBe(
+        expected
+          .concat([indent(`factory Movie.fromJson(Map<String, dynamic> json) => _$MovieFromJson(json);`), `}\n\n`])
+          .join('\n')
+      );
+
+      expect(
+        buildBlock(mergeConfig(config, { globalFreezedConfig: { fromJsonToJson: false } }), node, new NodeRepository())
+      ).toBe(expected.concat([`}\n\n`]).join('\n'));
+
+      describe('method:  buildBlock() => factoryBlock', () => {
+        const config = mergeConfig();
+        const placeholder = indent(`==>factory==>Movie\n`);
+
+        const blockName = 'Movie'; // TODO: get blockName from placeholder
+        const node = nodeRepository.get(blockName);
+        const expected = [`const factory Movie({`];
+        if (node) {
+          expect(FreezedFactoryBlock.buildFromFactory(config, node)).toBe(
+            expected
+              .concat([indent(`required  String id,`, 2), indent(`required  String title,`, 2), `}) = _Movie;\n`])
+              .join('\n')
+          );
+        }
+      });
+    });
   });
 });
