@@ -19,7 +19,6 @@ export const plugin: PluginFunction<FlutterFreezedPluginConfig> = (
   const visitorResult = oldVisit(ast, { leave: visitor });
 
   const generated: string[] = visitorResult.definitions.filter((def: any) => typeof def === 'string' && def.length > 0);
-  console.log('🚀 ~ file: index.ts ~ line 23 ~ generated', generated);
 
   return (
     buildImportStatements(config.fileName) +

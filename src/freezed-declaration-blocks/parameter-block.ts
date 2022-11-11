@@ -1,10 +1,8 @@
 import { FlutterFreezedPluginConfig } from '../config';
 import {
-  buildBlockComment,
-  buildBlockDecorators,
+  // buildBlockComment,
+  // buildBlockDecorators,
   buildBlockHeader,
-  buildBlockBody,
-  buildBlockFooter,
   NodeType,
   FieldType,
 } from '../utils';

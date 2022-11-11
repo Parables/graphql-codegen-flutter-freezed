@@ -1,6 +1,5 @@
 import { transformSchemaAST } from '@graphql-codegen/schema-ast';
 import { indent } from '@graphql-codegen/visitor-plugin-common';
-import { Kind } from 'graphql';
 import { DartIdentifierCasing, FlutterFreezedPluginConfig } from '../src/config';
 import { FreezedFactoryBlock } from '../src/freezed-declaration-blocks';
 import {
@@ -39,19 +38,6 @@ const suffixConfig = mergeConfig({
 const prefixSuffixConfig = mergeConfig({
   globalFreezedConfig: { dartKeywordEscapePrefix: 'k_', dartKeywordEscapeSuffix: '_k' },
 });
-
-const withoutCasingConfig: Partial<FlutterFreezedPluginConfig> = {
-  globalFreezedConfig: { dartKeywordEscapeCasing: undefined },
-};
-const withSnakeCasingConfig: Partial<FlutterFreezedPluginConfig> = {
-  globalFreezedConfig: { dartKeywordEscapeCasing: 'snake_case' },
-};
-const withCamelCasingConfig: Partial<FlutterFreezedPluginConfig> = {
-  globalFreezedConfig: { dartKeywordEscapeCasing: 'camelCase' },
-};
-const withPascalCasingConfig: Partial<FlutterFreezedPluginConfig> = {
-  globalFreezedConfig: { dartKeywordEscapeCasing: 'PascalCase' },
-};
 
 describe('flutter-freezed-plugin-utils', () => {
   describe('default values for plugin config', () => {
@@ -135,7 +121,6 @@ describe('flutter-freezed-plugin-utils', () => {
       };
 
       expect(customDecoratorsConfig).toMatchObject(expected);
-      // expect(customDecoratorsConfig).toMatchSnapshot();
     });
   });
 
@@ -261,10 +246,10 @@ describe('flutter-freezed-plugin-utils', () => {
       args: {
         config: FlutterFreezedPluginConfig;
         blockName: string;
-        typeName?: string | undefined;
+        typeName?: string;
         expected: string;
-        casing?: DartIdentifierCasing | undefined;
-        decorateWithAtJsonKey?: boolean | undefined;
+        casing?: DartIdentifierCasing;
+        decorateWithAtJsonKey?: boolean;
       }[];
     }[];
 
@@ -272,20 +257,20 @@ describe('flutter-freezed-plugin-utils', () => {
       {
         title: 'defaultConfig => NOT a valid Dart Language Keywords => it should NOT escape it',
         args: ['NEWHOPE', 'EMPIRE', 'JEDI', 'VOID', 'IN', 'IF', 'ELSE', 'SWITCH', 'FACTORY'].map(v => {
-          return { config: config, blockName: v, expected: v };
+          return { config, blockName: v, expected: v };
         }),
       },
       {
         title: 'defaultConfig => valid Dart Language Keywords => it should escape it',
         args: ['void', 'in', 'if', 'else', 'switch', 'factory'].map(v => {
-          return { config: config, blockName: v, expected: `${v}_` };
+          return { config, blockName: v, expected: `${v}_` };
         }),
       },
       {
         title:
           'defaultConfig => withCasing => should ignore both dartKeywordEscapeCasing and buildBlockName casing if casedBlockName is still a valid Dart Language Keyword',
         args: [undefined, 'snake_case', 'camelCase'].map(casing => {
-          return { config: config, blockName: 'void', casing: casing, expected: 'void_' };
+          return { config, blockName: 'void', casing, expected: 'void_' };
         }),
       },
       {
@@ -293,9 +278,9 @@ describe('flutter-freezed-plugin-utils', () => {
           'defaultConfig => decorateWithAtJsonKey => should ignore both dartKeywordEscapeCasing and buildBlockName casing if casedBlockName is still a valid Dart Language Keyword',
         args: [undefined, 'snake_case', 'camelCase'].map(casing => {
           return {
-            config: config,
+            config,
             blockName: 'void',
-            casing: casing,
+            casing,
             decorateWithAtJsonKey: true,
             expected: `@JsonKey(name: 'void') void_`,
           };
@@ -308,7 +293,7 @@ describe('flutter-freezed-plugin-utils', () => {
           return {
             config: prefixConfig,
             blockName: 'void',
-            casing: casing,
+            casing,
             expected: 'k_void',
           };
         }),
@@ -320,7 +305,7 @@ describe('flutter-freezed-plugin-utils', () => {
           return {
             config: prefixConfig,
             blockName: 'void',
-            casing: casing,
+            casing,
             decorateWithAtJsonKey: true,
             expected: `@JsonKey(name: 'void') k_void`,
           };
@@ -333,7 +318,7 @@ describe('flutter-freezed-plugin-utils', () => {
           return {
             config: suffixConfig,
             blockName: 'void',
-            casing: casing,
+            casing,
             expected: 'void_k',
           };
         }),
@@ -345,7 +330,7 @@ describe('flutter-freezed-plugin-utils', () => {
           return {
             config: suffixConfig,
             blockName: 'void',
-            casing: casing,
+            casing,
             decorateWithAtJsonKey: true,
             expected: `@JsonKey(name: 'void') void_k`,
           };
@@ -358,7 +343,7 @@ describe('flutter-freezed-plugin-utils', () => {
           return {
             config: prefixSuffixConfig,
             blockName: 'void',
-            casing: casing,
+            casing,
             expected: 'k_void_k',
           };
         }),
@@ -370,7 +355,7 @@ describe('flutter-freezed-plugin-utils', () => {
           return {
             config: prefixSuffixConfig,
             blockName: 'void',
-            casing: casing,
+            casing,
             decorateWithAtJsonKey: true,
             expected: `@JsonKey(name: 'void') k_void_k`,
           };
@@ -550,10 +535,10 @@ describe('flutter-freezed-plugin-utils', () => {
 
       describe('method:  buildBlock() => factoryBlock', () => {
         const config = mergeConfig();
-        const placeholder = indent(`==>factory==>Movie\n`);
+        // const placeholder = indent(`==>factory==>Movie\n`);
+        // const blockName = 'Movie'; // TODO: get blockName from placeholder
 
-        const blockName = 'Movie'; // TODO: get blockName from placeholder
-        const node = nodeRepository.get(blockName);
+        const node = nodeRepository.get('Movie');
         const expected = [`const factory Movie({`];
         if (node) {
           expect(FreezedFactoryBlock.buildFromFactory(config, node)).toBe(

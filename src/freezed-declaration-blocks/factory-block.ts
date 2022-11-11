@@ -1,8 +1,8 @@
 import { indent } from '@graphql-codegen/visitor-plugin-common';
 import { FlutterFreezedPluginConfig } from '../config';
 import {
-  buildBlockComment,
-  buildBlockDecorators,
+  // buildBlockComment,
+  // buildBlockDecorators,
   buildBlockHeader,
   buildBlockBody,
   buildBlockFooter,

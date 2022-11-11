@@ -24,7 +24,6 @@ import {
   FlutterFreezedPluginConfig,
   DART_SCALARS,
   DartIdentifierCasing,
-  DartKeyword,
   DART_KEYWORDS,
 } from './config';
 import { FreezedDeclarationBlock, FreezedFactoryBlock } from './freezed-declaration-blocks';
@@ -71,20 +70,6 @@ export const defaultFreezedPluginConfig: FlutterFreezedPluginConfig = {
   ignoreTypes: [],
   typeSpecificFreezedConfig: {},
 };
-
-/* export const extendDefaultFreezedPluginConfig = (
-  config: Partial<FlutterFreezedPluginConfig> = defaultFreezedPluginConfig
-): FlutterFreezedPluginConfig => {
-  const extendedConfig: FlutterFreezedPluginConfig = {
-    camelCasedEnums: config.camelCasedEnums ?? true,
-    customScalars: config.customScalars ?? {},
-    fileName: config.fileName ?? 'app_models',
-    globalFreezedConfig: { ...defaultFreezedConfig, ...config.globalFreezedConfig },
-    typeSpecificFreezedConfig: config.typeSpecificFreezedConfig ?? {},
-    ignoreTypes: config.ignoreTypes ?? [],
-  };
-  return extendedConfig;
-}; */
 
 export const mergeConfig = (
   baseConfig?: Partial<FlutterFreezedPluginConfig>,
@@ -171,10 +156,6 @@ export const buildBlockName = (
   casing?: DartIdentifierCasing,
   decorateWithAtJsonKey?: boolean
 ): string => {
-  console.log('🚀 ~ file: utils.ts ~ line 174 ~ blockName', blockName);
-  // TODO: check the order of preference for the casing.
-  // TODO: Test and expect `camelCased` to have precedence over the casing of the `escapedBlockName`
-
   const escapedBlockName = escapeDartKeyword(config, blockName, typeName);
 
   const casedBlockName = dartCasing(escapedBlockName, casing);
@@ -531,8 +512,6 @@ export const buildBlockBody = (
   node: NodeType,
   blockType: 'enum' | 'class' | 'factory' | 'named_factory'
 ): string => {
-  console.log('🚀 ~ file: utils.ts ~ line 509 ~ buildBlockBody ~ blockType', blockType);
-
   if (blockType === 'enum' && node.kind === Kind.ENUM_TYPE_DEFINITION) {
     return buildEnumBody(config, node);
   } else if (blockType === 'class') {
@@ -581,15 +560,6 @@ export const buildEnumBody = (config: FlutterFreezedPluginConfig, node: EnumType
         const decorateWithAtJsonKey = shouldDecorateWithAtJsonKey('enum_field', config, blockName, typeName);
         const enumField = buildBlockName(config, blockName, typeName, casing, decorateWithAtJsonKey);
 
-        console.log(
-          '🚀 ~ file: utils.ts ~ line 557 ~ buildEnumBody ~ args',
-          camelCased,
-          casing,
-          blockName,
-          typeName,
-          decorateWithAtJsonKey,
-          enumField
-        );
         return indent(`${buildBlockComment(enumValue)}${enumField},\n`);
       })
       .join('') ?? ''
