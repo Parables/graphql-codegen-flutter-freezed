@@ -19,7 +19,7 @@ export class FreezedParameterBlock {
     // TODO: Implement comments(multi-line) and decoratos
     // block += buildBlockComment(node);
     // block += buildBlockDecorators(node, config);
-    block += buildBlockHeader(config, node, blockType, field);
+    block += buildBlockHeader(config, node, blockType, undefined, undefined, field);
     return block;
   }
 }

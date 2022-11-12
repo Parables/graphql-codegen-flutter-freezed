@@ -75,7 +75,7 @@ export class FreezedDeclarationBlock {
   private setDecorators(): FreezedDeclarationBlock {
     const name = this._node.name.value;
     // determine if should mark as deprecated
-    const isDeprecated = this._config.typeSpecificFreezedConfig?.[name]?.deprecated;
+    const isDeprecated = this._config.graphQLTypeConfig?.[name]?.deprecated;
 
     this._decorators =
       this._node.kind === Kind.ENUM_TYPE_DEFINITION

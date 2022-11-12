@@ -1,4 +1,4 @@
-import { transformSchemaAST } from '@graphql-codegen/schema-ast';
+import { plugin } from '../src';
 import { indent } from '@graphql-codegen/visitor-plugin-common';
 import { DartIdentifierCasing, FlutterFreezedPluginConfig } from '../src/config';
 import { FreezedFactoryBlock } from '../src/freezed-declaration-blocks';
@@ -19,9 +19,12 @@ import {
   nodeIsObjectType,
   NodeRepository,
   NodeType,
+  ObjectType,
+  shouldDecorateWithAtJsonKey,
 } from '../src/utils';
-import { customDecoratorsConfig, fullDemoConfig, typeConfig } from './config';
-import { starWarsSchema } from './schema';
+import { customDecoratorsConfig, fullDemoConfig, typeConfig } from './config-old';
+import { fullSchema, starWarsSchema } from './schema';
+import { transformSchemaAST } from '@graphql-codegen/schema-ast';
 
 const {
   ast: { definitions: astNodesList },
@@ -129,7 +132,7 @@ describe('flutter-freezed-plugin-utils', () => {
     expect(astNodesList.map(nodeIsObjectType)).toEqual(expected);
   });
 
-  describe('method: getFreezedConfigValue() ==> ', () => {
+  describe('method: getFreezedConfigValue() => ', () => {
     const config = typeConfig;
     const typeName = 'Starship';
 
@@ -236,6 +239,12 @@ describe('flutter-freezed-plugin-utils', () => {
     expect(dartCasing('Camel_ case- -- - ME', 'camelCase')).toBe('camelCaseMe');
     expect(dartCasing('pascal-- --case _ ME', 'PascalCase')).toBe('PascalCaseMe');
     expect(dartCasing('lE-AvE mE A-l_o_n-e')).toBe('lE-AvE mE A-l_o_n-e');
+  });
+
+  test('method: shouldDecorateWithAtJsonKey() => ', () => {
+    const res = shouldDecorateWithAtJsonKey('parameter_field', mergeConfig(), 'No Please', 'SomeTypeName');
+
+    expect(res).toBe(false);
   });
 
   describe('methods: escapeDartKey() and buildBlockName() => ', () => {
@@ -439,38 +448,38 @@ describe('flutter-freezed-plugin-utils', () => {
   describe('block builders => ', () => {
     const config = mergeConfig();
 
-    const validBlockNames = [
-      'Episode',
-      'Movie',
-      'CreateMovieInput',
-      'UpsertMovieInput',
-      'UpdateMovieInput',
-      'DeleteMovieInput',
-      'Starship',
-      'Character',
-      'MovieCharacter',
-      'Human',
-      'Droid',
-      'SearchResult',
-    ];
+    describe('method:  buildBlockName() => ', () => {
+      const validBlockNames = [
+        'Episode',
+        'Movie',
+        'CreateMovieInput',
+        'UpsertMovieInput',
+        'UpdateMovieInput',
+        'DeleteMovieInput',
+        'Starship',
+        'Character',
+        'MovieCharacter',
+        'Human',
+        'Droid',
+        'SearchResult',
+      ];
 
-    test.each(validBlockNames)('returns a blockHeader', blockName => {
-      expect(buildEnumHeader(config, blockName)).toBe(`enum ${blockName} {\n`);
+      test.each(validBlockNames)('returns a blockHeader', blockName => {
+        expect(buildEnumHeader(config, blockName)).toBe(`enum ${blockName} {\n`);
 
-      const privateEmptyConstructor = indent(`const ${blockName}._();\n\n`);
-      expect(buildClassHeader(config, blockName)).toBe(
-        `class ${blockName} with _$${blockName} {\n${privateEmptyConstructor}`
-      );
-      expect(buildClassHeader(config, blockName, false)).toBe(`class ${blockName} with _$${blockName} {\n`);
+        const privateEmptyConstructor = indent(`const ${blockName}._();\n\n`);
+        expect(buildClassHeader(config, blockName)).toBe(
+          `class ${blockName} with _$${blockName} {\n${privateEmptyConstructor}`
+        );
+        expect(buildClassHeader(config, blockName, false)).toBe(`class ${blockName} with _$${blockName} {\n`);
 
-      const fromJsonToJson = indent(
-        `factory ${blockName}.fromJson(Map<String, dynamic> json) => _$${blockName}FromJson(json);\n}\n\n`
-      );
-      expect(buildClassFooter(config, blockName)).toBe(fromJsonToJson);
-      expect(buildClassFooter(config, blockName, false)).toBe(`}\n\n`);
+        const fromJsonToJson = indent(
+          `factory ${blockName}.fromJson(Map<String, dynamic> json) => _$${blockName}FromJson(json);\n}\n\n`
+        );
+        expect(buildClassFooter(config, blockName)).toBe(fromJsonToJson);
+        expect(buildClassFooter(config, blockName, false)).toBe(`}\n\n`);
+      });
     });
-
-    expect(buildEnumFooter()).toBe(`}\n\n`);
 
     describe('method:  buildBlock() => enumBlock', () => {
       const node = astNodesList[0] as NodeType;
@@ -510,44 +519,172 @@ describe('flutter-freezed-plugin-utils', () => {
           ])
           .join('\n')
       );
+
+      expect(buildEnumFooter()).toBe(`}\n\n`);
     });
 
     describe('method:  buildBlock() => classBlock', () => {
       const config = mergeConfig();
-      const node = astNodesList[1] as NodeType;
       const nodeRepository = new NodeRepository();
-      const expected = [
-        `@freezed`,
-        `class Movie with _$Movie {`,
-        indent(`const Movie._();\n`),
-        indent(`==>factory==>Movie`),
+
+      const classBlockHeader = [
+        `@freezed\n`,
+        `class Movie with _$Movie {\n`,
+        indent(`const Movie._();\n\n`),
+        `==>factory==>Movie\n`,
       ];
 
-      expect(buildBlock(config, node, nodeRepository)).toBe(
-        expected
-          .concat([indent(`factory Movie.fromJson(Map<String, dynamic> json) => _$MovieFromJson(json);`), `}\n\n`])
-          .join('\n')
-      );
+      const unionBlockHeader = [
+        `@freezed\n`,
+        `class SearchResult with _$SearchResult {\n`,
+        indent(`const SearchResult._();\n\n`),
+        `==>named_factory==>SearchResult==>Human\n`,
+        `==>named_factory==>SearchResult==>Droid\n`,
+        `==>named_factory==>SearchResult==>Starship\n`,
+      ];
 
-      expect(
-        buildBlock(mergeConfig(config, { globalFreezedConfig: { fromJsonToJson: false } }), node, new NodeRepository())
-      ).toBe(expected.concat([`}\n\n`]).join('\n'));
+      const mergedInputBlockHeader = []; // TODO:
+
+      const classBlockFooter = (blockName: string) => [
+        indent(`factory ${blockName}.fromJson(Map<String, dynamic> json) => _$${blockName}FromJson(json);\n`),
+        `}\n\n`,
+      ];
+
+      describe('method:  buildBlock() => simple Freezed models', () => {
+        const node = astNodesList[1] as NodeType;
+
+        expect(buildBlock(config, node, nodeRepository)).toBe(
+          classBlockHeader.concat(classBlockFooter('Movie')).join('')
+        );
+
+        expect(
+          buildBlock(
+            mergeConfig(config, { globalFreezedConfig: { fromJsonToJson: false } }),
+            node,
+            new NodeRepository()
+          )
+        ).toBe(classBlockHeader.concat([`}\n\n`]).join(''));
+      });
+
+      describe('method:  buildBlock() => union/sealed Freezed models from GraphQL Union Type', () => {
+        const node = astNodesList[11] as NodeType;
+
+        expect(buildBlock(config, node, nodeRepository)).toBe(
+          unionBlockHeader.concat(classBlockFooter('SearchResult')).join('')
+        );
+
+        expect(
+          buildBlock(
+            mergeConfig(config, { globalFreezedConfig: { fromJsonToJson: false } }),
+            node,
+            new NodeRepository()
+          )
+        ).toBe(unionBlockHeader.concat([`}\n\n`]).join(''));
+      });
+
+      /*  describe('method:  buildBlock() => union/sealed Freezed models using mergedInput', () => {
+        // TODO
+      }); */
 
       describe('method:  buildBlock() => factoryBlock', () => {
         const config = mergeConfig();
-        // const placeholder = indent(`==>factory==>Movie\n`);
-        // const blockName = 'Movie'; // TODO: get blockName from placeholder
-
         const node = nodeRepository.get('Movie');
-        const expected = [`const factory Movie({`];
-        if (node) {
-          expect(FreezedFactoryBlock.buildFromFactory(config, node)).toBe(
-            expected
-              .concat([indent(`required  String id,`, 2), indent(`required  String title,`, 2), `}) = _Movie;\n`])
-              .join('\n')
-          );
-        }
+
+        const factoryBlock = [
+          indent(`const factory Movie({\n`),
+          indent(`required String id,\n`, 2),
+          indent(`required String title,\n`, 2),
+          indent(`}) = _Movie;\n\n`),
+        ];
+
+        expect(FreezedFactoryBlock.deserializeFactory(config, nodeRepository, 'Movie')).toBe(factoryBlock.join(''));
+        expect(FreezedFactoryBlock.deserializeFactory(config, nodeRepository, 'UnknownBlockName')).toBe('');
+        expect(FreezedFactoryBlock.buildFromFactory(config, node as ObjectType, 'Movie')).toBe(factoryBlock.join(''));
+
+        expect(
+          FreezedFactoryBlock.extractAndReplaceTokens(
+            config,
+            nodeRepository,
+            classBlockHeader.concat(classBlockFooter('Movie'))
+          )
+        ).toBe([...classBlockHeader.slice(0, -1), ...factoryBlock, ...classBlockFooter('Movie')].join(''));
       });
+
+      describe('method:  buildBlock() => namedFactoryBlock', () => {
+        const config = mergeConfig();
+
+        buildBlock(config, astNodesList[6] as ObjectType, nodeRepository);
+        buildBlock(config, astNodesList[9] as ObjectType, nodeRepository);
+        buildBlock(config, astNodesList[10] as ObjectType, nodeRepository);
+
+        const nodeHuman = nodeRepository.get('Human');
+        console.log('🚀 ~ file: utils.spec.ts ~ line 613 ~ describe ~ nodeHuman', nodeHuman);
+        const nodeDroid = nodeRepository.get('Droid');
+        console.log('🚀 ~ file: utils.spec.ts ~ line 615 ~ describe ~ nodeDroid', nodeDroid);
+        const nodeStarship = nodeRepository.get('Starship');
+        console.log('🚀 ~ file: utils.spec.ts ~ line 617 ~ describe ~ nodeStarship', nodeStarship);
+
+        const humanFactoryBlock = [
+          indent(`const factory SearchResult.human({\n`),
+          indent(`required String id,\n`, 2),
+          indent(`required String name,\n`, 2),
+          indent(`List<MovieCharacter?>? friends,\n`, 2),
+          indent(`required List<Episode?> appearsIn,\n`, 2),
+          indent(`List<Starship?>? starships,\n`, 2),
+          indent(`int? totalCredits,\n`, 2),
+          indent(`}) = Human;\n\n`),
+        ];
+
+        const droidFactoryBlock = [
+          indent(`const factory SearchResult.droid({\n`),
+          indent(`required String id,\n`, 2),
+          indent(`required String name,\n`, 2),
+          indent(`List<MovieCharacter?>? friends,\n`, 2),
+          indent(`required List<Episode?> appearsIn,\n`, 2),
+          indent(`String? primaryFunction,\n`, 2),
+          indent(`}) = Droid;\n\n`),
+        ];
+
+        const starShipFactoryBlock = [
+          indent(`const factory SearchResult.starship({\n`),
+          indent(`required String id,\n`, 2),
+          indent(`required String name,\n`, 2),
+          indent(`double? length,\n`, 2),
+          indent(`}) = Starship;\n\n`),
+        ];
+
+        expect(FreezedFactoryBlock.deserializeNamedFactory(config, nodeRepository, 'SearchResult', 'Human')).toBe(
+          humanFactoryBlock.join('')
+        );
+        expect(
+          FreezedFactoryBlock.deserializeNamedFactory(config, nodeRepository, 'SearchResult', 'UnknownBlockName')
+        ).toBe('');
+        expect(
+          FreezedFactoryBlock.buildFromNamedFactory(config, nodeHuman as ObjectType, 'SearchResult', 'Human')
+        ).toBe(humanFactoryBlock.join(''));
+
+        expect(
+          FreezedFactoryBlock.extractAndReplaceTokens(
+            config,
+            nodeRepository,
+            unionBlockHeader.concat(classBlockFooter('SearchResult'))
+          )
+        ).toBe(
+          [
+            ...unionBlockHeader.slice(0, -3),
+            ...humanFactoryBlock,
+            ...droidFactoryBlock,
+            ...starShipFactoryBlock,
+            ...classBlockFooter('SearchResult'),
+          ].join('')
+        );
+      });
+    });
+
+    it('method:  buildBlock() => fullSchema', () => {
+      const result = plugin(fullSchema, [], fullDemoConfig);
+
+      expect(result).toBe('Hi');
     });
   });
 });

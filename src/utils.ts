@@ -18,7 +18,7 @@ import {
   UnionTypeDefinitionNode,
 } from 'graphql';
 import {
-  ApplyDecoratorOn,
+  AppliesOn,
   CustomDecorator,
   FreezedConfig,
   FlutterFreezedPluginConfig,
@@ -52,9 +52,10 @@ export const defaultFreezedConfig: FreezedConfig = {
   equal: undefined,
   escapeDartKeywords: true,
   fromJsonToJson: true,
+  fromJson: undefined,
+  toJson: undefined,
   immutable: true,
   makeCollectionsUnmodifiable: undefined,
-  mergeInputs: [],
   mutableInputs: true,
   privateEmptyConstructor: true,
   unionKey: undefined,
@@ -68,7 +69,7 @@ export const defaultFreezedPluginConfig: FlutterFreezedPluginConfig = {
   fileName: 'app_models',
   globalFreezedConfig: { ...defaultFreezedConfig },
   ignoreTypes: [],
-  typeSpecificFreezedConfig: {},
+  graphQLTypeConfig: {},
 };
 
 export const mergeConfig = (
@@ -85,9 +86,9 @@ export const mergeConfig = (
       ...(newConfig?.globalFreezedConfig ?? {}),
     },
     ignoreTypes: [...(baseConfig?.ignoreTypes ?? []), ...(newConfig?.ignoreTypes ?? [])],
-    typeSpecificFreezedConfig: {
-      ...(baseConfig?.typeSpecificFreezedConfig ?? {}),
-      ...(newConfig?.typeSpecificFreezedConfig ?? {}),
+    graphQLTypeConfig: {
+      ...(baseConfig?.graphQLTypeConfig ?? {}),
+      ...(newConfig?.graphQLTypeConfig ?? {}),
     },
   };
 };
@@ -114,7 +115,7 @@ export function getFreezedConfigValue<T>(
   defaultValue?: T
 ): T {
   if (typeName) {
-    return (config?.typeSpecificFreezedConfig?.[typeName]?.config?.[option] ??
+    return (config?.graphQLTypeConfig?.[typeName]?.config?.[option] ??
       getFreezedConfigValue(option, config, undefined, defaultValue)) as T;
   }
   return (config?.globalFreezedConfig?.[option] ?? defaultValue) as T;
@@ -268,7 +269,7 @@ export const buildBlockDecorators = (config: FlutterFreezedPluginConfig, node: N
   const name = node.name.value;
 
   // determine if should mark as deprecated
-  const isDeprecated = config.typeSpecificFreezedConfig?.[name]?.deprecated;
+  const isDeprecated = config.graphQLTypeConfig?.[name]?.deprecated;
 
   const decorators =
     node.kind === Kind.ENUM_TYPE_DEFINITION
@@ -361,7 +362,7 @@ export const isCustomizedFreezed = (config: FlutterFreezedPluginConfig, node: No
  */
 export function getCustomDecorators(
   config: FlutterFreezedPluginConfig,
-  appliesOn: ApplyDecoratorOn[],
+  appliesOn: AppliesOn[],
   typeName?: string | undefined,
   fieldName?: string | undefined
 ): CustomDecorator {
@@ -370,7 +371,7 @@ export function getCustomDecorators(
   let customDecorators: CustomDecorator = { ...globalCustomDecorators };
 
   if (typeName) {
-    const typeConfig = config?.typeSpecificFreezedConfig?.[typeName];
+    const typeConfig = config?.graphQLTypeConfig?.[typeName];
     const typeSpecificCustomDecorators = typeConfig?.config?.customDecorators ?? {};
     customDecorators = { ...customDecorators, ...typeSpecificCustomDecorators };
 
@@ -487,10 +488,11 @@ export const buildBlockHeader = (
   config: FlutterFreezedPluginConfig,
   node: NodeType,
   blockType: 'enum' | 'class' | 'factory' | 'named_factory' | 'parameter',
-  field?: FieldType,
-  namedConstructor = ''
+  blockName?: string,
+  namedConstructor = '',
+  field?: FieldType
 ): string => {
-  const blockName = node.name.value;
+  blockName ??= node.name.value;
   const typeName = blockName;
 
   if (blockType === 'enum') {
@@ -589,14 +591,27 @@ export const buildClassHeader = (
 
 export const buildClassBody = (config: FlutterFreezedPluginConfig, node: NodeType): string => {
   const blockName = node.name.value;
+  const mergeInputs = getFreezedConfigValue<string[]>('mergeInputs', config, node.name.value, []);
 
   if (node.kind === Kind.UNION_TYPE_DEFINITION) {
     return (
-      node.types?.map(value => FreezedFactoryBlock.namedFactoryPlaceholder(blockName, value.name.value)).join('') ?? ''
+      node.types?.map(value => FreezedFactoryBlock.serializeNamedFactory(blockName, value.name.value)).join('') ?? ''
     );
-  } else if (nodeIsObjectType(node)) {
-    return FreezedFactoryBlock.factoryPlaceholder(blockName);
+  } else if (node.kind === Kind.OBJECT_TYPE_DEFINITION && mergeInputs?.length > 0) {
+    // return FreezedFactoryBlock.serializeFactory(blockName);
     // TODO: Determine whether to mergeInputs
+
+    return [FreezedFactoryBlock.serializeFactory(blockName)]
+      .concat(
+        mergeInputs.map(pattern => {
+          const separator = pattern.includes('$') ? '$' : pattern.includes(blockName) ? blockName : '*';
+          namedConstructor = camelCase(input.split(separator).join('_'));
+          factoryBlockKey = input.replace('$', name);
+          shape += `==>factory==>${factoryBlockKey}==>${'merged_input_factory'}==>${name}==>${namedConstructor}\n`;
+          return FreezedFactoryBlock.serializeNamedFactory(blockName, value.name.value);
+        })
+      )
+      .join('');
   }
   return '';
 };
@@ -625,7 +640,7 @@ export const buildFactoryHeader = (
   namedConstructor = '',
   immutable = true
 ) => {
-  const constFactory = immutable ? 'const factory' : 'factory';
+  const constFactory = immutable ? indent('const factory') : indent('factory');
   const typeName = blockName;
   const decorateWithAtJsonKey = false;
   const escapedBlockName = buildBlockName(config, blockName, typeName, 'PascalCase', decorateWithAtJsonKey);
@@ -656,7 +671,7 @@ export const buildFactoryFooter = (
   const decorateWithAtJsonKey = false;
   const prefix = blockType === 'factory' ? '_' : '';
   const factoryFooterName = buildBlockName(config, blockName, typeName, 'PascalCase', decorateWithAtJsonKey);
-  return `}) = ${prefix}${factoryFooterName};\n`;
+  return indent(`}) = ${prefix}${factoryFooterName};\n\n`);
 };
 
 //#endregion
@@ -667,8 +682,7 @@ export const buildParameterHeader = (config: FlutterFreezedPluginConfig, node: N
   const decorators = ''; // TODO: modify the buildBlockDecorators to be used here
 
   const markedFinal =
-    decorators.includes('final') ||
-    config.typeSpecificFreezedConfig?.[node.name.value]?.fields?.[field.name.value]?.final;
+    decorators.includes('final') || config.graphQLTypeConfig?.[node.name.value]?.fields?.[field.name.value]?.final;
 
   const required = isNonNullType(field.type) ? 'required ' : '';
   const final = markedFinal ? 'final ' : '';
@@ -678,7 +692,7 @@ export const buildParameterHeader = (config: FlutterFreezedPluginConfig, node: N
   const decorateWithAtJsonKey = shouldDecorateWithAtJsonKey('parameter_field', config, blockName, typeName);
   const name = buildBlockName(config, blockName, typeName, 'camelCase', decorateWithAtJsonKey);
 
-  return indent(`${required}${final} ${type} ${name},\n`, 2);
+  return indent(`${required}${final}${type} ${name},\n`, 2);
 };
 
 export const parameterType = (config: FlutterFreezedPluginConfig, type: TypeNode, parentType?: TypeNode): string => {
