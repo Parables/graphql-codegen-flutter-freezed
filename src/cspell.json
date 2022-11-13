@@ -3,7 +3,11 @@
   "ignorePaths": [],
   "dictionaryDefinitions": [],
   "dictionaries": [],
-  "words": ["endregion", "Unfreezed"],
+  "words": [
+    "Codegen",
+    "endregion",
+    "Unfreezed"
+  ],
   "ignoreWords": [],
   "import": []
 }

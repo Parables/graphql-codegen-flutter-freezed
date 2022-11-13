@@ -24,12 +24,9 @@ import {
   DartIdentifierCasing,
   DART_KEYWORDS,
   GraphQLTypeConfig,
-  EscapeDartKeyword,
 } from './config';
 import { FreezedDeclarationBlock, FreezedFactoryBlock } from './freezed-declaration-blocks';
 import { FreezedParameterBlock } from './freezed-declaration-blocks/parameter-block';
-
-export type TypeConfigKey = keyof GraphQLTypeConfig;
 
 export type NodeType =
   | ObjectTypeDefinitionNode
@@ -41,36 +38,37 @@ export type FieldType = FieldDefinitionNode | InputValueDefinitionNode;
 
 export type ObjectType = ObjectTypeDefinitionNode | InputObjectTypeDefinitionNode;
 
-/** initializes a FreezedConfig with the defaults values */
-export const defaultFreezedConfig: FreezedConfig = {
-  alwaysUseJsonKeyName: false,
+/** initializes a FreezedPluginConfig with the defaults values */
+export const defaultFreezedPluginConfig: FlutterFreezedPluginConfig = {
+  allKey: '@*',
+  camelCasedEnums: true,
+  customScalars: {},
+  fileName: 'app_models',
+  graphQLTypeConfig: {},
+  ignoreTypes: [],
+};
+
+/** initializes a GraphQLTypeConfig with the defaults values */
+export const defaultGraphQLTypeConfig: GraphQLTypeConfig = {
+  alwaysUseJsonKeyName: undefined,
   copyWith: undefined,
-  customDecorators: {},
-  dartKeywordEscapeCasing: undefined,
-  dartKeywordEscapePrefix: undefined,
-  dartKeywordEscapeSuffix: '_',
+  customDecorators: undefined,
+  defaultValue: undefined,
+  deprecated: undefined,
   equal: undefined,
   escapeDartKeywords: true,
+  final: undefined,
   fromJsonToJson: true,
-  fromJson: undefined,
-  toJson: undefined,
   immutable: true,
   makeCollectionsUnmodifiable: undefined,
+  mergeInputs: undefined,
   mutableInputs: true,
   privateEmptyConstructor: true,
   unionKey: undefined,
   unionValueCase: undefined,
 };
 
-/** initializes a FreezedPluginConfig with the defaults values */
-export const defaultFreezedPluginConfig: FlutterFreezedPluginConfig = {
-  camelCasedEnums: true,
-  customScalars: {},
-  fileName: 'app_models',
-  globalFreezedConfig: { ...defaultFreezedConfig },
-  ignoreTypes: [],
-  graphQLTypeConfig: {},
-};
+export const defaultEscapeDartKeywordConfig = {};
 
 export const mergeConfig = (
   baseConfig?: Partial<FlutterFreezedPluginConfig>,
@@ -108,14 +106,20 @@ export const nodeIsObjectType = (
  * @param defaultValue If the value of the config option is undefined, this default value will be returned
  * @returns The value of the config option
  */
-export function getGraphQLTypeConfigValue<T>(
+/* export function getGraphQLTypeConfigValue<T>(
   config: FlutterFreezedPluginConfig,
   key: TypeConfigKey,
   typeName: string = config.allKey ?? '@*',
   defaultValue?: T
 ): T {
   return (config?.graphQLTypeConfig?.[typeName]?.[key] ?? defaultValue) as T;
-}
+} */
+
+export const valueFromRecord = <T>(record: Record<string | number | symbol, T>, key: string): T | undefined => {
+  const keys = Object.keys(record);
+  const keyName = keys.find(k => k.includes(key));
+  return keyName ? record[keyName] : undefined;
+};
 
 /**
  *  Returns a string of import statements placed at the top of the file that contains generated models
@@ -171,6 +175,8 @@ export const buildBlockName = (
  */
 export const isDartKeyword = (name: string) => Object.hasOwn(DART_KEYWORDS, name);
 
+const allKey = (config: FlutterFreezedPluginConfig) => config.allKey ?? '@*';
+
 /**
  * Ensures that the `blockName` isn't a valid Dart language reserved keyword. It wraps the `blockName` the `dartKeywordEscapePrefix`, `dartKeywordEscapeSuffix` and `dartKeywordEscapeCasing` specified in the config
  * @param config The plugin configuration object
@@ -178,16 +184,26 @@ export const isDartKeyword = (name: string) => Object.hasOwn(DART_KEYWORDS, name
  * @param typeName The Graphql Type name, used to get the config option from `typeSpecificFreezedConfig`
  * @returns
  */
-export const escapeDartKeyword = (config: FlutterFreezedPluginConfig, blockName: string, typeName?: string): string => {
+export const escapeDartKeyword = (
+  config: FlutterFreezedPluginConfig,
+  blockName: string,
+  typeName = allKey(config)
+): string => {
   if (isDartKeyword(blockName)) {
-    const escapeDartKeywords = getGraphQLTypeConfigValue<EscapeDartKeyword>(config, 'escapeDartKeywords', typeName);
-    const prefix = escapeDartKeywords.dartKeywordEscapePrefix ?? '';
-    const suffix = escapeDartKeywords.dartKeywordEscapeSuffix ?? '';
-    const casing = escapeDartKeywords.dartKeywordEscapeCasing;
+    const escapeDartKeywordsConfig = config.graphQLTypeConfig?.[typeName].escapeDartKeywords;
+    if (typeof escapeDartKeywordsConfig === 'boolean') {
+      const escapedBlockName = `${blockName}_`;
+      return dartCasing(escapedBlockName);
+    } else if (typeof escapeDartKeywordsConfig !== 'undefined') {
+      const escapeDartKeywords = valueFromRecord(escapeDartKeywordsConfig, typeName);
+      const prefix = escapeDartKeywords?.dartKeywordEscapePrefix ?? '';
+      const suffix = escapeDartKeywords?.dartKeywordEscapeSuffix ?? '_';
+      const casing = escapeDartKeywords?.dartKeywordEscapeCasing;
 
-    const escapedBlockName = `${prefix}${blockName}${suffix}`;
+      const escapedBlockName = `${prefix}${blockName}${suffix}`;
 
-    return dartCasing(escapedBlockName, casing);
+      return dartCasing(escapedBlockName, casing);
+    }
   }
   return blockName;
 };
@@ -209,7 +225,7 @@ export const shouldDecorateWithAtJsonKey = (
   blockName: string,
   typeName: string
 ): boolean => {
-  const alwaysUseJsonKeyName = getGraphQLTypeConfigValue('alwaysUseJsonKeyName', config, typeName, false);
+  const alwaysUseJsonKeyNameConfig = config.graphQLTypeConfig?.[typeName]?.alwaysUseJsonKeyName;
   const alreadyCamelCased = !isDartKeyword(blockName) && camelCase(blockName) === blockName;
 
   if (alwaysUseJsonKeyName) {
@@ -301,17 +317,17 @@ export const decorateAsFreezed = (config: FlutterFreezedPluginConfig, node: Node
   const typeName = node.name.value;
 
   if (isCustomizedFreezed(config, node)) {
-    const copyWith = getGraphQLTypeConfigValue<boolean>('copyWith', config, typeName);
-    const equal = getGraphQLTypeConfigValue<boolean>('equal', config, typeName);
+    const copyWith = getGraphQLTypeConfigValue<boolean>(config, 'copyWith', typeName);
+    const equal = getGraphQLTypeConfigValue<boolean>(config, 'equal', typeName);
     const makeCollectionsUnmodifiable = getGraphQLTypeConfigValue<boolean>(
-      'makeCollectionsUnmodifiable',
       config,
+      'makeCollectionsUnmodifiable',
       typeName
     );
-    const unionKey = getGraphQLTypeConfigValue<string>('unionKey', config, typeName);
+    const unionKey = getGraphQLTypeConfigValue<string>(config, 'unionKey', typeName);
     const unionValueCase = getGraphQLTypeConfigValue<'FreezedUnionCase.camel' | 'FreezedUnionCase.pascal'>(
-      'unionValueCase',
       config,
+      'unionValueCase',
       typeName
     );
 
@@ -349,13 +365,13 @@ export const isCustomizedFreezed = (config: FlutterFreezedPluginConfig, node: No
   const typeName = node.name.value;
 
   return (
-    getGraphQLTypeConfigValue<boolean>('copyWith', config, typeName) !== undefined ||
-    getGraphQLTypeConfigValue<boolean>('equal', config, typeName) !== undefined ||
-    getGraphQLTypeConfigValue<boolean>('makeCollectionsUnmodifiable', config, typeName) !== undefined ||
-    getGraphQLTypeConfigValue<string>('unionKey', config, typeName) !== undefined ||
+    getGraphQLTypeConfigValue<boolean>(config, 'copyWith', typeName) !== undefined ||
+    getGraphQLTypeConfigValue<boolean>(config, 'equal', typeName) !== undefined ||
+    getGraphQLTypeConfigValue<boolean>(config, 'makeCollectionsUnmodifiable', typeName) !== undefined ||
+    getGraphQLTypeConfigValue<string>(config, 'unionKey', typeName) !== undefined ||
     getGraphQLTypeConfigValue<'FreezedUnionCase.camel' | 'FreezedUnionCase.pascal'>(
-      'unionValueCase',
       config,
+      'unionValueCase',
       typeName
     ) !== undefined
   );
@@ -502,10 +518,10 @@ export const buildBlockHeader = (
   if (blockType === 'enum') {
     return buildEnumHeader(config, blockName);
   } else if (blockType === 'class') {
-    const withPrivateEmptyConstructor = getGraphQLTypeConfigValue<boolean>('privateEmptyConstructor', config, typeName);
+    const withPrivateEmptyConstructor = getGraphQLTypeConfigValue<boolean>(config, 'privateEmptyConstructor', typeName);
     return buildClassHeader(config, blockName, withPrivateEmptyConstructor);
   } else if (blockType === 'factory' || blockType === 'named_factory') {
-    const immutable = getGraphQLTypeConfigValue<boolean>('immutable', config, typeName);
+    const immutable = getGraphQLTypeConfigValue<boolean>(config, 'immutable', typeName);
     return buildFactoryHeader(config, blockName, namedConstructor, immutable);
   } else if (blockType === 'parameter' && field) {
     return buildParameterHeader(config, node, field);
@@ -595,7 +611,7 @@ export const buildClassHeader = (
 
 export const buildClassBody = (config: FlutterFreezedPluginConfig, node: NodeType): string => {
   const blockName = node.name.value;
-  const mergeInputs = getGraphQLTypeConfigValue<string[]>('mergeInputs', config, node.name.value, []);
+  const mergeInputs = getGraphQLTypeConfigValue<string[]>(config, 'mergeInputs', node.name.value, []);
 
   if (node.kind === Kind.UNION_TYPE_DEFINITION) {
     return (
@@ -605,8 +621,9 @@ export const buildClassBody = (config: FlutterFreezedPluginConfig, node: NodeTyp
     // return FreezedFactoryBlock.serializeFactory(blockName);
     // TODO: Determine whether to mergeInputs
 
-    return [FreezedFactoryBlock.serializeFactory(blockName)]
-      .concat(
+    return (
+      [FreezedFactoryBlock.serializeFactory(blockName)]
+        /*  .concat(
         mergeInputs.map(pattern => {
           const separator = pattern.includes('$') ? '$' : pattern.includes(blockName) ? blockName : '*';
           namedConstructor = camelCase(input.split(separator).join('_'));
@@ -614,8 +631,9 @@ export const buildClassBody = (config: FlutterFreezedPluginConfig, node: NodeTyp
           shape += `==>factory==>${factoryBlockKey}==>${'merged_input_factory'}==>${name}==>${namedConstructor}\n`;
           return FreezedFactoryBlock.serializeNamedFactory(blockName, value.name.value);
         })
-      )
-      .join('');
+      ) */
+        .join('')
+    );
   }
   return '';
 };
