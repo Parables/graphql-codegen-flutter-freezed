@@ -124,6 +124,24 @@ export type DartIdentifierCasing = 'snake_case' | 'camelCase' | 'PascalCase';
  */
 export interface FlutterFreezedPluginConfig /* extends TypeScriptPluginConfig */ {
   /**
+   * @name allKey
+   * @description the `allKey` is sued when you want to set the same config options value to every item or on the root object
+   * @default "@*"
+   *
+   * @exampleMarkdown
+   * ```yaml
+   * generates:
+   *   flutter_app/lib/data/models/app_models.dart
+   *     plugins:
+   *       - flutter-freezed
+   *     config:
+   *       rootKey: "@all"
+   *
+   * ```
+   */
+  allKey?: string;
+
+  /**
    * @name camelCasedEnums
    * @description Dart's recommended lint uses camelCase for enum fields. Set this option to `false` to use the same case as used in the GraphQL Schema but note this can cause lint issues.
    * @default true
@@ -191,406 +209,7 @@ export interface FlutterFreezedPluginConfig /* extends TypeScriptPluginConfig */
   * ```
   */
 
-  graphQLTypeConfig?: Record<
-    string,
-    {
-      /**
-       * @name final
-       * @description  a list of field Names to be marked as final
-       * @default undefined
-       */
-
-      final?: Record<string, AppliesOn[]>;
-
-      /**
-       * @name deprecated
-       * @description a list of field Names to be marked as deprecated. Include the rootKey to mark the whole
-       * @default undefined
-       */
-
-      deprecated?: Record<string, AppliesOn[]>;
-
-      /**
-       * @name defaultValue
-       * @description annotate a field with a @Default(value: defaultValue) decorator
-       * @default undefined
-       */
-
-      defaultValue?: Record<string, { value: string; valueAsString?: boolean; appliesOn: AppliesOn[] }>;
-
-      /**
-       * @name alwaysUseJsonKeyName
-       * @description Use @JsonKey(name: 'name') even if the name is already camelCased
-       * @default false
-       *
-       * @exampleMarkdown
-       * ```yaml
-       * generates:
-       *   flutter_app/lib/data/models/app_models.dart
-       *     plugins:
-       *       - flutter-freezed
-       *     config:
-       *       alwaysUseJsonKeyName: true
-       *
-       * ```
-       */
-
-      alwaysUseJsonKeyName?: Record<string, AppliesOn[]>;
-
-      /**
-       * @name copyWith
-       * @description set to false to disable Freezed copyWith method helper
-       * @default undefined
-       *
-       * @exampleMarkdown
-       * ```yaml
-       * generates:
-       *   flutter_app/lib/data/models/app_models.dart
-       *     plugins:
-       *       - flutter-freezed
-       *     config:
-       *       copyWith: false
-       * ```
-       */
-
-      copyWith?: Record<string, AppliesOn[]>;
-
-      /**
-       * @name customDecorators
-       * @description annotate/decorate the generated output. Also use this option to map GraphQL directives to freezed decorators.
-       * @default {}
-       *
-       * @exampleMarkdown
-       * ```yaml
-       * generates:
-       *   flutter_app/lib/data/models/app_models.dart
-       *     plugins:
-       *       - flutter-freezed
-       *     config:
-       *       customDecorators: {
-       *          'default' : {
-       *             mapsToFreezedAs: '@Default',
-       *             arguments: ['$0'],
-       *            },
-       *           'deprecated' : {
-       *              mapsToFreezedAs: '@deprecated',
-       *           },
-       *          'readonly' : {
-       *              mapsToFreezedAs: 'final',
-       *           },
-       *          '@Assert' : {
-       *              mapsToFreezedAs: 'custom',
-       *              applyOn: ['class_factory','union_factory'], # @Assert should ONLY be used on factories
-       *              arguments: [
-       *                  '(email != null && email != "") || (phoneNumber != null && phoneNumber != "")',
-       *                  'provide either an email or a phoneNumber',
-       *              ],
-       *           }, # custom are used just as it given
-       *       }
-       *
-       * ```
-       */
-
-      customDecorators?: Record<
-        string,
-        {
-          /**
-           * @name arguments
-           * @description Arguments to be applied on the decorator. if the `mapsToFreezedAs === 'directive'`,  use template string such `['$0', '$2', '$3']` to select/order the arguments of the directive to be used($0 is the first argument, $1 is the second).
-           * @default undefined
-           * @exampleMarkdown
-           * ```yaml
-           * arguments: [$0] # $0 is the first argument, $1 is the 2nd ...
-           * ```
-           */
-          arguments?: string[]; //['$0']
-
-          /**
-           * @name applyOn
-           * @description Specify where the decorator should be applied
-           * @exampleMarkdown
-           * ```yaml
-           * applyOn: ['class_factory','union_factory'], # applies this decorator on both class and union factory blocks
-           * ```
-           */
-          applyOn: AppliesOn[];
-
-          /**
-           * @name mapsToFreezedAs
-           * @description maps to a Freezed decorator or use `custom` to use a custom decorator.If `mapsToFreezedAs === 'directive'` don't include the `@` prefix in the key of the customDecorator.  If `mapsToFreezedAs === 'custom'` value, whatever you use as the key of the customDecorator is used just as it is, and the arguments spread into a parenthesis () */
-          mapsToFreezedAs: '@Default' | '@deprecated' | 'final' | 'directive' | 'custom';
-        }
-      >;
-
-      /**
-       * @name escapeDartKeywords
-       * @description wraps dart-language reserved keywords such as `void`, `in` etc with a prefix and/or suffix which can be set by changing `dartKeywordEscapePrefix` and `dartKeywordEscapeSuffix` config values
-       * @default true
-       * @see_also [dartKeywordEscapePrefix,dartKeywordEscapeSuffix]
-       *
-       * @exampleMarkdown
-       * ```yaml
-       * generates:
-       *   flutter_app/lib/data/models/app_models.dart
-       *     plugins:
-       *       - flutter-freezed
-       *     config:
-       *       escapeDartKeywords: {
-       *          in: true # becomes `in_`,
-       *          required: { #becomes `argRequired`
-       *              dartKeywordEscapePrefix: "arg_",
-       *              dartKeywordEscapeCasing: camelCase
-       *          }
-       *       }
-       *
-       * ```
-       */
-
-      escapeDartKeywords?:
-        | boolean
-        | Record<
-            string,
-            {
-              /**
-               * @name dartKeywordEscapeCasing
-               * @description after escaping a valid dart keyword, this option transforms the casing to `snake_cased`, `camelCase` or `PascalCase`. Defaults to `undefined` to leave the casing as it is.
-               * @default undefined
-               * @see_also [escapeDartKeywords, dartKeywordEscapePrefix]
-               *
-               * ```yaml
-               * generates:
-               *   flutter_app/lib/data/models/app_models.dart
-               *     plugins:
-               *       - flutter-freezed
-               *     config:
-               *       dartKeywordEscapeCasing: camelCase
-               *
-               * ```
-               */
-
-              dartKeywordEscapeCasing?: DartIdentifierCasing;
-
-              /**
-               * @name dartKeywordEscapePrefix
-               * @description prefix GraphQL type and field names that are valid dart keywords. Don't use only a underscore(`_`) as the `dartKeywordEscapePrefix` since it will make that identifier hidden or produce unexpected results. However, if you would want to change the case after escaping the keyword with `dartKeywordEscapeCasing`, you may use either an `_`, `-` or an empty space ` `.
-               * @default undefined
-               * @see_also [escapeDartKeywords, dartKeywordEscapeSuffix]
-               *
-               * @exampleMarkdown
-               * ```yaml
-               * generates:
-               *   flutter_app/lib/data/models/app_models.dart
-               *     plugins:
-               *       - flutter-freezed
-               *     config:
-               *       dartKeywordEscapePrefix: "k_"
-               *      # Example: let keyword = 'in'
-               *      # dartKeywordEscapeCasing === 'snake_case' => 'k_in'
-               *      # dartKeywordEscapeCasing === 'camelCase' => 'kIn'
-               *      # dartKeywordEscapeCasing === 'PascalCase' => 'KIn'
-               *      # dartKeywordEscapeCasing === undefined => 'k_in'
-               *
-               * ```
-               */
-
-              dartKeywordEscapePrefix?: string;
-
-              /**
-               * @name dartKeywordEscapeSuffix
-               * @description suffix GraphQL type and field names that are valid dart keywords. If the value of `dartKeywordEscapeSuffix` is an `_` and if `dartKeywordEscapeCasing` is `snake_case` or `camelCase`, then the casing will be ignored because it will remove the trailing `_` making the escapedKeyword invalid again
-               * @default "_"
-               * @see_also [escapeDartKeywords, dartKeywordEscapePrefix]
-               *
-               * ```yaml
-               * generates:
-               *   flutter_app/lib/data/models/app_models.dart
-               *     plugins:
-               *       - flutter-freezed
-               *     config:
-               *       dartKeywordEscapeSuffix: "_k" or using the default '_'
-               *      # Example: let keyword = 'in'
-               *      # dartKeywordEscapeCasing === 'snake_case'=> 'in_k' or 'in_' // ignored casing
-               *      # dartKeywordEscapeCasing === 'camelCase' =>'inK' or in_ // ignored casing
-               *      # dartKeywordEscapeCasing === 'PascalCase' => 'InK' or 'In'
-               *      # dartKeywordEscapeCasing === undefined  => 'in_k' or 'in_'
-               *
-               * ```
-               */
-
-              dartKeywordEscapeSuffix?: string;
-            }
-          >;
-
-      /**
-       * @name equal
-       * @description set to false to disable Freezed equal method helper
-       * @default undefined
-       *
-       * @exampleMarkdown
-       * ```yaml
-       * generates:
-       *   flutter_app/lib/data/models/app_models.dart
-       *     plugins:
-       *       - flutter-freezed
-       *     config:
-       *       equal: false
-       * ```
-       */
-
-      equal?: boolean;
-
-      /**
-       * @name fromJsonToJson
-       * @description generate fromJson toJson methods on the classes with json_serialization. Requires the [json_serializable](https://pub.dev/packages/json_serializable) to be installed in your Flutter app
-       * @default true
-       *
-       * @exampleMarkdown
-       * ```yaml
-       * generates:
-       *   flutter_app/lib/data/models/app_models.dart
-       *     plugins:
-       *       - flutter-freezed
-       *     config:
-       *       fromJsonToJson: true
-       *
-       * ```
-       */
-
-      fromJsonToJson?: boolean;
-
-      /**
-       * @name immutable
-       * @description  set to true to use the `@freezed` decorator or false to use the `@unfreezed` decorator
-       * @default true
-       *
-       * @exampleMarkdown
-       * ```yaml
-       * generates:
-       *   flutter_app/lib/data/models/app_models.dart
-       *     plugins:
-       *       - flutter-freezed
-       *     config:
-       *       immutable: true
-       *
-       * ```
-       */
-
-      immutable?: boolean;
-
-      /**
-       * @name makeCollectionsUnmodifiable
-       * @description allows collections(lists/maps) to be modified even if class is immutable
-       * @default undefined
-       *
-       * @exampleMarkdown
-       * ```yaml
-       * generates:
-       *   flutter_app/lib/data/models/app_models.dart
-       *     plugins:
-       *       - flutter-freezed
-       *     config:
-       *       makeCollectionsUnmodifiable: true
-       *
-       * ```
-       */
-
-      makeCollectionsUnmodifiable?: boolean;
-
-      /**
-       * @name mutableInputs
-       * @description  since inputs will be used to collect data, it makes sense to make them mutable with Freezed's `@unfreezed` decorator. This overrides(in order words: has a higher precedence than) the `immutable` config value `ONLY` for GraphQL `input types`.
-       * @default true
-       *
-       * @exampleMarkdown
-       * ```yaml
-       * generates:
-       *   flutter_app/lib/data/models/app_models.dart
-       *     plugins:
-       *       - flutter-freezed
-       *     config:
-       *       mutableInputs: true
-       *
-       * ```
-       */
-
-      mutableInputs?: boolean;
-
-      /**
-       * @name privateEmptyConstructor
-       * @description if true, defines a private empty constructor to allow getter and methods to work on the class
-       * @default true
-       *
-       * @exampleMarkdown
-       * ```yaml
-       * generates:
-       *   flutter_app/lib/data/models/app_models.dart
-       *     plugins:
-       *       - flutter-freezed
-       *     config:
-       *       privateEmptyConstructor: true
-       *
-       * ```
-       */
-
-      privateEmptyConstructor?: boolean;
-
-      /**
-       * @name unionKey
-       * @description specify the key to be used for Freezed union/sealed classes
-       * @default undefined
-       *
-       * @exampleMarkdown
-       * ```yaml
-       * generates:
-       *   flutter_app/lib/data/models/app_models.dart
-       *     plugins:
-       *       - flutter-freezed
-       *     config:
-       *       unionKey: 'type'
-       *
-       * ```
-       */
-
-      unionKey?: string;
-
-      /**
-       * @name unionValueCase
-       * @description specify the casing style to be used for Freezed union/sealed classes
-       * @default undefined
-       *
-       * @exampleMarkdown
-       * ```yaml
-       * generates:
-       *   flutter_app/lib/data/models/app_models.dart
-       *     plugins:
-       *       - flutter-freezed
-       *     config:
-       *       unionValueCase: 'FreezedUnionCase.pascal'
-       *
-       * ```
-       */
-
-      unionValueCase?: 'FreezedUnionCase.camel' | 'FreezedUnionCase.pascal';
-
-      /**
-       * @name mergeInputs
-       * @description merge InputTypes as a named factory constructor inside a class generated for a GraphQL ObjectType.
-       * @default []
-       *
-       * @exampleMarkdown
-       * ```yaml
-       * generates:
-       *   flutter_app/lib/data/models/app_models.dart
-       *     plugins:
-       *       - flutter-freezed
-       *     config:
-       *      mergeInputs: ["Create$Input", "Update$Input", "Delete$Input"]
-       * ```
-       */
-
-      mergeInputs?: string[];
-    }
-  >;
+  graphQLTypeConfig?: Record<string, GraphQLTypeConfig>;
 
   /**
    * @name ignoreTypes
@@ -610,11 +229,37 @@ export interface FlutterFreezedPluginConfig /* extends TypeScriptPluginConfig */
    */
 
   ignoreTypes?: string[];
+}
+
+export type GraphQLTypeConfig = {
+  /**
+   * @name final
+   * @description  a list of field Names to be marked as final
+   * @default undefined
+   */
+
+  final?: Record<string, AppliesOn[]>;
 
   /**
-   * @name allKey
-   * @description the `allKey` is sued when you want to set the same config options value to every item or on the root object
-   * @default "@*"
+   * @name deprecated
+   * @description a list of field Names to be marked as deprecated. Include the rootKey to mark the whole
+   * @default undefined
+   */
+
+  deprecated?: Record<string, AppliesOn[]>;
+
+  /**
+   * @name defaultValue
+   * @description annotate a field with a @Default(value: defaultValue) decorator
+   * @default undefined
+   */
+
+  defaultValue?: Record<string, { value: string; valueAsString?: boolean; appliesOn: AppliesOn[] }>;
+
+  /**
+   * @name alwaysUseJsonKeyName
+   * @description Use @JsonKey(name: 'name') even if the name is already camelCased
+   * @default false
    *
    * @exampleMarkdown
    * ```yaml
@@ -623,9 +268,359 @@ export interface FlutterFreezedPluginConfig /* extends TypeScriptPluginConfig */
    *     plugins:
    *       - flutter-freezed
    *     config:
-   *       rootKey: "@all"
+   *       alwaysUseJsonKeyName: true
    *
    * ```
    */
-  allKey?: string;
-}
+
+  alwaysUseJsonKeyName?: Record<string, AppliesOn[]>;
+
+  /**
+   * @name copyWith
+   * @description set to false to disable Freezed copyWith method helper
+   * @default undefined
+   *
+   * @exampleMarkdown
+   * ```yaml
+   * generates:
+   *   flutter_app/lib/data/models/app_models.dart
+   *     plugins:
+   *       - flutter-freezed
+   *     config:
+   *       copyWith: false
+   * ```
+   */
+
+  copyWith?: Record<string, AppliesOn[]>;
+
+  /**
+   * @name customDecorators
+   * @description annotate/decorate the generated output. Also use this option to map GraphQL directives to freezed decorators.
+   * @default {}
+   *
+   * @exampleMarkdown
+   * ```yaml
+   * generates:
+   *   flutter_app/lib/data/models/app_models.dart
+   *     plugins:
+   *       - flutter-freezed
+   *     config:
+   *       customDecorators: {
+   *          'default' : {
+   *             mapsToFreezedAs: '@Default',
+   *             arguments: ['$0'],
+   *            },
+   *           'deprecated' : {
+   *              mapsToFreezedAs: '@deprecated',
+   *           },
+   *          'readonly' : {
+   *              mapsToFreezedAs: 'final',
+   *           },
+   *          '@Assert' : {
+   *              mapsToFreezedAs: 'custom',
+   *              applyOn: ['class_factory','union_factory'], # @Assert should ONLY be used on factories
+   *              arguments: [
+   *                  '(email != null && email != "") || (phoneNumber != null && phoneNumber != "")',
+   *                  'provide either an email or a phoneNumber',
+   *              ],
+   *           }, # custom are used just as it given
+   *       }
+   *
+   * ```
+   */
+
+  customDecorators?: Record<string, CustomDecorator>;
+
+  /**
+   * @name escapeDartKeywords
+   * @description wraps dart-language reserved keywords such as `void`, `in` etc with a prefix and/or suffix which can be set by changing `dartKeywordEscapePrefix` and `dartKeywordEscapeSuffix` config values
+   * @default true
+   * @see_also [dartKeywordEscapePrefix,dartKeywordEscapeSuffix]
+   *
+   * @exampleMarkdown
+   * ```yaml
+   * generates:
+   *   flutter_app/lib/data/models/app_models.dart
+   *     plugins:
+   *       - flutter-freezed
+   *     config:
+   *       escapeDartKeywords: {
+   *          in: true # becomes `in_`,
+   *          required: { #becomes `argRequired`
+   *              dartKeywordEscapePrefix: "arg_",
+   *              dartKeywordEscapeCasing: camelCase
+   *          }
+   *       }
+   *
+   * ```
+   */
+
+  escapeDartKeywords?: boolean | Record<string, EscapeDartKeyword>;
+
+  /**
+   * @name equal
+   * @description set to false to disable Freezed equal method helper
+   * @default undefined
+   *
+   * @exampleMarkdown
+   * ```yaml
+   * generates:
+   *   flutter_app/lib/data/models/app_models.dart
+   *     plugins:
+   *       - flutter-freezed
+   *     config:
+   *       equal: false
+   * ```
+   */
+
+  equal?: boolean;
+
+  /**
+   * @name fromJsonToJson
+   * @description generate fromJson toJson methods on the classes with json_serialization. Requires the [json_serializable](https://pub.dev/packages/json_serializable) to be installed in your Flutter app
+   * @default true
+   *
+   * @exampleMarkdown
+   * ```yaml
+   * generates:
+   *   flutter_app/lib/data/models/app_models.dart
+   *     plugins:
+   *       - flutter-freezed
+   *     config:
+   *       fromJsonToJson: true
+   *
+   * ```
+   */
+
+  fromJsonToJson?: boolean;
+
+  /**
+   * @name immutable
+   * @description  set to true to use the `@freezed` decorator or false to use the `@unfreezed` decorator
+   * @default true
+   *
+   * @exampleMarkdown
+   * ```yaml
+   * generates:
+   *   flutter_app/lib/data/models/app_models.dart
+   *     plugins:
+   *       - flutter-freezed
+   *     config:
+   *       immutable: true
+   *
+   * ```
+   */
+
+  immutable?: boolean;
+
+  /**
+   * @name makeCollectionsUnmodifiable
+   * @description allows collections(lists/maps) to be modified even if class is immutable
+   * @default undefined
+   *
+   * @exampleMarkdown
+   * ```yaml
+   * generates:
+   *   flutter_app/lib/data/models/app_models.dart
+   *     plugins:
+   *       - flutter-freezed
+   *     config:
+   *       makeCollectionsUnmodifiable: true
+   *
+   * ```
+   */
+
+  makeCollectionsUnmodifiable?: boolean;
+
+  /**
+   * @name mutableInputs
+   * @description  since inputs will be used to collect data, it makes sense to make them mutable with Freezed's `@unfreezed` decorator. This overrides(in order words: has a higher precedence than) the `immutable` config value `ONLY` for GraphQL `input types`.
+   * @default true
+   *
+   * @exampleMarkdown
+   * ```yaml
+   * generates:
+   *   flutter_app/lib/data/models/app_models.dart
+   *     plugins:
+   *       - flutter-freezed
+   *     config:
+   *       mutableInputs: true
+   *
+   * ```
+   */
+
+  mutableInputs?: boolean;
+
+  /**
+   * @name privateEmptyConstructor
+   * @description if true, defines a private empty constructor to allow getter and methods to work on the class
+   * @default true
+   *
+   * @exampleMarkdown
+   * ```yaml
+   * generates:
+   *   flutter_app/lib/data/models/app_models.dart
+   *     plugins:
+   *       - flutter-freezed
+   *     config:
+   *       privateEmptyConstructor: true
+   *
+   * ```
+   */
+
+  privateEmptyConstructor?: boolean;
+
+  /**
+   * @name unionKey
+   * @description specify the key to be used for Freezed union/sealed classes
+   * @default undefined
+   *
+   * @exampleMarkdown
+   * ```yaml
+   * generates:
+   *   flutter_app/lib/data/models/app_models.dart
+   *     plugins:
+   *       - flutter-freezed
+   *     config:
+   *       unionKey: 'type'
+   *
+   * ```
+   */
+
+  unionKey?: string;
+
+  /**
+   * @name unionValueCase
+   * @description specify the casing style to be used for Freezed union/sealed classes
+   * @default undefined
+   *
+   * @exampleMarkdown
+   * ```yaml
+   * generates:
+   *   flutter_app/lib/data/models/app_models.dart
+   *     plugins:
+   *       - flutter-freezed
+   *     config:
+   *       unionValueCase: 'FreezedUnionCase.pascal'
+   *
+   * ```
+   */
+
+  unionValueCase?: 'FreezedUnionCase.camel' | 'FreezedUnionCase.pascal';
+
+  /**
+   * @name mergeInputs
+   * @description merge InputTypes as a named factory constructor inside a class generated for a GraphQL ObjectType.
+   * @default []
+   *
+   * @exampleMarkdown
+   * ```yaml
+   * generates:
+   *   flutter_app/lib/data/models/app_models.dart
+   *     plugins:
+   *       - flutter-freezed
+   *     config:
+   *      mergeInputs: ["Create$Input", "Update$Input", "Delete$Input"]
+   * ```
+   */
+
+  mergeInputs?: string[];
+};
+
+export type CustomDecorator = {
+  /**
+   * @name arguments
+   * @description Arguments to be applied on the decorator. if the `mapsToFreezedAs === 'directive'`,  use template string such `['$0', '$2', '$3']` to select/order the arguments of the directive to be used($0 is the first argument, $1 is the second).
+   * @default undefined
+   * @exampleMarkdown
+   * ```yaml
+   * arguments: [$0] # $0 is the first argument, $1 is the 2nd ...
+   * ```
+   */
+  arguments?: string[]; //['$0']
+
+  /**
+   * @name applyOn
+   * @description Specify where the decorator should be applied
+   * @exampleMarkdown
+   * ```yaml
+   * applyOn: ['class_factory','union_factory'], # applies this decorator on both class and union factory blocks
+   * ```
+   */
+  applyOn: AppliesOn[];
+
+  /**
+   * @name mapsToFreezedAs
+   * @description maps to a Freezed decorator or use `custom` to use a custom decorator.If `mapsToFreezedAs === 'directive'` don't include the `@` prefix in the key of the customDecorator.  If `mapsToFreezedAs === 'custom'` value, whatever you use as the key of the customDecorator is used just as it is, and the arguments spread into a parenthesis () */
+  mapsToFreezedAs: '@Default' | '@deprecated' | 'final' | 'directive' | 'custom';
+};
+
+export type EscapeDartKeyword = {
+  /**
+   * @name dartKeywordEscapeCasing
+   * @description after escaping a valid dart keyword, this option transforms the casing to `snake_cased`, `camelCase` or `PascalCase`. Defaults to `undefined` to leave the casing as it is.
+   * @default undefined
+   * @see_also [escapeDartKeywords, dartKeywordEscapePrefix]
+   *
+   * ```yaml
+   * generates:
+   *   flutter_app/lib/data/models/app_models.dart
+   *     plugins:
+   *       - flutter-freezed
+   *     config:
+   *       dartKeywordEscapeCasing: camelCase
+   *
+   * ```
+   */
+
+  dartKeywordEscapeCasing?: DartIdentifierCasing;
+
+  /**
+   * @name dartKeywordEscapePrefix
+   * @description prefix GraphQL type and field names that are valid dart keywords. Don't use only a underscore(`_`) as the `dartKeywordEscapePrefix` since it will make that identifier hidden or produce unexpected results. However, if you would want to change the case after escaping the keyword with `dartKeywordEscapeCasing`, you may use either an `_`, `-` or an empty space ` `.
+   * @default undefined
+   * @see_also [escapeDartKeywords, dartKeywordEscapeSuffix]
+   *
+   * @exampleMarkdown
+   * ```yaml
+   * generates:
+   *   flutter_app/lib/data/models/app_models.dart
+   *     plugins:
+   *       - flutter-freezed
+   *     config:
+   *       dartKeywordEscapePrefix: "k_"
+   *      # Example: let keyword = 'in'
+   *      # dartKeywordEscapeCasing === 'snake_case' => 'k_in'
+   *      # dartKeywordEscapeCasing === 'camelCase' => 'kIn'
+   *      # dartKeywordEscapeCasing === 'PascalCase' => 'KIn'
+   *      # dartKeywordEscapeCasing === undefined => 'k_in'
+   *
+   * ```
+   */
+
+  dartKeywordEscapePrefix?: string;
+
+  /**
+   * @name dartKeywordEscapeSuffix
+   * @description suffix GraphQL type and field names that are valid dart keywords. If the value of `dartKeywordEscapeSuffix` is an `_` and if `dartKeywordEscapeCasing` is `snake_case` or `camelCase`, then the casing will be ignored because it will remove the trailing `_` making the escapedKeyword invalid again
+   * @default "_"
+   * @see_also [escapeDartKeywords, dartKeywordEscapePrefix]
+   *
+   * ```yaml
+   * generates:
+   *   flutter_app/lib/data/models/app_models.dart
+   *     plugins:
+   *       - flutter-freezed
+   *     config:
+   *       dartKeywordEscapeSuffix: "_k" or using the default '_'
+   *      # Example: let keyword = 'in'
+   *      # dartKeywordEscapeCasing === 'snake_case'=> 'in_k' or 'in_' // ignored casing
+   *      # dartKeywordEscapeCasing === 'camelCase' =>'inK' or in_ // ignored casing
+   *      # dartKeywordEscapeCasing === 'PascalCase' => 'InK' or 'In'
+   *      # dartKeywordEscapeCasing === undefined  => 'in_k' or 'in_'
+   *
+   * ```
+   */
+
+  dartKeywordEscapeSuffix?: string;
+};

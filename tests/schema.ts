@@ -116,7 +116,12 @@ export const starWarsSchema = buildSchema(/* GraphQL */ `
   input CreateMovieInput {
     title: String!
   }
-
+  # I have a multi
+  #
+  # line comment with
+  # some \`backticks\` which I hope will be ignored
+  # and some # here and another here
+  #
   input UpsertMovieInput {
     id: ID!
     title: String!

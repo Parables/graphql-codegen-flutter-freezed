@@ -1,7 +1,6 @@
-import { indent } from '@graphql-codegen/visitor-plugin-common';
 import { FlutterFreezedPluginConfig } from '../config';
 import {
-  // buildBlockComment,
+  buildBlockComment,
   // buildBlockDecorators,
   buildBlockHeader,
   buildBlockBody,
@@ -94,11 +93,11 @@ export class FreezedFactoryBlock {
   ): string {
     let block = '';
 
-    // TODO: Implement comments(multi-line) and decoratos
+    // TODO: Implement comments(multi-line) and decorators
 
-    // block += buildBlockComment(node);
+    block += buildBlockComment(node);
     // block += buildBlockDecorators(node, config);
-    block += buildBlockHeader(config, node, blockType, blockName, namedConstructor, undefined);
+    block += buildBlockHeader(config, node, blockType, blockName, namedConstructor);
     block += buildBlockBody(config, node, blockType);
     block += buildBlockFooter(config, node, blockType, blockType === 'factory' ? node.name.value : namedConstructor);
     return block;
