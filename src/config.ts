@@ -118,14 +118,42 @@ export type DartKeywordType = 'built-in' | 'context' | 'reserved' | 'async-reser
 
 export type DartIdentifierCasing = 'snake_case' | 'camelCase' | 'PascalCase';
 
+export type GlobalTypeName = string;
+
+/**
+ * @name TypeName
+ * @description A comma-separated string of GraphQL Type Names.Use the `globalTypeName` to apply the same config options to all GraphQL Types.
+ * @exampleMarkdown
+ * ```ts filename:"config.ts"
+ * TODO: add an example
+ * ```
+ * */
+export type TypeName = string;
+
+/**
+ * @name FieldName
+ * @description Just like TypeName but instead used for the fields names of a GraphQL Type. Use the `globalTypeName` to apply the same config options to all fields.
+ * @exampleMarkdown
+ * ```ts filename:"config.ts"
+ * TODO: add an example
+ * ```
+ * */
+export type FieldName = string;
+type GraphQLScalarType = string;
+type DartCompatibleType = string;
+type JsonConvertorClassName = string;
+type FromToJsonFunctionName = string;
+
+export type KeyOfTypeConfig = keyof TypeConfig;
+
 /**
  * @name FlutterFreezedPluginConfig
  * @description configure the `flutter-freezed` plugin
  */
 export type FlutterFreezedPluginConfig /* extends TypeScriptPluginConfig */ = {
   /**
-   * @name allKey
-   * @description the `allKey` is sued when you want to set the same config options value to every item or on the root object
+   * @name globalTypeName
+   * @description the `globalTypeName` is used when you want to set the same config options value to every item or on the root object
    * @default "@*"
    *
    * @exampleMarkdown
@@ -135,11 +163,11 @@ export type FlutterFreezedPluginConfig /* extends TypeScriptPluginConfig */ = {
    *     plugins:
    *       - flutter-freezed
    *     config:
-   *       rootKey: "@all"
+   *       globalTypeName: "@all"
    *
    * ```
    */
-  allKey?: string;
+  globalTypeName?: GlobalTypeName;
 
   /**
    * @name camelCasedEnums
@@ -178,7 +206,7 @@ export type FlutterFreezedPluginConfig /* extends TypeScriptPluginConfig */ = {
    * ```
    */
 
-  customScalars?: { [name: string]: string };
+  customScalars?: Record<GraphQLScalarType, DartCompatibleType>;
 
   /**
    * @name fileName
@@ -199,7 +227,7 @@ export type FlutterFreezedPluginConfig /* extends TypeScriptPluginConfig */ = {
   fileName?: string;
 
   /**
-   * @name graphQLTypeConfig
+   * @name typeConfig
    * @description The GraphQL Type name is used as the key. Use `allKey` config value to set global 
    * @default undefined
    *
@@ -209,7 +237,7 @@ export type FlutterFreezedPluginConfig /* extends TypeScriptPluginConfig */ = {
   * ```
   */
 
-  graphQLTypeConfig?: Record<string, GraphQLTypeConfig>;
+  typeConfig?: Record<TypeName, TypeConfig>;
 
   /**
    * @name ignoreTypes
@@ -231,7 +259,7 @@ export type FlutterFreezedPluginConfig /* extends TypeScriptPluginConfig */ = {
   ignoreTypes?: string[];
 };
 
-export type GraphQLTypeConfig = {
+export type TypeConfig = {
   /**
    * @name alwaysUseJsonKeyName
    * @description Use @JsonKey(name: 'name') even if the name is already camelCased
@@ -249,7 +277,7 @@ export type GraphQLTypeConfig = {
    * ```
    */
 
-  alwaysUseJsonKeyName?: boolean | Record<string, AppliesOn[]>;
+  alwaysUseJsonKeyName?: boolean | Record<FieldName, AppliesOn[]>;
 
   /**
    * @name copyWith
@@ -267,7 +295,7 @@ export type GraphQLTypeConfig = {
    * ```
    */
 
-  copyWith?: Record<string, AppliesOn[]>;
+  copyWith?: Record<FieldName, AppliesOn[]>;
 
   /**
    * @name customDecorators
@@ -305,39 +333,7 @@ export type GraphQLTypeConfig = {
    * ```
    */
 
-  customDecorators?: Record<
-    string,
-    Record<
-      string,
-      {
-        /**
-         * @name arguments
-         * @description Arguments to be applied on the decorator. if the `mapsToFreezedAs === 'directive'`,  use template string such `['$0', '$2', '$3']` to select/order the arguments of the directive to be used($0 is the first argument, $1 is the second).
-         * @default undefined
-         * @exampleMarkdown
-         * ```yaml
-         * arguments: [$0] # $0 is the first argument, $1 is the 2nd ...
-         * ```
-         */
-        arguments?: string[]; //['$0']
-
-        /**
-         * @name applyOn
-         * @description Specify where the decorator should be applied
-         * @exampleMarkdown
-         * ```yaml
-         * applyOn: ['class_factory','union_factory'], # applies this decorator on both class and union factory blocks
-         * ```
-         */
-        applyOn: AppliesOn[];
-
-        /**
-         * @name mapsToFreezedAs
-         * @description maps to a Freezed decorator or use `custom` to use a custom decorator.If `mapsToFreezedAs === 'directive'` don't include the `@` prefix in the key of the customDecorator.  If `mapsToFreezedAs === 'custom'` value, whatever you use as the key of the customDecorator is used just as it is, and the arguments spread into a parenthesis () */
-        mapsToFreezedAs: '@Default' | '@deprecated' | 'final' | 'directive' | 'custom';
-      }
-    >
-  >;
+  customDecorators?: CustomDecorator;
 
   /**
    * @name defaultValue
@@ -345,7 +341,7 @@ export type GraphQLTypeConfig = {
    * @default undefined
    */
 
-  defaultValue?: Record<string, { value: string; valueAsString?: boolean; appliesOn: AppliesOn[] }>;
+  defaultValue?: Record<FieldName, DefaultValueConfig>;
 
   /**
    * @name deprecated
@@ -353,7 +349,7 @@ export type GraphQLTypeConfig = {
    * @default undefined
    */
 
-  deprecated?: Record<string, AppliesOn[]>;
+  deprecated?: Record<FieldName, AppliesOn[]>;
 
   /**
    * @name equal
@@ -397,80 +393,7 @@ export type GraphQLTypeConfig = {
    * ```
    */
 
-  escapeDartKeywords?:
-    | boolean
-    | Record<
-        string,
-        {
-          /**
-           * @name dartKeywordEscapeCasing
-           * @description after escaping a valid dart keyword, this option transforms the casing to `snake_cased`, `camelCase` or `PascalCase`. Defaults to `undefined` to leave the casing as it is.
-           * @default undefined
-           * @see_also [escapeDartKeywords, dartKeywordEscapePrefix]
-           *
-           * ```yaml
-           * generates:
-           *   flutter_app/lib/data/models/app_models.dart
-           *     plugins:
-           *       - flutter-freezed
-           *     config:
-           *       dartKeywordEscapeCasing: camelCase
-           *
-           * ```
-           */
-
-          dartKeywordEscapeCasing?: DartIdentifierCasing;
-
-          /**
-           * @name dartKeywordEscapePrefix
-           * @description prefix GraphQL type and field names that are valid dart keywords. Don't use only a underscore(`_`) as the `dartKeywordEscapePrefix` since it will make that identifier hidden or produce unexpected results. However, if you would want to change the case after escaping the keyword with `dartKeywordEscapeCasing`, you may use either an `_`, `-` or an empty space ` `.
-           * @default undefined
-           * @see_also [escapeDartKeywords, dartKeywordEscapeSuffix]
-           *
-           * @exampleMarkdown
-           * ```yaml
-           * generates:
-           *   flutter_app/lib/data/models/app_models.dart
-           *     plugins:
-           *       - flutter-freezed
-           *     config:
-           *       dartKeywordEscapePrefix: "k_"
-           *      # Example: let keyword = 'in'
-           *      # dartKeywordEscapeCasing === 'snake_case' => 'k_in'
-           *      # dartKeywordEscapeCasing === 'camelCase' => 'kIn'
-           *      # dartKeywordEscapeCasing === 'PascalCase' => 'KIn'
-           *      # dartKeywordEscapeCasing === undefined => 'k_in'
-           *
-           * ```
-           */
-
-          dartKeywordEscapePrefix?: string;
-
-          /**
-           * @name dartKeywordEscapeSuffix
-           * @description suffix GraphQL type and field names that are valid dart keywords. If the value of `dartKeywordEscapeSuffix` is an `_` and if `dartKeywordEscapeCasing` is `snake_case` or `camelCase`, then the casing will be ignored because it will remove the trailing `_` making the escapedKeyword invalid again
-           * @default "_"
-           * @see_also [escapeDartKeywords, dartKeywordEscapePrefix]
-           *
-           * ```yaml
-           * generates:
-           *   flutter_app/lib/data/models/app_models.dart
-           *     plugins:
-           *       - flutter-freezed
-           *     config:
-           *       dartKeywordEscapeSuffix: "_k" or using the default '_'
-           *      # Example: let keyword = 'in'
-           *      # dartKeywordEscapeCasing === 'snake_case'=> 'in_k' or 'in_' // ignored casing
-           *      # dartKeywordEscapeCasing === 'camelCase' =>'inK' or in_ // ignored casing
-           *      # dartKeywordEscapeCasing === 'PascalCase' => 'InK' or 'In'
-           *      # dartKeywordEscapeCasing === undefined  => 'in_k' or 'in_'
-           *
-           * ```
-           */
-
-          dartKeywordEscapeSuffix?: string;
-        }
-      >;
+  escapeDartKeywords?: EscapeDartKeyword;
 
   /**
    * @name final
@@ -478,7 +401,7 @@ export type GraphQLTypeConfig = {
    * @default undefined
    */
 
-  final?: Record<string, AppliesOn[]>;
+  final?: Record<FieldName, AppliesOn[]>;
 
   /**
    *
@@ -568,9 +491,7 @@ export type GraphQLTypeConfig = {
    * ```
    *
    */
-  fromJsonToJson?:
-    | boolean
-    | Record<string, string | { functionName: string; className: string; appliesOn: AppliesOn[] }>;
+  fromJsonToJson?: boolean | Record<FieldName, JsonConvertorClassName | FromToJsonConfig>;
 
   /**
    * @name immutable
@@ -624,7 +545,7 @@ export type GraphQLTypeConfig = {
    *      mergeInputs: ["Create$Input", "Update$Input", "Delete$Input"]
    * ```
    */
-  mergeInputs?: string[];
+  mergeInputs?: TypeName[];
 
   /**
    * @name mutableInputs
@@ -699,4 +620,109 @@ export type GraphQLTypeConfig = {
   unionValueCase?: 'FreezedUnionCase.camel' | 'FreezedUnionCase.pascal';
 };
 
-export type KeyOfTypeConfig = keyof GraphQLTypeConfig;
+type CustomDecoratorConfig = {
+  /**
+   * @name arguments
+   * @description Arguments to be applied on the decorator. if the `mapsToFreezedAs === 'directive'`,  use template string such `['$0', '$2', '$3']` to select/order the arguments of the directive to be used($0 is the first argument, $1 is the second).
+   * @default undefined
+   * @exampleMarkdown
+   * ```yaml
+   * arguments: [$0] # $0 is the first argument, $1 is the 2nd ...
+   * ```
+   */
+  arguments?: string[]; //['$0']
+  /**
+   * @name applyOn
+   * @description Specify where the decorator should be applied
+   * @exampleMarkdown
+   * ```yaml
+   * applyOn: ['class_factory','union_factory'], # applies this decorator on both class and union factory blocks
+   * ```
+   */
+  applyOn: AppliesOn[];
+  /**
+   * @name mapsToFreezedAs
+   * @description maps to a Freezed decorator or use `custom` to use a custom decorator.If `mapsToFreezedAs === 'directive'` don't include the `@` prefix in the key of the customDecorator.  If `mapsToFreezedAs === 'custom'` value, whatever you use as the key of the customDecorator is used just as it is, and the arguments spread into a parenthesis () */
+  mapsToFreezedAs: '@Default' | '@deprecated' | 'final' | 'directive' | 'custom';
+};
+
+export type CustomDecorator = Record<TypeName, Record<FieldName, CustomDecoratorConfig>>;
+
+type DefaultValueConfig = {
+  value: string;
+  valueAsString?: boolean;
+  appliesOn: AppliesOn[];
+};
+
+type EscapeDartKeyword = boolean | Record<FieldName, EscapeDartKeywordConfig>;
+
+type EscapeDartKeywordConfig = {
+  /**
+   * @name dartKeywordEscapeCasing
+   * @description after escaping a valid dart keyword, this option transforms the casing to `snake_cased`, `camelCase` or `PascalCase`. Defaults to `undefined` to leave the casing as it is.
+   * @default undefined
+   * @see_also [escapeDartKeywords, dartKeywordEscapePrefix]
+   *
+   * ```yaml
+   * generates:
+   *   flutter_app/lib/data/models/app_models.dart
+   *     plugins:
+   *       - flutter-freezed
+   *     config:
+   *       dartKeywordEscapeCasing: camelCase
+   *
+   * ```
+   */
+  dartKeywordEscapeCasing?: DartIdentifierCasing;
+  /**
+   * @name dartKeywordEscapePrefix
+   * @description prefix GraphQL type and field names that are valid dart keywords. Don't use only a underscore(`_`) as the `dartKeywordEscapePrefix` since it will make that identifier hidden or produce unexpected results. However, if you would want to change the case after escaping the keyword with `dartKeywordEscapeCasing`, you may use either an `_`, `-` or an empty space ` `.
+   * @default undefined
+   * @see_also [escapeDartKeywords, dartKeywordEscapeSuffix]
+   *
+   * @exampleMarkdown
+   * ```yaml
+   * generates:
+   *   flutter_app/lib/data/models/app_models.dart
+   *     plugins:
+   *       - flutter-freezed
+   *     config:
+   *       dartKeywordEscapePrefix: "k_"
+   *      # Example: let keyword = 'in'
+   *      # dartKeywordEscapeCasing === 'snake_case' => 'k_in'
+   *      # dartKeywordEscapeCasing === 'camelCase' => 'kIn'
+   *      # dartKeywordEscapeCasing === 'PascalCase' => 'KIn'
+   *      # dartKeywordEscapeCasing === undefined => 'k_in'
+   *
+   * ```
+   */
+  dartKeywordEscapePrefix?: string;
+  /**
+   * @name dartKeywordEscapeSuffix
+   * @description suffix GraphQL type and field names that are valid dart keywords. If the value of `dartKeywordEscapeSuffix` is an `_` and if `dartKeywordEscapeCasing` is `snake_case` or `camelCase`, then the casing will be ignored because it will remove the trailing `_` making the escapedKeyword invalid again
+   * @default "_"
+   * @see_also [escapeDartKeywords, dartKeywordEscapePrefix]
+   *
+   * ```yaml
+   * generates:
+   *   flutter_app/lib/data/models/app_models.dart
+   *     plugins:
+   *       - flutter-freezed
+   *     config:
+   *       dartKeywordEscapeSuffix: "_k" or using the default '_'
+   *      # Example: let keyword = 'in'
+   *      # dartKeywordEscapeCasing === 'snake_case'=> 'in_k' or 'in_' // ignored casing
+   *      # dartKeywordEscapeCasing === 'camelCase' =>'inK' or in_ // ignored casing
+   *      # dartKeywordEscapeCasing === 'PascalCase' => 'InK' or 'In'
+   *      # dartKeywordEscapeCasing === undefined  => 'in_k' or 'in_'
+   *
+   * ```
+   */
+  dartKeywordEscapeSuffix?: string;
+};
+
+export type FromToJsonConfig = {
+  functionName: FromToJsonFunctionName;
+  className: JsonConvertorClassName;
+  appliesOn: AppliesOn[];
+};
