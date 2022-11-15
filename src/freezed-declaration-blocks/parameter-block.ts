@@ -1,6 +1,6 @@
-import { AppliesOnParameters, FieldType, FlutterFreezedPluginConfig, NodeType } from 'src/config';
-import { TypeName } from 'src/models/type-field-name';
-import { buildBlockComment, buildBlockDecorators, buildBlockHeader } from 'src/utils';
+import { AppliesOnParameters, FieldType, FlutterFreezedPluginConfig, NodeType } from '../config';
+import { TypeName } from '../models/type-field-name';
+import { buildBlockComment, buildBlockDecorators, buildBlockHeader } from '../utils';
 
 export class FreezedParameterBlock {
   public static build(

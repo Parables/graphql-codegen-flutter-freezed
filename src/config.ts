@@ -700,7 +700,7 @@ export type TypeConfig = {
 
 /** initializes a FreezedPluginConfig with the defaults values */
 export const defaultFreezedPluginConfig: FlutterFreezedPluginConfig = {
-  globalName: { typeName: '@*TypeFieldName', fieldName: '@*FieldName' },
+  globalName: { rootBlock: '@*RootBlock', typeName: '@*TypeName', fieldName: '@*FieldName' },
   camelCasedEnums: true,
   customScalars: {},
   fileName: 'app_models',
@@ -713,6 +713,7 @@ export type OptionInConfig = keyof FlutterFreezedPluginConfig;
 type CamelCasedEnums = boolean | DartIdentifierCasing;
 
 type GlobalNameConfig = {
+  rootBlock?: GlobalName;
   typeName?: GlobalName;
   fieldName?: GlobalName;
 };

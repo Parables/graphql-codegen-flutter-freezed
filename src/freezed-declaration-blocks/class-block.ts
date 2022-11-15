@@ -1,7 +1,7 @@
 import { Kind } from 'graphql';
-import { AppliesOnClass, AppliesOnEnum, FlutterFreezedPluginConfig, NodeType } from 'src/config';
-import { TypeName } from 'src/models/type-field-name';
-import { buildBlockComment, buildBlockDecorators, buildBlockHeader, buildBlockBody, buildBlockFooter } from 'src/utils';
+import { AppliesOnClass, AppliesOnEnum, FlutterFreezedPluginConfig, NodeType } from '../config';
+import { TypeName } from '../models/type-field-name';
+import { buildBlockComment, buildBlockDecorators, buildBlockHeader, buildBlockBody, buildBlockFooter } from '../utils';
 
 export class FreezedDeclarationBlock {
   public static build(config: FlutterFreezedPluginConfig, node: NodeType): string {

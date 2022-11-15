@@ -4,8 +4,8 @@ import {
   AppliesOnNamedFactory,
   FlutterFreezedPluginConfig,
   NodeType,
-} from 'src/config';
-import { TypeName } from 'src/models/type-field-name';
+} from '../config';
+import { TypeName } from '../models/type-field-name';
 import {
   buildBlockComment,
   buildBlockDecorators,

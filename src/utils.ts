@@ -115,7 +115,9 @@ export const getTypeConfigOption = <T>(
   option: OptionInTypeConfig,
   defaultValue?: T
 ): T | undefined => {
-  return ((config.typeConfig?.[typeName.value]?.[option] ?? defaultTypeConfig?.[option]) as T) ?? defaultValue;
+  return (
+    ((config.typeConfig?.[typeName.value]?.[option] ?? defaultTypeConfig?.[option]) as unknown as T) ?? defaultValue
+  );
 };
 
 export const optionFromAnyConfig = <
@@ -130,10 +132,10 @@ export const optionFromAnyConfig = <
 };
 
 // TODO: TEst this function
-const findOptionWithTypeFieldName = (config: Record<string, any>, typeFieldName: string, option: string) => {
+export const findOptionWithTypeFieldName = (config: Record<string, any>, typeFieldName: string, option: string) => {
   // get all options for
   const commaSeparatedNames = Object.keys(config);
-  return commaSeparatedNames.filter(n => n.includes(typeFieldName)).map(k => config[k][option] !== undefined);
+  return commaSeparatedNames.filter(n => n.includes(typeFieldName)).map(k => config[k][option]);
 };
 
 const mergeValuesForKey = (record: Record<string, any>, key: string) => {
@@ -351,7 +353,7 @@ export const isCustomizedFreezed = (config: FlutterFreezedPluginConfig, typeName
 /**
  * @description filters the customDirectives to return those that are applied on a list of blocks
  */
-export function getCustomDecorators(
+/* export function getCustomDecorators(
   config: FlutterFreezedPluginConfig,
   appliesOn: AppliesOn[],
   typeName: TypeName,
@@ -394,8 +396,8 @@ export function getCustomDecorators(
 
   return filteredCustomDecorators;
 }
-
-export function transformCustomDecorators(
+ */
+/* export function transformCustomDecorators(
   customDecorators: CustomDecorators,
   node?: NodeType | undefined,
   field?: FieldType | undefined
@@ -436,14 +438,14 @@ export function transformCustomDecorators(
   });
 
   return result;
-}
+} */
 
 /**
  * transforms the directive into a decorator array
  * this decorator array might contain a `final` string which would be filtered out
  * and used to mark the parameter block as final
  */
-function directiveToString(directive: DirectiveNode, customDecorators: CustomDecorators) {
+/* function directiveToString(directive: DirectiveNode, customDecorators: CustomDecorators) {
   const key = directive.name.value;
   const value = customDecorators[key];
   if (value.mapsToFreezedAs === 'directive') {
@@ -472,7 +474,7 @@ function directiveToString(directive: DirectiveNode, customDecorators: CustomDec
   // returns either "@deprecated" || "final".
   // `final` to be filtered from the decorators array when applying the decorators
   return value.mapsToFreezedAs + '\n';
-}
+} */
 
 /** transforms string template: "$0" into an integer: 1 */
 function argToInt(arg: string) {

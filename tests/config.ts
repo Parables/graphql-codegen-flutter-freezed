@@ -10,10 +10,10 @@ export const customScalarConfig = mergeConfig({
 
 export const customDecoratorsConfig = mergeConfig({
   typeConfig: {
-    '@*': {
+    '@*TypeName': {
       // <-- all types
       customDecorators: {
-        '@*': {
+        '@*RootBlock': {
           // <-- for root block of all types
           '@JsonSerializable(explicitToJson: true)': {
             appliesOn: ['class'],
@@ -27,7 +27,7 @@ export const customDecoratorsConfig = mergeConfig({
       // <-- specific typeName(s); this will work for both Droid and Starship
       customDecorators: {
         // comma-separated field names
-        '@*': {
+        '@*RootBlock': {
           // <-- for root block of Droid and Starship
           '@FreezedUnionValue': {
             appliesOn: ['named_factory_for_union_types', 'class'],
@@ -45,12 +45,12 @@ export const customDecoratorsConfig = mergeConfig({
         },
       },
     },
-    'Starship, @*': {
+    'Starship, @*TypeName': {
       // comma-separated type names
       // <-- specific typeName(s); this will work for Starship and all typeNames
       customDecorators: {
         // comma-separated field names
-        '@*': {
+        '@*RootBlock': {
           // <-- for root block of Starship and all typeNames
           '@HiveObject': {
             appliesOn: ['class'],
@@ -58,11 +58,11 @@ export const customDecoratorsConfig = mergeConfig({
             mapsToFreezedAs: 'custom',
           },
         },
-        id: {
-          // <-- for `id` field of Starship
+        '@*FieldName': {
+          // <-- for all fields of Starship
           '@HiveType': {
             appliesOn: ['default_factory'],
-            arguments: ['1'],
+            arguments: ['${index}'], //TODO: if the string matches `/^${index}/gm`, it will be replaced with the index of the field
             mapsToFreezedAs: 'custom',
           },
         },

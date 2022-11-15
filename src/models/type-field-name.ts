@@ -1,4 +1,4 @@
-import { FlutterFreezedPluginConfig, defaultFreezedPluginConfig } from 'src/config';
+import { FlutterFreezedPluginConfig, defaultFreezedPluginConfig } from '../config';
 
 export type TypeNameValue = string;
 export type FieldNameValue = string;
@@ -38,7 +38,7 @@ export class TypeName extends TypeFieldName {
 
   public static fromGlobalName = (config: FlutterFreezedPluginConfig) =>
     TypeFieldName.fromString(
-      config.globalName?.typeName ?? defaultFreezedPluginConfig.globalName?.typeName ?? '@*TypeFieldName'
+      config.globalName?.typeName ?? defaultFreezedPluginConfig.globalName?.typeName ?? '@*TypeName'
     );
 }
 
