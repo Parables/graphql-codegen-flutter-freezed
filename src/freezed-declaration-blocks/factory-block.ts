@@ -1,21 +1,31 @@
-import { FlutterFreezedPluginConfig } from '../config';
+import {
+  AppliesOnDefaultFactory,
+  AppliesOnFactory,
+  AppliesOnNamedFactory,
+  FlutterFreezedPluginConfig,
+  NodeType,
+} from 'src/config';
+import { TypeName } from 'src/models/type-field-name';
 import {
   buildBlockComment,
-  // buildBlockDecorators,
+  buildBlockDecorators,
   buildBlockHeader,
   buildBlockBody,
   buildBlockFooter,
-  NodeType,
   NodeRepository,
 } from '../utils';
 
 export class FreezedFactoryBlock {
-  public static serializeFactory = (blockName: string): string => {
-    return `==>factory==>${blockName}\n`;
+  public static serializeFactory = (typeName: TypeName, appliesOn: AppliesOnDefaultFactory[]): string => {
+    return `==>factory==>${typeName.value}==>${appliesOn.join(',')}\n`;
   };
 
-  public static serializeNamedFactory = (blockName: string, namedConstructor: string): string => {
-    return `==>named_factory==>${blockName}==>${namedConstructor}\n`;
+  public static serializeNamedFactory = (
+    typeName: TypeName,
+    namedConstructor: string,
+    appliesOn: AppliesOnNamedFactory[]
+  ): string => {
+    return `==>named_factory==>${typeName.value}==>${namedConstructor}==>${appliesOn.join(',')}\n`;
   };
 
   public static extractAndReplaceTokens = (
@@ -27,14 +37,26 @@ export class FreezedFactoryBlock {
       .map(block => {
         if (block.includes('==>factory==>')) {
           return block.replace(/==>factory==>.+\n?/gm, token => {
-            const blockName = token.replace('==>factory==>', '').trim();
-            return this.deserializeFactory(config, nodeRepository, blockName);
+            const pattern = token.replace('==>factory==>', '').trim();
+            const [typeName, appliesOn] = pattern.split('==>');
+            return this.deserializeFactory(
+              config,
+              nodeRepository,
+              TypeName.fromString(typeName),
+              appliesOn.split(',') as AppliesOnDefaultFactory[]
+            );
           });
         } else if (block.includes('==>named_factory==>')) {
           return block.replace(/==>named_factory==>.+\n/gm, token => {
             const pattern = token.replace('==>named_factory==>', '').trim();
-            const [blockName, namedConstructor] = pattern.split('==>');
-            return this.deserializeNamedFactory(config, nodeRepository, blockName, namedConstructor);
+            const [typeName, namedConstructor, appliesOn] = pattern.split('==>');
+            return this.deserializeNamedFactory(
+              config,
+              nodeRepository,
+              TypeName.fromString(typeName),
+              namedConstructor,
+              appliesOn.split(',') as AppliesOnNamedFactory[]
+            );
           });
         }
         return block;
@@ -45,12 +67,13 @@ export class FreezedFactoryBlock {
   public static deserializeFactory = (
     config: FlutterFreezedPluginConfig,
     nodeRepository: NodeRepository,
-    blockName: string
+    typeName: TypeName,
+    appliesOn: AppliesOnDefaultFactory[]
   ): string => {
-    const node = nodeRepository.get(blockName);
+    const node = nodeRepository.get(typeName.value);
 
     if (node) {
-      return FreezedFactoryBlock.buildFromFactory(config, node, blockName);
+      return FreezedFactoryBlock.buildFromFactory(config, node, typeName, appliesOn);
     }
 
     return '';
@@ -59,47 +82,59 @@ export class FreezedFactoryBlock {
   public static deserializeNamedFactory = (
     config: FlutterFreezedPluginConfig,
     nodeRepository: NodeRepository,
-    blockName: string,
-    namedConstructor: string
+    typeName: TypeName,
+    namedConstructor: string,
+    appliesOn: AppliesOnNamedFactory[]
   ): string => {
     const node = nodeRepository.get(namedConstructor);
 
     if (node) {
-      return FreezedFactoryBlock.buildFromNamedFactory(config, node, blockName, namedConstructor);
+      return FreezedFactoryBlock.buildFromNamedFactory(config, node, typeName, namedConstructor, appliesOn);
     }
 
     return '';
   };
 
-  public static buildFromFactory = (config: FlutterFreezedPluginConfig, node: NodeType, blockName: string): string => {
-    return FreezedFactoryBlock.build(config, node, 'factory', blockName);
+  public static buildFromFactory = (
+    config: FlutterFreezedPluginConfig,
+    node: NodeType,
+    typeName: TypeName,
+    appliesOn: AppliesOnDefaultFactory[]
+  ): string => {
+    return FreezedFactoryBlock.build(config, node, appliesOn, typeName);
   };
 
   public static buildFromNamedFactory = (
     config: FlutterFreezedPluginConfig,
     node: NodeType,
-    blockName: string,
-    namedConstructor: string
+    typeName: TypeName,
+    namedConstructor: string,
+    appliesOn: AppliesOnNamedFactory[]
   ): string => {
-    return FreezedFactoryBlock.build(config, node, 'named_factory', blockName, namedConstructor);
+    return FreezedFactoryBlock.build(config, node, appliesOn, typeName, namedConstructor);
   };
 
   public static build(
     config: FlutterFreezedPluginConfig,
     node: NodeType,
-    blockType: 'factory' | 'named_factory',
-    blockName: string,
+    appliesOn: AppliesOnFactory[],
+    typeName: TypeName,
+
     namedConstructor = ''
   ): string {
     let block = '';
 
-    // TODO: Implement comments(multi-line) and decorators
-
     block += buildBlockComment(node);
-    // block += buildBlockDecorators(node, config);
-    block += buildBlockHeader(config, node, blockType, blockName, namedConstructor);
-    block += buildBlockBody(config, node, blockType);
-    block += buildBlockFooter(config, node, blockType, blockType === 'factory' ? node.name.value : namedConstructor);
+
+    block += buildBlockDecorators(config, node, appliesOn);
+
+    block += buildBlockHeader(config, node, appliesOn, typeName, namedConstructor);
+
+    block += buildBlockBody(config, node, appliesOn);
+
+    const _namedConstructor = appliesOn.includes('default_factory') ? node.name.value : namedConstructor;
+    block += buildBlockFooter(config, node, appliesOn, _namedConstructor);
+
     return block;
   }
 }

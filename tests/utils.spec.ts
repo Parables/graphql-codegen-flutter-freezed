@@ -15,7 +15,7 @@ import {
   defaultFreezedConfig,
   defaultFreezedPluginConfig,
   escapeDartKeyword,
-  getGraphQLTypeConfigValue,
+  getTypeConfigValue,
   mergeConfig,
   nodeIsObjectType,
   NodeRepository,
@@ -138,83 +138,83 @@ describe('flutter-freezed-plugin-utils', () => {
     const typeName = 'Starship';
 
     test('without a typeName, returns the value from the globalFreezedConfig(target)', () => {
-      expect(getGraphQLTypeConfigValue('alwaysUseJsonKeyName', config)).toBe(false);
-      expect(getGraphQLTypeConfigValue('copyWith', config)).toBeUndefined();
-      expect(getGraphQLTypeConfigValue('customDecorators', config)).toMatchObject({});
-      expect(getGraphQLTypeConfigValue('dartKeywordEscapeCasing', config)).toBeUndefined();
-      expect(getGraphQLTypeConfigValue('dartKeywordEscapePrefix', config)).toBeUndefined();
-      expect(getGraphQLTypeConfigValue('dartKeywordEscapeSuffix', config)).toBe('_');
-      expect(getGraphQLTypeConfigValue('equal', config)).toBeUndefined();
-      expect(getGraphQLTypeConfigValue('escapeDartKeywords', config)).toBe(true);
-      expect(getGraphQLTypeConfigValue('fromJsonToJson', config)).toBe(true);
-      expect(getGraphQLTypeConfigValue('immutable', config)).toBe(true);
-      expect(getGraphQLTypeConfigValue('makeCollectionsUnmodifiable', config)).toBeUndefined();
-      expect(getGraphQLTypeConfigValue('mergeInputs', config)).toMatchObject([]);
-      expect(getGraphQLTypeConfigValue('mutableInputs', config)).toBe(true);
-      expect(getGraphQLTypeConfigValue('privateEmptyConstructor', config)).toBe(true);
-      expect(getGraphQLTypeConfigValue('unionKey', config)).toBeUndefined();
-      expect(getGraphQLTypeConfigValue('unionValueCase', config)).toBe('FreezedUnionCase.camel');
+      expect(getTypeConfigValue('alwaysUseJsonKeyName', config)).toBe(false);
+      expect(getTypeConfigValue('copyWith', config)).toBeUndefined();
+      expect(getTypeConfigValue('customDecorators', config)).toMatchObject({});
+      expect(getTypeConfigValue('dartKeywordEscapeCasing', config)).toBeUndefined();
+      expect(getTypeConfigValue('dartKeywordEscapePrefix', config)).toBeUndefined();
+      expect(getTypeConfigValue('dartKeywordEscapeSuffix', config)).toBe('_');
+      expect(getTypeConfigValue('equal', config)).toBeUndefined();
+      expect(getTypeConfigValue('escapeDartKeywords', config)).toBe(true);
+      expect(getTypeConfigValue('fromJsonToJson', config)).toBe(true);
+      expect(getTypeConfigValue('immutable', config)).toBe(true);
+      expect(getTypeConfigValue('makeCollectionsUnmodifiable', config)).toBeUndefined();
+      expect(getTypeConfigValue('mergeInputs', config)).toMatchObject([]);
+      expect(getTypeConfigValue('mutableInputs', config)).toBe(true);
+      expect(getTypeConfigValue('privateEmptyConstructor', config)).toBe(true);
+      expect(getTypeConfigValue('unionKey', config)).toBeUndefined();
+      expect(getTypeConfigValue('unionValueCase', config)).toBe('FreezedUnionCase.camel');
     });
 
     test('without a typeName, will use the defaultValue if the globalFreezedConfig(target) values is undefined', () => {
-      expect(getGraphQLTypeConfigValue('copyWith', config, undefined, true)).toBe(true);
-      expect(getGraphQLTypeConfigValue('copyWith', config, undefined, false)).toBe(false);
+      expect(getTypeConfigValue('copyWith', config, undefined, true)).toBe(true);
+      expect(getTypeConfigValue('copyWith', config, undefined, false)).toBe(false);
 
-      expect(getGraphQLTypeConfigValue('dartKeywordEscapeCasing', config, undefined, 'snake_case')).toBe('snake_case');
-      expect(getGraphQLTypeConfigValue('dartKeywordEscapeCasing', config, undefined, 'camelCase')).toBe('camelCase');
-      expect(getGraphQLTypeConfigValue('dartKeywordEscapeCasing', config, undefined, 'PascalCase')).toBe('PascalCase');
+      expect(getTypeConfigValue('dartKeywordEscapeCasing', config, undefined, 'snake_case')).toBe('snake_case');
+      expect(getTypeConfigValue('dartKeywordEscapeCasing', config, undefined, 'camelCase')).toBe('camelCase');
+      expect(getTypeConfigValue('dartKeywordEscapeCasing', config, undefined, 'PascalCase')).toBe('PascalCase');
 
-      expect(getGraphQLTypeConfigValue('dartKeywordEscapePrefix', config, undefined, 'GQL_')).toBe('GQL_');
-      expect(getGraphQLTypeConfigValue('dartKeywordEscapePrefix', config, undefined, 'ff')).toBe('ff');
+      expect(getTypeConfigValue('dartKeywordEscapePrefix', config, undefined, 'GQL_')).toBe('GQL_');
+      expect(getTypeConfigValue('dartKeywordEscapePrefix', config, undefined, 'ff')).toBe('ff');
 
-      expect(getGraphQLTypeConfigValue('equal', config, undefined, true)).toBe(true);
-      expect(getGraphQLTypeConfigValue('equal', config, undefined, false)).toBe(false);
+      expect(getTypeConfigValue('equal', config, undefined, true)).toBe(true);
+      expect(getTypeConfigValue('equal', config, undefined, false)).toBe(false);
 
-      expect(getGraphQLTypeConfigValue('makeCollectionsUnmodifiable', config, undefined, true)).toBe(true);
-      expect(getGraphQLTypeConfigValue('makeCollectionsUnmodifiable', config, undefined, false)).toBe(false);
+      expect(getTypeConfigValue('makeCollectionsUnmodifiable', config, undefined, true)).toBe(true);
+      expect(getTypeConfigValue('makeCollectionsUnmodifiable', config, undefined, false)).toBe(false);
 
-      expect(getGraphQLTypeConfigValue('unionKey', config, undefined, 'runtimeType')).toBe('runtimeType');
-      expect(getGraphQLTypeConfigValue('unionKey', config, undefined, 'type')).toBe('type');
+      expect(getTypeConfigValue('unionKey', config, undefined, 'runtimeType')).toBe('runtimeType');
+      expect(getTypeConfigValue('unionKey', config, undefined, 'type')).toBe('type');
     });
 
     test('given a typeName, returns the value from the typeSpecificFreezedConfig(target)', () => {
-      expect(getGraphQLTypeConfigValue('alwaysUseJsonKeyName', config, typeName)).toBe(true);
-      expect(getGraphQLTypeConfigValue('copyWith', config, typeName)).toBe(false);
-      expect(getGraphQLTypeConfigValue('immutable', config, typeName)).toBe(false);
-      expect(getGraphQLTypeConfigValue('unionValueCase', config, typeName)).toBe('FreezedUnionCase.pascal');
+      expect(getTypeConfigValue('alwaysUseJsonKeyName', config, typeName)).toBe(true);
+      expect(getTypeConfigValue('copyWith', config, typeName)).toBe(false);
+      expect(getTypeConfigValue('immutable', config, typeName)).toBe(false);
+      expect(getTypeConfigValue('unionValueCase', config, typeName)).toBe('FreezedUnionCase.pascal');
     });
 
     test('given a typeName, falls back to the globalFreezedConfig if they value is undefined', () => {
-      expect(getGraphQLTypeConfigValue('customDecorators', config, typeName)).toMatchObject({});
-      expect(getGraphQLTypeConfigValue('dartKeywordEscapeCasing', config, typeName)).toBeUndefined();
-      expect(getGraphQLTypeConfigValue('dartKeywordEscapePrefix', config, typeName)).toBeUndefined();
-      expect(getGraphQLTypeConfigValue('dartKeywordEscapeSuffix', config, typeName)).toBe('_');
-      expect(getGraphQLTypeConfigValue('equal', config, typeName)).toBeUndefined();
-      expect(getGraphQLTypeConfigValue('escapeDartKeywords', config, typeName)).toBe(true);
-      expect(getGraphQLTypeConfigValue('fromJsonToJson', config, typeName)).toBe(true);
-      expect(getGraphQLTypeConfigValue('makeCollectionsUnmodifiable', config, typeName)).toBeUndefined();
-      expect(getGraphQLTypeConfigValue('mergeInputs', config, typeName)).toMatchObject([]);
-      expect(getGraphQLTypeConfigValue('mutableInputs', config, typeName)).toBe(true);
-      expect(getGraphQLTypeConfigValue('privateEmptyConstructor', config, typeName)).toBe(true);
-      expect(getGraphQLTypeConfigValue('unionKey', config, typeName)).toBeUndefined();
+      expect(getTypeConfigValue('customDecorators', config, typeName)).toMatchObject({});
+      expect(getTypeConfigValue('dartKeywordEscapeCasing', config, typeName)).toBeUndefined();
+      expect(getTypeConfigValue('dartKeywordEscapePrefix', config, typeName)).toBeUndefined();
+      expect(getTypeConfigValue('dartKeywordEscapeSuffix', config, typeName)).toBe('_');
+      expect(getTypeConfigValue('equal', config, typeName)).toBeUndefined();
+      expect(getTypeConfigValue('escapeDartKeywords', config, typeName)).toBe(true);
+      expect(getTypeConfigValue('fromJsonToJson', config, typeName)).toBe(true);
+      expect(getTypeConfigValue('makeCollectionsUnmodifiable', config, typeName)).toBeUndefined();
+      expect(getTypeConfigValue('mergeInputs', config, typeName)).toMatchObject([]);
+      expect(getTypeConfigValue('mutableInputs', config, typeName)).toBe(true);
+      expect(getTypeConfigValue('privateEmptyConstructor', config, typeName)).toBe(true);
+      expect(getTypeConfigValue('unionKey', config, typeName)).toBeUndefined();
     });
 
     test('given a typeName, will use the defaultValue if both typeSpecificFreezedConfig(target) and globalFreezedConfig(fallback) values is undefined', () => {
-      expect(getGraphQLTypeConfigValue('dartKeywordEscapeCasing', config, typeName, 'snake_case')).toBe('snake_case');
-      expect(getGraphQLTypeConfigValue('dartKeywordEscapeCasing', config, typeName, 'camelCase')).toBe('camelCase');
-      expect(getGraphQLTypeConfigValue('dartKeywordEscapeCasing', config, typeName, 'PascalCase')).toBe('PascalCase');
+      expect(getTypeConfigValue('dartKeywordEscapeCasing', config, typeName, 'snake_case')).toBe('snake_case');
+      expect(getTypeConfigValue('dartKeywordEscapeCasing', config, typeName, 'camelCase')).toBe('camelCase');
+      expect(getTypeConfigValue('dartKeywordEscapeCasing', config, typeName, 'PascalCase')).toBe('PascalCase');
 
-      expect(getGraphQLTypeConfigValue('dartKeywordEscapePrefix', config, typeName, 'GQL_')).toBe('GQL_');
-      expect(getGraphQLTypeConfigValue('dartKeywordEscapePrefix', config, typeName, 'ff')).toBe('ff');
+      expect(getTypeConfigValue('dartKeywordEscapePrefix', config, typeName, 'GQL_')).toBe('GQL_');
+      expect(getTypeConfigValue('dartKeywordEscapePrefix', config, typeName, 'ff')).toBe('ff');
 
-      expect(getGraphQLTypeConfigValue('equal', config, typeName, true)).toBe(true);
-      expect(getGraphQLTypeConfigValue('equal', config, typeName, false)).toBe(false);
+      expect(getTypeConfigValue('equal', config, typeName, true)).toBe(true);
+      expect(getTypeConfigValue('equal', config, typeName, false)).toBe(false);
 
-      expect(getGraphQLTypeConfigValue('makeCollectionsUnmodifiable', config, typeName, true)).toBe(true);
-      expect(getGraphQLTypeConfigValue('makeCollectionsUnmodifiable', config, typeName, false)).toBe(false);
+      expect(getTypeConfigValue('makeCollectionsUnmodifiable', config, typeName, true)).toBe(true);
+      expect(getTypeConfigValue('makeCollectionsUnmodifiable', config, typeName, false)).toBe(false);
 
-      expect(getGraphQLTypeConfigValue('unionKey', config, typeName, 'runtimeType')).toBe('runtimeType');
-      expect(getGraphQLTypeConfigValue('unionKey', config, typeName, 'type')).toBe('type');
+      expect(getTypeConfigValue('unionKey', config, typeName, 'runtimeType')).toBe('runtimeType');
+      expect(getTypeConfigValue('unionKey', config, typeName, 'type')).toBe('type');
     });
   });
 

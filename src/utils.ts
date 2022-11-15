@@ -1,4 +1,4 @@
-import { indent } from '@graphql-codegen/visitor-plugin-common';
+import { indent, indentMultiline } from '@graphql-codegen/visitor-plugin-common';
 import { camelCase, pascalCase, snakeCase } from 'change-case-all';
 import {
   ArgumentNode,
@@ -6,90 +6,40 @@ import {
   DirectiveNode,
   EnumTypeDefinitionNode,
   EnumValueDefinitionNode,
-  FieldDefinitionNode,
   InputObjectTypeDefinitionNode,
-  InputValueDefinitionNode,
   Kind,
   ListTypeNode,
   NamedTypeNode,
   NonNullTypeNode,
   ObjectTypeDefinitionNode,
   TypeNode,
-  UnionTypeDefinitionNode,
 } from 'graphql';
 import {
   AppliesOn,
   FlutterFreezedPluginConfig,
   DART_SCALARS,
   DartIdentifierCasing,
-  DART_KEYWORDS,
-  GraphQLTypeConfig,
+  OptionInTypeConfig,
+  defaultFreezedPluginConfig,
+  CustomDecorators,
+  defaultTypeConfig,
+  FieldType,
+  NodeType,
+  ObjectType,
+  AppliesOnEnum,
+  AppliesOnClass,
+  AppliesOnFactory,
+  AppliesOnParameters,
+  AppliesOnEnumValue,
+  AppliesOnNamedFactory,
+  AppliesOnDefaultFactory,
+  MergeInputs,
+  DeprecatedFields,
 } from './config';
 import { FreezedDeclarationBlock, FreezedFactoryBlock } from './freezed-declaration-blocks';
 import { FreezedParameterBlock } from './freezed-declaration-blocks/parameter-block';
-
-export type NodeType =
-  | ObjectTypeDefinitionNode
-  | InputObjectTypeDefinitionNode
-  | UnionTypeDefinitionNode
-  | EnumTypeDefinitionNode;
-
-export type FieldType = FieldDefinitionNode | InputValueDefinitionNode;
-
-export type ObjectType = ObjectTypeDefinitionNode | InputObjectTypeDefinitionNode;
-
-/** initializes a FreezedPluginConfig with the defaults values */
-export const defaultFreezedPluginConfig: FlutterFreezedPluginConfig = {
-  allKey: '@*',
-  camelCasedEnums: true,
-  customScalars: {},
-  fileName: 'app_models',
-  graphQLTypeConfig: {},
-  ignoreTypes: [],
-};
-
-/** initializes a GraphQLTypeConfig with the defaults values */
-export const defaultGraphQLTypeConfig: GraphQLTypeConfig = {
-  alwaysUseJsonKeyName: undefined,
-  copyWith: undefined,
-  customDecorators: undefined,
-  defaultValue: undefined,
-  deprecated: undefined,
-  equal: undefined,
-  escapeDartKeywords: true,
-  final: undefined,
-  fromJsonToJson: true,
-  immutable: true,
-  makeCollectionsUnmodifiable: undefined,
-  mergeInputs: undefined,
-  mutableInputs: true,
-  privateEmptyConstructor: true,
-  unionKey: undefined,
-  unionValueCase: undefined,
-};
-
-export const defaultEscapeDartKeywordConfig = {};
-
-export const mergeConfig = (
-  baseConfig?: Partial<FlutterFreezedPluginConfig>,
-  newConfig?: Partial<FlutterFreezedPluginConfig>
-): FlutterFreezedPluginConfig => {
-  return {
-    camelCasedEnums: newConfig?.camelCasedEnums ?? baseConfig?.camelCasedEnums ?? true,
-    customScalars: { ...(baseConfig?.customScalars ?? {}), ...(newConfig?.customScalars ?? {}) },
-    fileName: newConfig?.fileName ?? baseConfig?.fileName ?? 'app_models',
-    globalFreezedConfig: {
-      ...defaultFreezedConfig,
-      ...(baseConfig?.globalFreezedConfig ?? {}),
-      ...(newConfig?.globalFreezedConfig ?? {}),
-    },
-    ignoreTypes: [...(baseConfig?.ignoreTypes ?? []), ...(newConfig?.ignoreTypes ?? [])],
-    graphQLTypeConfig: {
-      ...(baseConfig?.graphQLTypeConfig ?? {}),
-      ...(newConfig?.graphQLTypeConfig ?? {}),
-    },
-  };
-};
+import { BlockName } from './models/block-name';
+import { TypeName, FieldName } from './models/type-field-name';
 
 //#region helpers
 
@@ -98,27 +48,98 @@ export const nodeIsObjectType = (
 ): node is ObjectTypeDefinitionNode | InputObjectTypeDefinitionNode =>
   node.kind === Kind.OBJECT_TYPE_DEFINITION || node.kind === Kind.INPUT_OBJECT_TYPE_DEFINITION;
 
-/**
- *  Returns the value of the `FreezedConfig` option for a specific type if given `typeName` or else fallbacks to the value of the `globalFreezedConfig` for that option
- * @param key The name of the `FreezedConfig` config option
- * @param config The plugin configuration object
- * @param typeName The Graphql Type name, used to get the config option from `typeSpecificFreezedConfig`
- * @param defaultValue If the value of the config option is undefined, this default value will be returned
- * @returns The value of the config option
- */
-/* export function getGraphQLTypeConfigValue<T>(
-  config: FlutterFreezedPluginConfig,
-  key: TypeConfigKey,
-  typeName: string = config.allKey ?? '@*',
-  defaultValue?: T
-): T {
-  return (config?.graphQLTypeConfig?.[typeName]?.[key] ?? defaultValue) as T;
-} */
+export const appliesOnBlock = <T extends AppliesOn>(appliesOn: T[], expected: T[]) => {
+  return appliesOn.every(a => expected.includes(a));
+};
 
-export const valueFromRecord = <T>(record: Record<string | number | symbol, T>, key: string): T | undefined => {
-  const keys = Object.keys(record);
-  const keyName = keys.find(k => k.includes(key));
-  return keyName ? record[keyName] : undefined;
+export const appliesOnEnumBlock = <T extends AppliesOn>(appliesOn: T[]) => {
+  return appliesOnBlock(appliesOn, ['enum'] as T[]);
+};
+
+export const appliesOnEnumValue = <T extends AppliesOn>(appliesOn: T[]) => {
+  return appliesOnBlock(appliesOn, ['enum_value'] as T[]);
+};
+
+export const appliesOnClassBlock = <T extends AppliesOn>(appliesOn: T[]) => {
+  return appliesOnBlock(appliesOn, ['class'] as T[]);
+};
+
+export const appliesOnFactoryBlock = <T extends AppliesOn>(appliesOn: T[]) => {
+  return appliesOnBlock(appliesOn, [
+    'factory',
+    'default_factory',
+    'named_factory',
+    'named_factory_for_merged_inputs',
+    'named_factory_for_union_types',
+  ] as T[]);
+};
+
+export const appliesOnParameterBlock = <T extends AppliesOn>(appliesOn: T[]) => {
+  return appliesOnBlock(appliesOn, [
+    'parameter',
+    'default_factory_parameter',
+    'named_factory_parameter',
+    'named_factory_parameter_for_merged_inputs',
+    'named_factory_parameter_for_union_types',
+  ] as T[]);
+};
+
+export const mergeConfig = (
+  baseConfig?: Partial<FlutterFreezedPluginConfig>,
+  newConfig?: Partial<FlutterFreezedPluginConfig>
+): FlutterFreezedPluginConfig => {
+  return {
+    camelCasedEnums:
+      newConfig?.camelCasedEnums ?? baseConfig?.camelCasedEnums ?? defaultFreezedPluginConfig.camelCasedEnums,
+    customScalars: { ...(baseConfig?.customScalars ?? {}), ...(newConfig?.customScalars ?? {}) },
+    fileName: newConfig?.fileName ?? baseConfig?.fileName ?? defaultFreezedPluginConfig.fileName,
+    globalName: newConfig?.globalName ?? baseConfig?.globalName ?? defaultFreezedPluginConfig.globalName,
+    ignoreTypes: [...(baseConfig?.ignoreTypes ?? []), ...(newConfig?.ignoreTypes ?? [])],
+    typeConfig: {
+      ...(baseConfig?.typeConfig ?? {}),
+      ...(newConfig?.typeConfig ?? {}),
+    },
+  };
+};
+
+/* export const optionFromConfigOrDefault = <T>(
+  config: FlutterFreezedPluginConfig,
+  option: OptionInConfig
+): T | undefined => {
+  return (config?.[option] ?? defaultFreezedPluginConfig?.[option]) as T | undefined;
+}; */
+
+export const getTypeConfigOption = <T>(
+  config: FlutterFreezedPluginConfig,
+  typeName: TypeName,
+  option: OptionInTypeConfig,
+  defaultValue?: T
+): T | undefined => {
+  return ((config.typeConfig?.[typeName.value]?.[option] ?? defaultTypeConfig?.[option]) as T) ?? defaultValue;
+};
+
+export const optionFromAnyConfig = <
+  T extends Record<string, any>,
+  U extends string = Exclude<'number' | 'symbol', keyof T>
+>(
+  config: T,
+  option: U,
+  defaultValue?: T[U]
+): T[U] | undefined => {
+  return config[option] ?? defaultValue;
+};
+
+// TODO: TEst this function
+const findOptionWithTypeFieldName = (config: Record<string, any>, typeFieldName: string, option: string) => {
+  // get all options for
+  const commaSeparatedNames = Object.keys(config);
+  return commaSeparatedNames.filter(n => n.includes(typeFieldName)).map(k => config[k][option] !== undefined);
+};
+
+const mergeValuesForKey = (record: Record<string, any>, key: string) => {
+  // get all options for
+  const commaSeparatedNames = Object.keys(record);
+  const targetName = commaSeparatedNames.filter(n => n.includes(key));
 };
 
 /**
@@ -141,73 +162,6 @@ export const buildImportStatements = (fileName: string) => {
   ].join('');
 };
 
-/**
- * constructs the name for Freezed enum, class, factory and parameter blocks
- * @param config The plugin configuration object
- * @param blockName The name of the block usually derived from the `node.name.value`, `field.name.value` or `type.name.value` when building Freezed block
- * @param typeName The Graphql Type name, used to get the config option from `typeSpecificFreezedConfig`
- * @param casing Specify the casing to be used for the name. Available options are: `snake_case`, `camelCase`, `PascalCase`
- * @param decorateWithAtJsonKey wraps the name in a `@JsonKey(name: 'blockName') name` decorator
- * @returns the new camelCased/PascalCased `@JsonKey` decorated name for the FreezedBlock
- */
-export const buildBlockName = (
-  config: FlutterFreezedPluginConfig,
-  blockName: string,
-  typeName: string = blockName,
-  casing?: DartIdentifierCasing,
-  decorateWithAtJsonKey?: boolean
-): string => {
-  const escapedBlockName = escapeDartKeyword(config, blockName, typeName);
-
-  const casedBlockName = dartCasing(escapedBlockName, casing);
-
-  if (isDartKeyword(casedBlockName)) {
-    const escapedBlockName = escapeDartKeyword(config, casedBlockName, typeName);
-    return decorateWithAtJsonKey ? `@JsonKey(name: '${blockName}') ${escapedBlockName}` : escapedBlockName;
-  }
-  return decorateWithAtJsonKey ? `@JsonKey(name: '${blockName}') ${casedBlockName}` : casedBlockName;
-};
-
-/**
- * checks whether name is a Dart Language keyword
- * @param name The name or identifier to be checked
- * @returns `true` if name is a Dart Language keyword, otherwise `false`
- */
-export const isDartKeyword = (name: string) => Object.hasOwn(DART_KEYWORDS, name);
-
-const allKey = (config: FlutterFreezedPluginConfig) => config.allKey ?? '@*';
-
-/**
- * Ensures that the `blockName` isn't a valid Dart language reserved keyword. It wraps the `blockName` the `dartKeywordEscapePrefix`, `dartKeywordEscapeSuffix` and `dartKeywordEscapeCasing` specified in the config
- * @param config The plugin configuration object
- * @param blockName The name of the block usually derived from the `node.name.value`, `field.name.value` or `type.name.value` when building Freezed block
- * @param typeName The Graphql Type name, used to get the config option from `typeSpecificFreezedConfig`
- * @returns
- */
-export const escapeDartKeyword = (
-  config: FlutterFreezedPluginConfig,
-  blockName: string,
-  typeName = allKey(config)
-): string => {
-  if (isDartKeyword(blockName)) {
-    const escapeDartKeywordsConfig = config.graphQLTypeConfig?.[typeName].escapeDartKeywords;
-    if (typeof escapeDartKeywordsConfig === 'boolean') {
-      const escapedBlockName = `${blockName}_`;
-      return dartCasing(escapedBlockName);
-    } else if (typeof escapeDartKeywordsConfig !== 'undefined') {
-      const escapeDartKeywords = valueFromRecord(escapeDartKeywordsConfig, typeName);
-      const prefix = escapeDartKeywords?.dartKeywordEscapePrefix ?? '';
-      const suffix = escapeDartKeywords?.dartKeywordEscapeSuffix ?? '_';
-      const casing = escapeDartKeywords?.dartKeywordEscapeCasing;
-
-      const escapedBlockName = `${prefix}${blockName}${suffix}`;
-
-      return dartCasing(escapedBlockName, casing);
-    }
-  }
-  return blockName;
-};
-
 export const dartCasing = (name: string, casing?: DartIdentifierCasing): string => {
   if (casing === 'camelCase') {
     return camelCase(name);
@@ -217,25 +171,6 @@ export const dartCasing = (name: string, casing?: DartIdentifierCasing): string 
     return snakeCase(name);
   }
   return name;
-};
-
-export const shouldDecorateWithAtJsonKey = (
-  blockType: 'enum_field' | 'parameter_field',
-  config: FlutterFreezedPluginConfig,
-  blockName: string,
-  typeName: string
-): boolean => {
-  const alwaysUseJsonKeyNameConfig = config.graphQLTypeConfig?.[typeName]?.alwaysUseJsonKeyName;
-  const alreadyCamelCased = !isDartKeyword(blockName) && camelCase(blockName) === blockName;
-
-  if (alwaysUseJsonKeyName) {
-    return true;
-  } else if (alreadyCamelCased) {
-    return false;
-  } else if (blockType === 'enum_field') {
-    return config.camelCasedEnums ?? true;
-  }
-  return false;
 };
 //#endregion
 
@@ -278,24 +213,70 @@ export const buildBlockComment = (node?: NodeType | EnumValueDefinitionNode): st
 //#region Step 03. Build Decorators
 
 // TODO: modify this for factory blocks too
-export const buildBlockDecorators = (config: FlutterFreezedPluginConfig, node: NodeType): string => {
-  const name = node.name.value;
+export const buildBlockDecorators = (
+  config: FlutterFreezedPluginConfig,
+  node: NodeType | EnumValueDefinitionNode,
+  appliesOn: AppliesOn[],
+  field?: FieldType
+): string => {
+  if (node.kind === Kind.ENUM_VALUE_DEFINITION) {
+    if (appliesOnEnumValue(appliesOn)) {
+      return buildEnumValueDecorators(config, node, appliesOn);
+    }
+  } else {
+    if (appliesOnEnumBlock(appliesOn)) {
+      return buildEnumBlockDecorators(config, node, appliesOn);
+    } else if (appliesOnClassBlock(appliesOn)) {
+      return buildClassBlockDecorators(config, node, appliesOn);
+    } else if (appliesOnFactoryBlock(appliesOn)) {
+      return buildFactoryBlockDecorators(config, node, appliesOn);
+    } else if (appliesOnParameterBlock(appliesOn) && field) {
+      return buildParameterBlockDecorators(config, node, field, appliesOn);
+    }
+  }
 
-  // determine if should mark as deprecated
-  const isDeprecated = config.graphQLTypeConfig?.[name]?.deprecated;
+  return '';
+};
 
-  const decorators =
-    node.kind === Kind.ENUM_TYPE_DEFINITION
-      ? [...transformCustomDecorators(getCustomDecorators(config, ['enum'], name), node)]
-      : [
-          buildFreezedDecorator(config, node),
-          ...transformCustomDecorators(getCustomDecorators(config, ['class'], name), node),
-        ];
+export const buildEnumValueDecorators = (
+  config: FlutterFreezedPluginConfig,
+  node: EnumValueDefinitionNode,
+  appliesOn: AppliesOn[]
+): string => {
+  return '';
+};
 
-  return decorators
-    .filter(d => d !== '@deprecated')
-    .concat(isDeprecated ? ['@deprecated\n'] : [])
-    .join('');
+export const buildEnumBlockDecorators = (
+  config: FlutterFreezedPluginConfig,
+  node: NodeType,
+  appliesOn: AppliesOn[]
+): string => {
+  return '';
+};
+
+export const buildClassBlockDecorators = (
+  config: FlutterFreezedPluginConfig,
+  node: NodeType,
+  appliesOn: AppliesOn[]
+): string => {
+  return '';
+};
+
+export const buildFactoryBlockDecorators = (
+  config: FlutterFreezedPluginConfig,
+  node: NodeType,
+  appliesOn: AppliesOn[]
+): string => {
+  return '';
+};
+
+export const buildParameterBlockDecorators = (
+  config: FlutterFreezedPluginConfig,
+  node: NodeType,
+  field: FieldType,
+  appliesOn: AppliesOn[]
+): string => {
+  return '';
 };
 
 export const buildFreezedDecorator = (config: FlutterFreezedPluginConfig, node: NodeType) => {
@@ -305,30 +286,25 @@ export const buildFreezedDecorator = (config: FlutterFreezedPluginConfig, node: 
 
 export const decorateAsUnfreezed = (config: FlutterFreezedPluginConfig, node: NodeType) => {
   const typeName = node.name.value;
-
-  const mutable =
-    !getGraphQLTypeConfigValue('immutable', config, typeName) ||
-    (node.kind === Kind.INPUT_OBJECT_TYPE_DEFINITION && getGraphQLTypeConfigValue('mutableInputs', config, typeName));
+  const immutable = config?.typeConfig?.[typeName]?.immutable ?? defaultTypeConfig.immutable;
+  const mutableInputs = config?.typeConfig?.[typeName]?.mutableInputs ?? defaultTypeConfig.mutableInputs;
+  const mutable = !immutable || (node.kind === Kind.INPUT_OBJECT_TYPE_DEFINITION && mutableInputs);
 
   return mutable ? '@unfreezed\n' : decorateAsFreezed(config, node);
 };
 
 export const decorateAsFreezed = (config: FlutterFreezedPluginConfig, node: NodeType) => {
-  const typeName = node.name.value;
+  const typeName = TypeName.fromConfig(config, node.name.value);
 
-  if (isCustomizedFreezed(config, node)) {
-    const copyWith = getGraphQLTypeConfigValue<boolean>(config, 'copyWith', typeName);
-    const equal = getGraphQLTypeConfigValue<boolean>(config, 'equal', typeName);
-    const makeCollectionsUnmodifiable = getGraphQLTypeConfigValue<boolean>(
+  if (isCustomizedFreezed(config, typeName)) {
+    const copyWith = getTypeConfigOption<boolean>(config, typeName, 'copyWith');
+    const equal = getTypeConfigOption<boolean>(config, typeName, 'equal');
+    const makeCollectionsUnmodifiable = getTypeConfigOption<boolean>(config, typeName, 'makeCollectionsUnmodifiable');
+    const unionKey = getTypeConfigOption<string>(config, typeName, 'unionKey');
+    const unionValueCase = getTypeConfigOption<'FreezedUnionCase.camel' | 'FreezedUnionCase.pascal'>(
       config,
-      'makeCollectionsUnmodifiable',
-      typeName
-    );
-    const unionKey = getGraphQLTypeConfigValue<string>(config, 'unionKey', typeName);
-    const unionValueCase = getGraphQLTypeConfigValue<'FreezedUnionCase.camel' | 'FreezedUnionCase.pascal'>(
-      config,
-      'unionValueCase',
-      typeName
+      typeName,
+      'unionValueCase'
     );
 
     let atFreezed = '@Freezed(\n';
@@ -361,19 +337,14 @@ export const decorateAsFreezed = (config: FlutterFreezedPluginConfig, node: Node
   return '@freezed\n';
 };
 
-export const isCustomizedFreezed = (config: FlutterFreezedPluginConfig, node: NodeType) => {
-  const typeName = node.name.value;
-
+export const isCustomizedFreezed = (config: FlutterFreezedPluginConfig, typeName: TypeName) => {
   return (
-    getGraphQLTypeConfigValue<boolean>(config, 'copyWith', typeName) !== undefined ||
-    getGraphQLTypeConfigValue<boolean>(config, 'equal', typeName) !== undefined ||
-    getGraphQLTypeConfigValue<boolean>(config, 'makeCollectionsUnmodifiable', typeName) !== undefined ||
-    getGraphQLTypeConfigValue<string>(config, 'unionKey', typeName) !== undefined ||
-    getGraphQLTypeConfigValue<'FreezedUnionCase.camel' | 'FreezedUnionCase.pascal'>(
-      config,
-      'unionValueCase',
-      typeName
-    ) !== undefined
+    getTypeConfigOption<boolean>(config, typeName, 'copyWith') !== undefined ||
+    getTypeConfigOption<boolean>(config, typeName, 'equal') !== undefined ||
+    getTypeConfigOption<boolean>(config, typeName, 'makeCollectionsUnmodifiable') !== undefined ||
+    getTypeConfigOption<string>(config, typeName, 'unionKey') !== undefined ||
+    getTypeConfigOption<'FreezedUnionCase.camel' | 'FreezedUnionCase.pascal'>(config, typeName, 'unionValueCase') !==
+      undefined
   );
 };
 
@@ -383,29 +354,38 @@ export const isCustomizedFreezed = (config: FlutterFreezedPluginConfig, node: No
 export function getCustomDecorators(
   config: FlutterFreezedPluginConfig,
   appliesOn: AppliesOn[],
-  typeName?: string | undefined,
-  fieldName?: string | undefined
-): CustomDecorator {
-  const filteredCustomDecorators: CustomDecorator = {};
-  const globalCustomDecorators = config?.globalFreezedConfig?.customDecorators ?? {};
-  let customDecorators: CustomDecorator = { ...globalCustomDecorators };
+  typeName: TypeName,
+  fieldName?: FieldName
+): CustomDecorators {
+  const filteredCustomDecorators: CustomDecorators = {};
+  const customDecoratorsForAllTypes = getTypeConfigOption<CustomDecorators>(
+    config,
+    TypeName.fromGlobalName(config),
+    'customDecorators',
+    {}
+  );
+  const customDecoratorsForSpecificType = getTypeConfigOption<CustomDecorators>(
+    config,
+    typeName,
+    'customDecorators',
+    {}
+  );
 
-  if (typeName) {
-    const typeConfig = config?.graphQLTypeConfig?.[typeName];
-    const typeSpecificCustomDecorators = typeConfig?.config?.customDecorators ?? {};
-    customDecorators = { ...customDecorators, ...typeSpecificCustomDecorators };
+  let customDecorators: CustomDecorators = { ...customDecoratorsForAllTypes, ...customDecoratorsForSpecificType };
 
-    if (fieldName) {
-      const fieldSpecificCustomDecorators = typeConfig?.fields?.[fieldName]?.customDecorators ?? {};
-      customDecorators = {
-        ...customDecorators,
-        ...fieldSpecificCustomDecorators,
-      };
-    }
+  if (fieldName) {
+    const customDecoratorsForSpecificFields = getTypeConfigOption<CustomDecorators>(
+      config,
+      fieldName,
+      'customDecorators',
+      {}
+    );
+
+    customDecorators = { ...customDecorators, ...customDecoratorsForSpecificFields };
   }
 
   Object.entries(customDecorators).forEach(([key, value]) =>
-    value?.applyOn?.forEach(a => {
+    value?.appliesOn?.forEach(a => {
       if (appliesOn.includes(a)) {
         filteredCustomDecorators[key] = value;
       }
@@ -416,7 +396,7 @@ export function getCustomDecorators(
 }
 
 export function transformCustomDecorators(
-  customDecorators: CustomDecorator,
+  customDecorators: CustomDecorators,
   node?: NodeType | undefined,
   field?: FieldType | undefined
 ): string[] {
@@ -463,7 +443,7 @@ export function transformCustomDecorators(
  * this decorator array might contain a `final` string which would be filtered out
  * and used to mark the parameter block as final
  */
-function directiveToString(directive: DirectiveNode, customDecorators: CustomDecorator) {
+function directiveToString(directive: DirectiveNode, customDecorators: CustomDecorators) {
   const key = directive.name.value;
   const value = customDecorators[key];
   if (value.mapsToFreezedAs === 'directive') {
@@ -507,39 +487,32 @@ function argToInt(arg: string) {
 export const buildBlockHeader = (
   config: FlutterFreezedPluginConfig,
   node: NodeType,
-  blockType: 'enum' | 'class' | 'factory' | 'named_factory' | 'parameter',
-  blockName?: string,
+  appliesOn: AppliesOn[],
+  typeName: TypeName,
   namedConstructor = '',
   field?: FieldType
 ): string => {
-  blockName ??= node.name.value;
-  const typeName = blockName;
-
-  if (blockType === 'enum') {
-    return buildEnumHeader(config, blockName);
-  } else if (blockType === 'class') {
-    const withPrivateEmptyConstructor = getGraphQLTypeConfigValue<boolean>(config, 'privateEmptyConstructor', typeName);
-    return buildClassHeader(config, blockName, withPrivateEmptyConstructor);
-  } else if (blockType === 'factory' || blockType === 'named_factory') {
-    const immutable = getGraphQLTypeConfigValue<boolean>(config, 'immutable', typeName);
-    return buildFactoryHeader(config, blockName, namedConstructor, immutable);
-  } else if (blockType === 'parameter' && field) {
-    return buildParameterHeader(config, node, field);
+  if (appliesOnEnumBlock(appliesOn)) {
+    return buildEnumHeader(config, typeName);
+  } else if (appliesOnClassBlock(appliesOn)) {
+    const withPrivateEmptyConstructor = getTypeConfigOption<boolean>(config, typeName, 'privateEmptyConstructor');
+    return buildClassHeader(config, typeName, withPrivateEmptyConstructor);
+  } else if (appliesOnFactoryBlock(appliesOn)) {
+    const immutable = getTypeConfigOption<boolean>(config, typeName, 'immutable');
+    return buildFactoryHeader(config, typeName, namedConstructor, immutable);
+  } else if (appliesOnParameterBlock(appliesOn) && field) {
+    return buildParameterHeader(config, node, field, appliesOn as AppliesOnParameters[]);
   }
   return '';
 };
 
-export const buildBlockBody = (
-  config: FlutterFreezedPluginConfig,
-  node: NodeType,
-  blockType: 'enum' | 'class' | 'factory' | 'named_factory'
-): string => {
-  if (blockType === 'enum' && node.kind === Kind.ENUM_TYPE_DEFINITION) {
+export const buildBlockBody = (config: FlutterFreezedPluginConfig, node: NodeType, appliesOn: AppliesOn[]): string => {
+  if (appliesOnEnumBlock(appliesOn) && node.kind === Kind.ENUM_TYPE_DEFINITION) {
     return buildEnumBody(config, node);
-  } else if (blockType === 'class') {
+  } else if (appliesOnClassBlock(appliesOn)) {
     return buildClassBody(config, node);
-  } else if ((blockType === 'factory' || blockType === 'named_factory') && nodeIsObjectType(node)) {
-    return buildFactoryBody(config, node);
+  } else if (appliesOnFactoryBlock(appliesOn) && nodeIsObjectType(node)) {
+    return buildFactoryBody(config, node, appliesOn as AppliesOnFactory[]);
   }
   return '';
 };
@@ -547,19 +520,22 @@ export const buildBlockBody = (
 export const buildBlockFooter = (
   config: FlutterFreezedPluginConfig,
   node: NodeType | FieldType,
-  blockType: 'enum' | 'class' | 'factory' | 'named_factory',
+  appliesOn: AppliesOn[],
   namedConstructor = ''
 ): string => {
-  const blockName = node.name.value;
-  const typeName = blockName;
+  const typeName = TypeName.fromConfig(config, node.name.value);
 
-  if (blockType === 'enum') {
+  if (appliesOnEnumBlock(appliesOn)) {
     return buildEnumFooter();
-  } else if (blockType === 'class') {
-    const fromJsonToJson = getGraphQLTypeConfigValue<boolean>('fromJsonToJson', config, typeName);
-    return buildClassFooter(config, blockName, fromJsonToJson);
-  } else if (blockType === 'factory' || (blockType === 'named_factory' && namedConstructor.length > 0)) {
-    return buildFactoryFooter(config, blockType, namedConstructor);
+  } else if (appliesOnClassBlock(appliesOn)) {
+    const fromJsonToJson = getTypeConfigOption<boolean>(config, typeName, 'fromJsonToJson');
+    return buildClassFooter(config, typeName, fromJsonToJson);
+  } else if (
+    appliesOn.includes('default_factory') ||
+    ((appliesOn.includes('named_factory_for_union_types') || appliesOn.includes('named_factory_for_merged_inputs')) &&
+      namedConstructor.length > 0)
+  ) {
+    return buildFactoryFooter(config, appliesOn as AppliesOnFactory[], namedConstructor);
   }
   return '';
 };
@@ -567,22 +543,21 @@ export const buildBlockFooter = (
 
 //#region Step 03.01. Build Enum Block
 
-export const buildEnumHeader = (config: FlutterFreezedPluginConfig, blockName: string): string => {
-  return `enum ${buildBlockName(config, blockName)} {\n`;
+export const buildEnumHeader = (config: FlutterFreezedPluginConfig, typeName: TypeName): string => {
+  return `enum ${BlockName.asEnumTypeName(config, typeName)} {\n`;
 };
 
 export const buildEnumBody = (config: FlutterFreezedPluginConfig, node: EnumTypeDefinitionNode): string => {
+  const typeName = TypeName.fromConfig(config, node.name.value);
   return (
     node.values
       ?.map((enumValue: EnumValueDefinitionNode) => {
-        const blockName = enumValue.name.value;
-        const typeName = node.name.value;
-        const camelCased = config.camelCasedEnums ?? true;
-        const casing: DartIdentifierCasing | undefined = camelCased ? 'camelCase' : undefined;
-        const decorateWithAtJsonKey = shouldDecorateWithAtJsonKey('enum_field', config, blockName, typeName);
-        const enumField = buildBlockName(config, blockName, typeName, casing, decorateWithAtJsonKey);
+        const fieldName = FieldName.fromConfig(config, enumValue.name.value);
+        const blockName = BlockName.asEnumValueName(config, typeName, fieldName);
 
-        return indent(`${buildBlockComment(enumValue)}${enumField},\n`);
+        const decorators = buildBlockDecorators(config, enumValue, ['enum_value'] as AppliesOnEnumValue[]);
+
+        return indentMultiline(`${decorators}${buildBlockComment(enumValue)}${blockName},\n`);
       })
       .join('') ?? ''
   );
@@ -598,11 +573,10 @@ export const buildEnumFooter = (): string => {
 
 export const buildClassHeader = (
   config: FlutterFreezedPluginConfig,
-  blockName: string,
+  typeName: TypeName,
   withPrivateEmptyConstructor = true
 ): string => {
-  const typeName = blockName;
-  const className = buildBlockName(config, blockName, typeName, 'PascalCase', false);
+  const className = BlockName.asClassName(config, typeName);
 
   const privateEmptyConstructor = withPrivateEmptyConstructor ? indent(`const ${className}._();\n\n`) : '';
 
@@ -610,44 +584,53 @@ export const buildClassHeader = (
 };
 
 export const buildClassBody = (config: FlutterFreezedPluginConfig, node: NodeType): string => {
-  const blockName = node.name.value;
-  const mergeInputs = getGraphQLTypeConfigValue<string[]>(config, 'mergeInputs', node.name.value, []);
+  const typeName = TypeName.fromConfig(config, node.name.value);
+
+  const typeMergeInputs = getTypeConfigOption<string[]>(config, typeName, 'mergeInputs', []);
+  const globalMergeInputs = getTypeConfigOption<string[]>(config, TypeName.fromGlobalName(config), 'mergeInputs', []);
+
+  const mergeInputs = [...(typeMergeInputs ?? []), ...(globalMergeInputs ?? [])];
 
   if (node.kind === Kind.UNION_TYPE_DEFINITION) {
     return (
-      node.types?.map(value => FreezedFactoryBlock.serializeNamedFactory(blockName, value.name.value)).join('') ?? ''
-    );
-  } else if (node.kind === Kind.OBJECT_TYPE_DEFINITION && mergeInputs?.length > 0) {
-    // return FreezedFactoryBlock.serializeFactory(blockName);
-    // TODO: Determine whether to mergeInputs
-
-    return (
-      [FreezedFactoryBlock.serializeFactory(blockName)]
-        /*  .concat(
-        mergeInputs.map(pattern => {
-          const separator = pattern.includes('$') ? '$' : pattern.includes(blockName) ? blockName : '*';
-          namedConstructor = camelCase(input.split(separator).join('_'));
-          factoryBlockKey = input.replace('$', name);
-          shape += `==>factory==>${factoryBlockKey}==>${'merged_input_factory'}==>${name}==>${namedConstructor}\n`;
-          return FreezedFactoryBlock.serializeNamedFactory(blockName, value.name.value);
+      node.types
+        ?.map(value => {
+          const namedConstructor = value.name.value;
+          return FreezedFactoryBlock.serializeNamedFactory(typeName, namedConstructor, [
+            'factory',
+            'named_factory',
+            'named_factory_for_union_types',
+          ] as AppliesOnNamedFactory[]);
         })
-      ) */
-        .join('')
+        .join('') ?? ''
     );
+  } else if (node.kind === Kind.OBJECT_TYPE_DEFINITION && (mergeInputs?.length ?? 0) > 0) {
+    return [FreezedFactoryBlock.serializeFactory(typeName, ['factory', 'default_factory'] as AppliesOnDefaultFactory[])]
+      .concat(
+        mergeInputs.map(pattern => {
+          const separator = pattern.includes('$') ? '$' : typeName.value;
+          const namedConstructor = camelCase(pattern.split(separator).join('_'));
+          return FreezedFactoryBlock.serializeNamedFactory(typeName, namedConstructor, [
+            'factory',
+            'named_factory',
+            'named_factory_for_merged_inputs',
+          ]);
+        })
+      )
+      .join('');
   }
   return '';
 };
 
 export const buildClassFooter = (
   config: FlutterFreezedPluginConfig,
-  blockName: string,
+  typeName: TypeName,
   fromJsonToJson = true
 ): string => {
-  const typeName = blockName;
-  const className = buildBlockName(config, blockName, typeName, 'PascalCase', false);
+  const blockName = BlockName.asClassName(config, typeName);
 
   if (fromJsonToJson) {
-    return indent(`factory ${className}.fromJson(Map<String, dynamic> json) => _$${className}FromJson(json);\n}\n\n`);
+    return indent(`factory ${blockName}.fromJson(Map<String, dynamic> json) => _$${blockName}FromJson(json);\n}\n\n`);
   }
   return '}\n\n';
 };
@@ -658,41 +641,49 @@ export const buildClassFooter = (
 
 export const buildFactoryHeader = (
   config: FlutterFreezedPluginConfig,
-  blockName: string,
+  typeName: TypeName,
   namedConstructor = '',
   immutable = true
 ) => {
   const constFactory = immutable ? indent('const factory') : indent('factory');
-  const typeName = blockName;
-  const decorateWithAtJsonKey = false;
-  const escapedBlockName = buildBlockName(config, blockName, typeName, 'PascalCase', decorateWithAtJsonKey);
-
   if (namedConstructor.length > 0) {
-    const blockName = namedConstructor;
-    const typeName = namedConstructor;
-    const decorateWithAtJsonKey = false;
-    const escapedNamedConstructor = buildBlockName(config, blockName, typeName, 'camelCase', decorateWithAtJsonKey);
-
-    return `${constFactory} ${escapedBlockName}.${escapedNamedConstructor}({\n`;
+    return `${constFactory} ${BlockName.asNamedConstructor(config, typeName, namedConstructor)}({\n`;
   }
 
-  return `${constFactory} ${escapedBlockName}({\n`;
+  return `${constFactory} ${BlockName.asClassName(config, typeName)}({\n`;
 };
 
-export const buildFactoryBody = (config: FlutterFreezedPluginConfig, node: ObjectType): string => {
-  return node.fields?.map(field => FreezedParameterBlock.build(config, node, 'parameter', field)).join('') ?? '';
+export const buildFactoryBody = (
+  config: FlutterFreezedPluginConfig,
+  node: ObjectType,
+  appliesOn: AppliesOnFactory[]
+): string => {
+  let appliesOnParameters: AppliesOnParameters[] = [];
+  if (appliesOn.includes('default_factory')) {
+    appliesOnParameters = ['parameter', 'default_factory_parameter'];
+  } else if (appliesOn.includes('named_factory_for_union_types')) {
+    appliesOnParameters = ['parameter', 'named_factory_parameter', 'named_factory_parameter_for_union_types'];
+  } else if (appliesOn.includes('named_factory_for_merged_inputs')) {
+    appliesOnParameters = ['parameter', 'named_factory_parameter', 'named_factory_parameter_for_merged_inputs'];
+  }
+
+  return (
+    node.fields
+      ?.map(field => {
+        return FreezedParameterBlock.build(config, node, appliesOnParameters, field);
+      })
+      .join('') ?? ''
+  );
 };
 
 export const buildFactoryFooter = (
   config: FlutterFreezedPluginConfig,
-  blockType: 'factory' | 'named_factory',
+  appliesOn: AppliesOnFactory[],
   namedConstructor: string
 ) => {
-  const blockName = namedConstructor;
-  const typeName = namedConstructor;
-  const decorateWithAtJsonKey = false;
-  const prefix = blockType === 'factory' ? '_' : '';
-  const factoryFooterName = buildBlockName(config, blockName, typeName, 'PascalCase', decorateWithAtJsonKey);
+  const typeName = TypeName.fromConfig(config, namedConstructor);
+  const prefix = appliesOn.includes('default_factory') ? '_' : '';
+  const factoryFooterName = BlockName.asClassName(config, typeName);
   return indent(`}) = ${prefix}${factoryFooterName};\n\n`);
 };
 
@@ -700,19 +691,25 @@ export const buildFactoryFooter = (
 
 //#region Step 03.04. Build Parameter Block
 
-export const buildParameterHeader = (config: FlutterFreezedPluginConfig, node: NodeType, field: FieldType): string => {
-  const decorators = ''; // TODO: modify the buildBlockDecorators to be used here
+export const buildParameterHeader = (
+  config: FlutterFreezedPluginConfig,
+  node: NodeType,
+  field: FieldType,
+  appliesOn: AppliesOnParameters[]
+): string => {
+  const typeName = TypeName.fromConfig(config, node.name.value);
+  const fieldName = TypeName.fromConfig(config, field.name.value);
 
+  const decorators = buildBlockDecorators(config, node, appliesOn);
+
+  const applyFinalOn = getTypeConfigOption(config, typeName, 'final', defaultTypeConfig.final)?.[fieldName.value];
   const markedFinal =
-    decorators.includes('final') || config.graphQLTypeConfig?.[node.name.value]?.fields?.[field.name.value]?.final;
+    decorators.includes('final') || (applyFinalOn?.filter(a => appliesOn.includes(a)).length ?? 0) > 0;
 
   const required = isNonNullType(field.type) ? 'required ' : '';
   const final = markedFinal ? 'final ' : '';
   const type = parameterType(config, field.type);
-  const blockName = field.name.value;
-  const typeName = node.name.value;
-  const decorateWithAtJsonKey = shouldDecorateWithAtJsonKey('parameter_field', config, blockName, typeName);
-  const name = buildBlockName(config, blockName, typeName, 'camelCase', decorateWithAtJsonKey);
+  const name = BlockName.asParameterName(config, typeName, fieldName);
 
   return indent(`${required}${final}${type} ${name},\n`, 2);
 };
