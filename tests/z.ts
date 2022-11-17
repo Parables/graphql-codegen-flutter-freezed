@@ -1,6 +1,6 @@
 import { transformSchemaAST } from '@graphql-codegen/schema-ast';
 import { NodeType } from '../src/config';
-import { buildClassBlockDecorators, findOptionWithTypeFieldName } from '../src/utils';
+import { buildClassBlockDecorators, findOptionWithTypeFieldName, parseDecorators } from '../src/utils';
 import { customDecoratorsConfig } from './config';
 import { starWarsSchema } from './schema';
 
@@ -12,5 +12,9 @@ const {
 
 console.log(findOptionWithTypeFieldName(customDecoratorsConfig['typeConfig'] ?? {}, '@*TypeName', 'customDecorators'));
 console.log(findOptionWithTypeFieldName(customDecoratorsConfig['typeConfig'] ?? {}, 'Starship', 'customDecorators'));
+const node = astNodesList[6] as NodeType;
+const listOfCustomDecoratorConfig = buildClassBlockDecorators(customDecoratorsConfig, node, ['class']);
 
-console.log(buildClassBlockDecorators(customDecoratorsConfig, astNodesList[6] as NodeType, ['class']));
+const result = parseDecorators(node, listOfCustomDecoratorConfig);
+
+console.log(result);

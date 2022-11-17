@@ -227,7 +227,7 @@ export const buildBlockDecorators = (
     if (appliesOnEnumBlock(appliesOn)) {
       return buildEnumBlockDecorators(config, node, appliesOn);
     } else if (appliesOnClassBlock(appliesOn)) {
-      return buildClassBlockDecorators(config, node, appliesOn as AppliesOnClass[]);
+      // return buildClassBlockDecorators(config, node, appliesOn as AppliesOnClass[]);
     } else if (appliesOnFactoryBlock(appliesOn)) {
       return buildFactoryBlockDecorators(config, node, appliesOn);
     } else if (appliesOnParameterBlock(appliesOn) && field) {
@@ -258,38 +258,32 @@ export const buildClassBlockDecorators = (
   config: FlutterFreezedPluginConfig,
   node: NodeType,
   appliesOn: AppliesOnClass[]
-): string => {
+) => {
   const typeName = TypeName.fromConfig(config, node.name.value);
-  console.log('🚀 ~ file: utils.ts ~ line 263 ~ typeName', typeName);
   const globalTypeName = TypeName.fromGlobalName(config);
-  console.log('🚀 ~ file: utils.ts ~ line 265 ~ globalTypeName', globalTypeName);
   const rootBlock = TypeName.rootBlockFromGlobalName(config);
-  console.log('🚀 ~ file: utils.ts ~ line 267 ~ rootBlock', rootBlock);
 
   const customDecoratorsForAllTypes = findOptionWithTypeFieldName(
     config['typeConfig'] ?? {},
     globalTypeName.value,
     'customDecorators'
   );
-  console.log('🚀 ~ file: utils.ts ~ line 270 ~ customDecoratorsForAllTypes', customDecoratorsForAllTypes);
   const customDecoratorsForTypeName = findOptionWithTypeFieldName(
     config['typeConfig'] ?? {},
     typeName.value,
     'customDecorators'
   );
-  console.log('🚀 ~ file: utils.ts ~ line 272 ~ customDecoratorsForTypeName', customDecoratorsForTypeName);
 
   const mergedCustomDecorators = [...customDecoratorsForAllTypes, ...customDecoratorsForTypeName];
-  console.log('🚀 ~ file: utils.ts ~ line 275 ~ mergedCustomDecorators', mergedCustomDecorators);
 
-  const decoratorsForClassBlock: CustomDecoratorConfig[] = mergedCustomDecorators
+  // const decoratorsForClassBlock: CustomDecoratorConfig[] =
+  return mergedCustomDecorators
     .filter(d => d['customDecorators'][rootBlock.value])
     .map(d => d['customDecorators'][rootBlock.value]);
-  console.log('🚀 ~ file: utils.ts ~ line 278 ~ decoratorsForClassBlock', decoratorsForClassBlock);
 
   // no need to check applies on since there is only one case for it
 
-  return '';
+  // return '';
 };
 
 export const parseDecorators = (node: NodeType, listOfCustomDecoratorConfig: CustomDecoratorConfig[]) => {

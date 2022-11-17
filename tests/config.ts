@@ -19,6 +19,15 @@ export const customDecoratorsConfig = mergeConfig({
             appliesOn: ['class'],
             mapsToFreezedAs: 'custom',
           },
+          "@Assert('${fieldName}.isNotEmpty', '${fieldName} cannot be empty')": {
+            appliesOn: ['factory'],
+            mapsToFreezedAs: 'custom',
+          },
+          "@Assert('${fieldName}.length >= ${@constraint.minLength} && ${fieldName}.length <= ${@constraint.maxLength} ')":
+            {
+              appliesOn: ['factory'],
+              mapsToFreezedAs: 'directive',
+            },
         },
       },
     },
