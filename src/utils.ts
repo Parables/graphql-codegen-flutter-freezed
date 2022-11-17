@@ -21,7 +21,7 @@ import {
   DartIdentifierCasing,
   OptionInTypeConfig,
   defaultFreezedPluginConfig,
-  CustomDecorators,
+  CustomDecoratorConfig,
   defaultTypeConfig,
   FieldType,
   NodeType,
@@ -134,14 +134,12 @@ export const optionFromAnyConfig = <
 // TODO: TEst this function
 export const findOptionWithTypeFieldName = (config: Record<string, any>, typeFieldName: string, option: string) => {
   // get all options for
-  const commaSeparatedNames = Object.keys(config);
-  return commaSeparatedNames.filter(n => n.includes(typeFieldName)).map(k => config[k][option]);
-};
-
-const mergeValuesForKey = (record: Record<string, any>, key: string) => {
-  // get all options for
-  const commaSeparatedNames = Object.keys(record);
-  const targetName = commaSeparatedNames.filter(n => n.includes(key));
+  const commaSeparatedKey = Object.keys(config);
+  return commaSeparatedKey
+    .filter(key => key.includes(typeFieldName))
+    .map(key => {
+      return { [option]: config[key][option], key, typeFieldName };
+    });
 };
 
 /**
@@ -229,7 +227,7 @@ export const buildBlockDecorators = (
     if (appliesOnEnumBlock(appliesOn)) {
       return buildEnumBlockDecorators(config, node, appliesOn);
     } else if (appliesOnClassBlock(appliesOn)) {
-      return buildClassBlockDecorators(config, node, appliesOn);
+      return buildClassBlockDecorators(config, node, appliesOn as AppliesOnClass[]);
     } else if (appliesOnFactoryBlock(appliesOn)) {
       return buildFactoryBlockDecorators(config, node, appliesOn);
     } else if (appliesOnParameterBlock(appliesOn) && field) {
@@ -259,9 +257,58 @@ export const buildEnumBlockDecorators = (
 export const buildClassBlockDecorators = (
   config: FlutterFreezedPluginConfig,
   node: NodeType,
-  appliesOn: AppliesOn[]
+  appliesOn: AppliesOnClass[]
 ): string => {
+  const typeName = TypeName.fromConfig(config, node.name.value);
+  console.log('🚀 ~ file: utils.ts ~ line 263 ~ typeName', typeName);
+  const globalTypeName = TypeName.fromGlobalName(config);
+  console.log('🚀 ~ file: utils.ts ~ line 265 ~ globalTypeName', globalTypeName);
+  const rootBlock = TypeName.rootBlockFromGlobalName(config);
+  console.log('🚀 ~ file: utils.ts ~ line 267 ~ rootBlock', rootBlock);
+
+  const customDecoratorsForAllTypes = findOptionWithTypeFieldName(
+    config['typeConfig'] ?? {},
+    globalTypeName.value,
+    'customDecorators'
+  );
+  console.log('🚀 ~ file: utils.ts ~ line 270 ~ customDecoratorsForAllTypes', customDecoratorsForAllTypes);
+  const customDecoratorsForTypeName = findOptionWithTypeFieldName(
+    config['typeConfig'] ?? {},
+    typeName.value,
+    'customDecorators'
+  );
+  console.log('🚀 ~ file: utils.ts ~ line 272 ~ customDecoratorsForTypeName', customDecoratorsForTypeName);
+
+  const mergedCustomDecorators = [...customDecoratorsForAllTypes, ...customDecoratorsForTypeName];
+  console.log('🚀 ~ file: utils.ts ~ line 275 ~ mergedCustomDecorators', mergedCustomDecorators);
+
+  const decoratorsForClassBlock: CustomDecoratorConfig[] = mergedCustomDecorators
+    .filter(d => d['customDecorators'][rootBlock.value])
+    .map(d => d['customDecorators'][rootBlock.value]);
+  console.log('🚀 ~ file: utils.ts ~ line 278 ~ decoratorsForClassBlock', decoratorsForClassBlock);
+
+  // no need to check applies on since there is only one case for it
+
   return '';
+};
+
+export const parseDecorators = (node: NodeType, listOfCustomDecoratorConfig: CustomDecoratorConfig[]) => {
+  return listOfCustomDecoratorConfig.map(config => {
+    return Object.keys(config).map(decorator => {
+      const decoratorConfig = config[decorator];
+      if (decoratorConfig.mapsToFreezedAs === 'directive') {
+        // find the directive in the node and use it arguments to create the decorator
+        const directiveNode = node.directives?.find(directive => directive.name.value === decorator);
+        const args = decoratorConfig.arguments
+          ?.map(a => (directiveNode?.arguments ?? [])[argToInt(a)].value ?? '')
+          .join('');
+        return `${decorator}${args}`;
+      } else if (decoratorConfig.mapsToFreezedAs === 'custom') {
+        const args = (decoratorConfig.arguments ?? []).join('');
+        return `${decorator}${args}`;
+      }
+    });
+  });
 };
 
 export const buildFactoryBlockDecorators = (
@@ -397,8 +444,9 @@ export const isCustomizedFreezed = (config: FlutterFreezedPluginConfig, typeName
   return filteredCustomDecorators;
 }
  */
+
 /* export function transformCustomDecorators(
-  customDecorators: CustomDecorators,
+  customDecoratorConfig: CustomDecoratorConfig,
   node?: NodeType | undefined,
   field?: FieldType | undefined
 ): string[] {
@@ -412,18 +460,18 @@ export const isCustomizedFreezed = (config: FlutterFreezedPluginConfig, typeName
       // and have values that not undefined or null in the customDecorator record
       .filter(d => {
         const key = d.name.value;
-        const value = customDecorators[key] ?? customDecorators[`@${key}`];
+        const value = customDecoratorConfig[key] ?? customDecoratorConfig[`@${key}`];
         if (value && value.mapsToFreezedAs !== 'custom') {
           return true;
         }
         return false;
       })
       // transform each directive to string
-      .map(d => directiveToString(d, customDecorators)),
+      .map(d => directiveToString(d, customDecoratorConfig)),
   ];
 
   // for  decorators that mapsToFreezedAs === 'custom'
-  Object.entries(customDecorators).forEach(([key, value]) => {
+  Object.entries(customDecoratorConfig).forEach(([key, value]) => {
     if (value.mapsToFreezedAs === 'custom') {
       const args = value?.arguments;
       // if the custom directives have arguments,
@@ -438,8 +486,8 @@ export const isCustomizedFreezed = (config: FlutterFreezedPluginConfig, typeName
   });
 
   return result;
-} */
-
+}
+ */
 /**
  * transforms the directive into a decorator array
  * this decorator array might contain a `final` string which would be filtered out
@@ -474,8 +522,8 @@ export const isCustomizedFreezed = (config: FlutterFreezedPluginConfig, typeName
   // returns either "@deprecated" || "final".
   // `final` to be filtered from the decorators array when applying the decorators
   return value.mapsToFreezedAs + '\n';
-} */
-
+}
+ */
 /** transforms string template: "$0" into an integer: 1 */
 function argToInt(arg: string) {
   const parsedIndex = Number.parseInt(arg.replace('$', '').trim() ?? '0'); // '$1 => 1

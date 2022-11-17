@@ -21,6 +21,11 @@ class TypeFieldName {
     const targetName = commaSeparatedNames.find(n => n.includes(name));
     return TypeFieldName.fromString(targetName ?? name);
   };
+
+  public static rootBlockFromGlobalName = (config: FlutterFreezedPluginConfig) =>
+    TypeName.fromString(
+      config.globalName?.rootBlock ?? defaultFreezedPluginConfig.globalName?.rootBlock ?? '@*RootBlock'
+    );
 }
 
 /**
@@ -37,9 +42,7 @@ export class TypeName extends TypeFieldName {
   }
 
   public static fromGlobalName = (config: FlutterFreezedPluginConfig) =>
-    TypeFieldName.fromString(
-      config.globalName?.typeName ?? defaultFreezedPluginConfig.globalName?.typeName ?? '@*TypeName'
-    );
+    TypeName.fromString(config.globalName?.typeName ?? defaultFreezedPluginConfig.globalName?.typeName ?? '@*TypeName');
 }
 
 /**

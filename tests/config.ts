@@ -52,17 +52,18 @@ export const customDecoratorsConfig = mergeConfig({
         // comma-separated field names
         '@*RootBlock': {
           // <-- for root block of Starship and all typeNames
-          '@HiveObject': {
+          '@HiveType': {
             appliesOn: ['class'],
-            arguments: ['5'],
+            // arguments: ['5'],
+            arguments: ['typeId: ${index}'], //TODO: if the string matches `/(\${index})/g`, it will be replaced with the index of the type
             mapsToFreezedAs: 'custom',
           },
         },
         '@*FieldName': {
           // <-- for all fields of Starship
-          '@HiveType': {
+          '@HiveField': {
             appliesOn: ['default_factory'],
-            arguments: ['${index}'], //TODO: if the string matches `/^${index}/gm`, it will be replaced with the index of the field
+            arguments: ['${index}'], //TODO: if the string matches `/(\${index})/g`, it will be replaced with the index of the field
             mapsToFreezedAs: 'custom',
           },
         },

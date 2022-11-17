@@ -259,7 +259,7 @@ export type DefaultValueConfig = {
   appliesOn?: AppliesOnParameters[];
 };
 
-export type CustomDecoratorConfig = {
+export type DecoratorConfig = {
   /**
    * @name arguments
    * @description Arguments to be applied on the decorator. if the `mapsToFreezedAs === 'directive'`,  use template string such `['$0', '$2', '$3']` to select/order the arguments of the directive to be used($0 is the first argument, $1 is the second).
@@ -284,12 +284,14 @@ export type CustomDecoratorConfig = {
   /**
    * @name mapsToFreezedAs
    * @description maps to a Freezed decorator or use `custom` to use a custom decorator.If `mapsToFreezedAs === 'directive'` don't include the `@` prefix in the key of the customDecorator.  If `mapsToFreezedAs === 'custom'` value, whatever you use as the key of the customDecorator is used just as it is, and the arguments spread into a parenthesis () */
-  mapsToFreezedAs: '@Default' | '@deprecated' | 'final' | 'directive' | 'custom';
+  mapsToFreezedAs: 'directive' | 'custom'; // '@Default' | '@deprecated' | 'final' |
 };
 
-type Decorator = string;
+export type Decorator = string;
 
-export type CustomDecorators = Record<FieldName, Record<Decorator, CustomDecoratorConfig>>;
+export type CustomDecoratorConfig = Record<Decorator, DecoratorConfig>;
+
+export type CustomDecoratorsConfig = Record<FieldName, CustomDecoratorConfig>;
 
 /** initializes a TypeConfig with the defaults values */
 export const defaultTypeConfig: TypeConfig = {
@@ -411,7 +413,7 @@ export type TypeConfig = {
    * ```
    */
 
-  customDecorators?: CustomDecorators;
+  customDecorators?: CustomDecoratorsConfig;
 
   /**
    * @name defaultValue
