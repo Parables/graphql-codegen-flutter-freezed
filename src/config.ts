@@ -7,207 +7,55 @@ import {
   InputValueDefinitionNode,
 } from 'graphql';
 
-export type NodeType =
-  | ObjectTypeDefinitionNode
-  | InputObjectTypeDefinitionNode
-  | UnionTypeDefinitionNode
-  | EnumTypeDefinitionNode;
-
-export type FieldType = FieldDefinitionNode | InputValueDefinitionNode;
-
-export type ObjectType = ObjectTypeDefinitionNode | InputObjectTypeDefinitionNode;
-
 /**
- * @name ApplyDecoratorOn
- * @description Values that are passed to the `DecoratorToFreezed.applyOn` field that specifies where the custom decorator should be applied
+ * @name FlutterFreezedPluginConfig
+ * @description configure the `flutter-freezed` plugin
  */
-export type AppliesOn =
-  | 'enum' // applies on the Enum itself
-  | 'enum_value' // applies to the value of an Enum
-  | 'class' // applies on the class itself
-  | 'factory' // applies on all class factory constructor
-  | 'default_factory' // applies on the main default factory constructor
-  | 'named_factory' // applies on all of the named factory constructors in a class
-  | 'named_factory_for_union_types' // applies on the named factory constructors for a specified(or all when the `*` is used as the key) GraphQL Object Type when it appears in a class as a named factory constructor and that class was generated for a GraphQL Union Type. E.g: `Droid` in `SearchResult` in the StarWars Schema
-  | 'named_factory_for_merged_inputs' // applies on the named factory constructors for a GraphQL Input Type when it appears in a class as a named factory constructor and that class was generated for a GraphQL Object Type and it Type is to be merged with the GraphQL Object Type. E.g: `CreateMovieInput` merged with `Movie` in the StarWars Schema
-  | 'parameter' // applies on all parameters for both default constructors and named factory constructors
-  | 'default_factory_parameter' // applies on parameters for ONLY default constructors for a specified(or all when the `*` is used as the key) field on a GraphQL Object/Input Type
-  | 'named_factory_parameter' // applies on parameters for all named factory constructors for a specified(or all when the `*` is used as the key) field on a GraphQL Object/Input Type
-  | 'named_factory_parameter_for_union_types' // like `named_factory_parameters` but ONLY for a parameter in a named factory constructor which for a GraphQL Union Type
-  | 'named_factory_parameter_for_merged_inputs'; // like `named_factory_parameters` but ONLY for a parameter in a named factory constructor which for a GraphQL Input Type that is merged inside an a class generated for a GraphQL Object Type
-
-export type AppliesOnEnum = Extract<AppliesOn, 'enum'>;
-export type AppliesOnEnumValue = Extract<AppliesOn, 'enum_value'>;
-
-export type AppliesOnClass = Extract<AppliesOn, 'class'>;
-
-export type AppliesOnDefaultFactory = Extract<AppliesOn, 'factory' | 'default_factory'>;
-export type AppliesOnNamedFactory = Extract<
-  AppliesOn,
-  'factory' | 'named_factory' | 'named_factory_for_union_types' | 'named_factory_for_merged_inputs'
->;
-export type AppliesOnFactory = AppliesOnDefaultFactory | AppliesOnNamedFactory;
-
-export type AppliesOnDefaultParameters = Extract<AppliesOn, 'parameter' | 'default_factory_parameter'>;
-
-export type AppliesOnNamedParametersForUnionTypes = Extract<
-  AppliesOn,
-  'parameter' | 'named_factory_parameter' | 'named_factory_parameter_for_union_types'
->;
-export type AppliesOnNamedParametersForMergedInputs = Extract<
-  AppliesOn,
-  'parameter' | 'named_factory_parameter' | 'named_factory_parameter_for_merged_inputs'
->;
-
-export type AppliesOnNamedParameters = AppliesOnNamedParametersForUnionTypes | AppliesOnNamedParametersForMergedInputs;
-export type AppliesOnParameters = AppliesOnDefaultParameters | AppliesOnNamedParameters;
-
-/**
- * maps GraphQL scalar types to Dart's scalar types
- */
-export const DART_SCALARS: Record<string, string> = {
-  ID: 'String',
-  String: 'String',
-  Boolean: 'bool',
-  Int: 'int',
-  Float: 'double',
-  DateTime: 'DateTime',
-};
-
-// TODO: get this from config or use default or build withPrefix or withSuffix
-export const DART_KEYWORDS = {
-  abstract: 'built-in',
-  else: 'reserved',
-  import: 'built-in',
-  show: 'context',
-  as: 'built-in',
-  enum: 'reserved',
-  in: 'reserved',
-  static: 'built-in',
-  assert: 'reserved',
-  export: 'built-in',
-  interface: 'built-in',
-  super: 'reserved',
-  async: 'context',
-  extends: 'reserved',
-  is: 'reserved',
-  switch: 'reserved',
-  await: 'async-reserved',
-  extension: 'built-in',
-  late: 'built-in',
-  sync: 'context',
-  break: 'reserved',
-  external: 'built-in',
-  library: 'built-in',
-  this: 'reserved',
-  case: 'reserved',
-  factory: 'built-in',
-  mixin: 'built-in',
-  throw: 'reserved',
-  catch: 'reserved',
-  false: 'reserved',
-  new: 'reserved',
-  true: 'reserved',
-  class: 'reserved',
-  final: 'reserved',
-  null: 'reserved',
-  try: 'reserved',
-  const: 'reserved',
-  finally: 'reserved',
-  on: 'context',
-  typedef: 'built-in',
-  continue: 'reserved',
-  for: 'reserved',
-  operator: 'built-in',
-  var: 'reserved',
-  covariant: 'built-in',
-  Function: 'built-in',
-  part: 'built-in',
-  void: 'reserved',
-  default: 'reserved',
-  get: 'built-in',
-  required: 'built-in',
-  while: 'reserved',
-  deferred: 'built-in',
-  hide: 'context',
-  rethrow: 'reserved',
-  with: 'reserved',
-  do: 'reserved',
-  if: 'reserved',
-  return: 'reserved',
-  yield: 'async-reserved',
-  dynamic: 'built-in',
-  implements: 'built-in',
-  set: 'built-in',
-  // built-in types
-  int: 'reserved',
-  double: 'reserved',
-  String: 'reserved',
-  bool: 'reserved',
-  List: 'reserved',
-  Set: 'reserved',
-  Map: 'reserved',
-  Runes: 'reserved',
-  Symbol: 'reserved',
-  Object: 'reserved',
-  Null: 'reserved',
-  Never: 'reserved',
-  Enum: 'reserved',
-  Future: 'reserved',
-  Iterable: 'reserved',
-};
-
-export type DartKeyword = keyof typeof DART_KEYWORDS;
-
-export type DartKeywordType = 'built-in' | 'context' | 'reserved' | 'async-reserved';
-
-export type DartIdentifierCasing = 'snake_case' | 'camelCase' | 'PascalCase';
-
-export type GlobalName = string;
-
-/**
- * @name TypeName
- * @description A comma-separated string of GraphQL Type Names.Use the `globalName` to apply the same config options to all GraphQL Types.
- * @exampleMarkdown
- * ```ts filename:"config.ts"
- * TODO: add an example
- * ```
- * */
-export type TypeName = string;
-
-/**
- * @name FieldName
- * @description Just like TypeName but instead used for the fields names of a GraphQL Type. Use the `config.globalName` to apply the same config options to all fields.
- * @exampleMarkdown
- * ```ts filename:"config.ts"
- * TODO: add an example
- * ```
- * */
-export type FieldName = string;
-
-export type EscapeDartKeywordConfig = {
+export type FlutterFreezedPluginConfig = {
   /**
-   * @name dartKeywordEscapeCasing
-   * @description after escaping a valid dart keyword, this option transforms the casing to `snake_cased`, `camelCase` or `PascalCase`. Defaults to `undefined` to leave the casing as it is.
-   * @default undefined
-   * @see_also [escapeDartKeywords, dartKeywordEscapePrefix]
+   * @name camelCasedEnums
+   * @type boolean // TODO: do the same for all config options
+   * @description Dart's recommended lint uses camelCase for enum fields. You can specify your preferred casing. Set this option to `false` to use the same case as used in the GraphQL Schema but note this can cause lint issues.
+   * @default true
    *
+   * @exampleMarkdown
+    ```yaml
+    generates:
+      flutter_app/lib/data/models/app_models.dart
+        plugins:
+          - flutter-freezed
+        config:
+          camelCasedEnums: true
+    ```
+   */
+  camelCasedEnums?: CamelCasedEnums;
+
+  /**
+   * @name customScalars
+   * @description map GraphQL Scalar Types to Dart built-in types
+   * @default {}
+   *
+   * @exampleMarkdown
    * ```yaml
-   * generates:
-   *   flutter_app/lib/data/models/app_models.dart
-   *     plugins:
-   *       - flutter-freezed
-   *     config:
-   *       dartKeywordEscapeCasing: camelCase
-   *
+    generates:
+      flutter_app/lib/data/models/app_models.dart
+        plugins:
+          - flutter-freezed
+        config:
+          customScalars: {
+            "jsonb": "Map<String, dynamic>",
+            "timestamptz": "DateTime",
+            "UUID": "String",
+          }
    * ```
    */
-  dartKeywordEscapeCasing?: DartIdentifierCasing;
+
+  customScalars?: Record<GraphQLScalarType, DartCompatibleType>;
+
   /**
-   * @name dartKeywordEscapePrefix
-   * @description prefix GraphQL type and field names that are valid dart keywords. Don't use only a underscore(`_`) as the `dartKeywordEscapePrefix` since it will make that identifier hidden or produce unexpected results. However, if you would want to change the case after escaping the keyword with `dartKeywordEscapeCasing`, you may use either an `_`, `-` or an empty space ` `.
-   * @default undefined
-   * @see_also [escapeDartKeywords, dartKeywordEscapeSuffix]
+   * @name fileName
+   * @description this fileName will be used for the generated output file
+   * @default "app_models"
    *
    * @exampleMarkdown
    * ```yaml
@@ -216,128 +64,68 @@ export type EscapeDartKeywordConfig = {
    *     plugins:
    *       - flutter-freezed
    *     config:
-   *       dartKeywordEscapePrefix: "k_"
-   *      # Example: let keyword = 'in'
-   *      # dartKeywordEscapeCasing === 'snake_case' => 'k_in'
-   *      # dartKeywordEscapeCasing === 'camelCase' => 'kIn'
-   *      # dartKeywordEscapeCasing === 'PascalCase' => 'KIn'
-   *      # dartKeywordEscapeCasing === undefined => 'k_in'
-   *
+   *       fileName: app_models
    * ```
    */
-  dartKeywordEscapePrefix?: string;
+
+  fileName?: string;
+
   /**
-   * @name dartKeywordEscapeSuffix
-   * @description suffix GraphQL type and field names that are valid dart keywords. If the value of `dartKeywordEscapeSuffix` is an `_` and if `dartKeywordEscapeCasing` is `snake_case` or `camelCase`, then the casing will be ignored because it will remove the trailing `_` making the escapedKeyword invalid again
-   * @default "_"
-   * @see_also [escapeDartKeywords, dartKeywordEscapePrefix]
+   * @name globalName
+   * @description the `globalName` is used when you want to set the same config options value to every item or on the root object
+   * @default "@*"
    *
+   * @exampleMarkdown
    * ```yaml
    * generates:
    *   flutter_app/lib/data/models/app_models.dart
    *     plugins:
    *       - flutter-freezed
    *     config:
-   *       dartKeywordEscapeSuffix: "_k" or using the default '_'
-   *      # Example: let keyword = 'in'
-   *      # dartKeywordEscapeCasing === 'snake_case'=> 'in_k' or 'in_' // ignored casing
-   *      # dartKeywordEscapeCasing === 'camelCase' =>'inK' or in_ // ignored casing
-   *      # dartKeywordEscapeCasing === 'PascalCase' => 'InK' or 'In'
-   *      # dartKeywordEscapeCasing === undefined  => 'in_k' or 'in_'
+   *       globalName: "@all"
    *
    * ```
    */
-  dartKeywordEscapeSuffix?: string;
-  appliesOn?: AppliesOnParameters[];
-};
+  globalName?: GlobalNameConfig;
 
-export type EscapeDartKeywords = boolean | Record<FieldName, EscapeDartKeywordConfig>;
-
-export type DefaultValueConfig = {
-  value: string;
-  valueAsString?: boolean;
-  appliesOn?: AppliesOnParameters[];
-};
-
-export type DecoratorConfig = {
   /**
-   * @name arguments
-   * @description Arguments to be applied on the decorator. if the `mapsToFreezedAs === 'directive'`,  use template string such `['$0', '$2', '$3']` to select/order the arguments of the directive to be used($0 is the first argument, $1 is the second).
+   * @name typeConfig
+   * @description The GraphQL Type name is used as the key. Use `allKey` config value to set global 
    * @default undefined
+   *
    * @exampleMarkdown
    * ```yaml
-   * arguments: [$0] # $0 is the first argument, $1 is the 2nd ...
-   * ```
-   */
-  arguments?: string[]; //['$0']
+
+  * ```
+  */
+
+  typeConfig?: TypeConfig;
 
   /**
-   * @name applyOn
-   * @description Specify where the decorator should be applied
+   * @name ignoreTypes
+   * @description names of GraphQL types to ignore when generating Freezed classes
+   * @default []
+   *
    * @exampleMarkdown
    * ```yaml
-   * applyOn: ['class_factory','union_factory'], # applies this decorator on both class and union factory blocks
+   * generates:
+   *   flutter_app/lib/data/models/app_models.dart
+   *     plugins:
+   *       - flutter-freezed
+   *     config:
+   *       ignoreTypes: ["PaginatorInfo"]
+   *
    * ```
    */
-  appliesOn: AppliesOn[];
 
-  /**
-   * @name mapsToFreezedAs
-   * @description maps to a Freezed decorator or use `custom` to use a custom decorator.If `mapsToFreezedAs === 'directive'` don't include the `@` prefix in the key of the customDecorator.  If `mapsToFreezedAs === 'custom'` value, whatever you use as the key of the customDecorator is used just as it is, and the arguments spread into a parenthesis () */
-  mapsToFreezedAs: 'directive' | 'custom'; // '@Default' | '@deprecated' | 'final' |
+  ignoreTypes?: string[];
 };
 
-export type Decorator = string;
-
-export type CustomDecoratorConfig = Record<Decorator, DecoratorConfig>;
-
-export type CustomDecoratorsConfig = Record<FieldName, CustomDecoratorConfig>;
-
-/** initializes a TypeConfig with the defaults values */
-export const defaultTypeConfig: TypeConfig = {
-  alwaysUseJsonKeyName: undefined,
-  copyWith: undefined,
-  customDecorators: undefined,
-  defaultValue: undefined,
-  deprecated: undefined,
-  equal: undefined,
-  escapeDartKeywords: true,
-  final: undefined,
-  fromJsonToJson: true,
-  immutable: true,
-  makeCollectionsUnmodifiable: undefined,
-  mergeInputs: undefined,
-  mutableInputs: true,
-  privateEmptyConstructor: true,
-  unionKey: undefined,
-  unionValueCase: undefined,
+export type GetFromConfig<T> = {
+  [P in keyof T as `get${Capitalize<string & P>}`]: (config: T) => T[P];
 };
 
-export type OptionInTypeConfig = keyof TypeConfig;
-
-type GraphQLScalarType = string;
-type DartCompatibleType = string;
-
-export type DefaultFieldValues = Record<FieldName, DefaultValueConfig>;
-
-export type DeprecatedFields = Record<FieldName, AppliesOn[]>;
-
-export type FinalFieldValues = Record<FieldName, AppliesOnParameters[]>;
-
-type JsonConvertorClassName = string;
-type FromToJsonFunctionName = string;
-
-export type FromToJsonConfig = {
-  name: JsonConvertorClassName | FromToJsonFunctionName;
-  useClassConverter?: boolean;
-  appliesOn?: AppliesOnParameters[];
-};
-
-export type FromJsonToJson = boolean | Record<FieldName, JsonConvertorClassName | FromToJsonConfig>;
-
-export type MergeInputs = TypeName[];
-
-export type UnionValueCase = 'FreezedUnionCase.camel' | 'FreezedUnionCase.pascal';
+export type FromConfig = GetFromConfig<TypeConfig>;
 
 export type TypeConfig = {
   /**
@@ -357,7 +145,7 @@ export type TypeConfig = {
    * ```
    */
 
-  alwaysUseJsonKeyName?: boolean | Record<FieldName, AppliesOnParameters[]>;
+  alwaysUseJsonKeyName?: boolean | [TypeName, AppliesOnParameters[]][];
 
   /**
    * @name copyWith
@@ -376,44 +164,6 @@ export type TypeConfig = {
    */
 
   copyWith?: boolean;
-
-  /**
-   * @name customDecorators
-   * @description annotate/decorate the generated output. Also use this option to map GraphQL directives to freezed decorators.
-   * @default {}
-   *
-   * @exampleMarkdown
-   * ```yaml
-   * generates:
-   *   flutter_app/lib/data/models/app_models.dart
-   *     plugins:
-   *       - flutter-freezed
-   *     config:
-   *       customDecorators: {
-   *          'default' : {
-   *             mapsToFreezedAs: '@Default',
-   *             arguments: ['$0'],
-   *            },
-   *           'deprecated' : {
-   *              mapsToFreezedAs: '@deprecated',
-   *           },
-   *          'readonly' : {
-   *              mapsToFreezedAs: 'final',
-   *           },
-   *          '@Assert' : {
-   *              mapsToFreezedAs: 'custom',
-   *              applyOn: ['class_factory','union_factory'], # @Assert should ONLY be used on factories
-   *              arguments: [
-   *                  '(email != null && email != "") || (phoneNumber != null && phoneNumber != "")',
-   *                  'provide either an email or a phoneNumber',
-   *              ],
-   *           }, # custom are used just as it given
-   *       }
-   *
-   * ```
-   */
-
-  customDecorators?: CustomDecoratorsConfig;
 
   /**
    * @name defaultValue
@@ -700,9 +450,304 @@ export type TypeConfig = {
   unionValueCase?: UnionValueCase;
 };
 
+/**
+ * maps GraphQL scalar types to Dart's scalar types
+ */
+export const DART_SCALARS: Record<string, string> = {
+  ID: 'String',
+  String: 'String',
+  Boolean: 'bool',
+  Int: 'int',
+  Float: 'double',
+  DateTime: 'DateTime',
+};
+
+// TODO: get this from config or use default or build withPrefix or withSuffix
+export const DART_KEYWORDS = {
+  abstract: 'built-in',
+  else: 'reserved',
+  import: 'built-in',
+  show: 'context',
+  as: 'built-in',
+  enum: 'reserved',
+  in: 'reserved',
+  static: 'built-in',
+  assert: 'reserved',
+  export: 'built-in',
+  interface: 'built-in',
+  super: 'reserved',
+  async: 'context',
+  extends: 'reserved',
+  is: 'reserved',
+  switch: 'reserved',
+  await: 'async-reserved',
+  extension: 'built-in',
+  late: 'built-in',
+  sync: 'context',
+  break: 'reserved',
+  external: 'built-in',
+  library: 'built-in',
+  this: 'reserved',
+  case: 'reserved',
+  factory: 'built-in',
+  mixin: 'built-in',
+  throw: 'reserved',
+  catch: 'reserved',
+  false: 'reserved',
+  new: 'reserved',
+  true: 'reserved',
+  class: 'reserved',
+  final: 'reserved',
+  null: 'reserved',
+  try: 'reserved',
+  const: 'reserved',
+  finally: 'reserved',
+  on: 'context',
+  typedef: 'built-in',
+  continue: 'reserved',
+  for: 'reserved',
+  operator: 'built-in',
+  var: 'reserved',
+  covariant: 'built-in',
+  Function: 'built-in',
+  part: 'built-in',
+  void: 'reserved',
+  default: 'reserved',
+  get: 'built-in',
+  required: 'built-in',
+  while: 'reserved',
+  deferred: 'built-in',
+  hide: 'context',
+  rethrow: 'reserved',
+  with: 'reserved',
+  do: 'reserved',
+  if: 'reserved',
+  return: 'reserved',
+  yield: 'async-reserved',
+  dynamic: 'built-in',
+  implements: 'built-in',
+  set: 'built-in',
+  // built-in types
+  int: 'reserved',
+  double: 'reserved',
+  String: 'reserved',
+  bool: 'reserved',
+  List: 'reserved',
+  Set: 'reserved',
+  Map: 'reserved',
+  Runes: 'reserved',
+  Symbol: 'reserved',
+  Object: 'reserved',
+  Null: 'reserved',
+  Never: 'reserved',
+  Enum: 'reserved',
+  Future: 'reserved',
+  Iterable: 'reserved',
+};
+
+//#region string type alias
+export type GlobalName = string;
+
+/**
+ * @name TypeName
+ * @description A comma-separated string of GraphQL Type Names.Use the `globalName` to apply the same config options to all GraphQL Types.
+ * @exampleMarkdown
+ * ```ts filename:"config.ts"
+ * TODO: add an example
+ * ```
+ * */
+export type TypeName = string;
+
+/**
+ * @name FieldName
+ * @description Just like TypeName but instead used for the fields names of a GraphQL Type. Use the `config.globalName` to apply the same config options to all fields.
+ * @exampleMarkdown
+ * ```ts filename:"config.ts"
+ * TODO: add an example
+ * ```
+ * */
+export type FieldName = string;
+
+type JsonConvertorClassName = string;
+type FromToJsonFunctionName = string;
+
+type GraphQLScalarType = string;
+type DartCompatibleType = string;
+
+export type Decorator = string;
+
+//#endregion
+
+//#region custom config
+
+export type EscapeDartKeywordConfig = {
+  /**
+   * @name dartKeywordEscapeCasing
+   * @description after escaping a valid dart keyword, this option transforms the casing to `snake_cased`, `camelCase` or `PascalCase`. Defaults to `undefined` to leave the casing as it is.
+   * @default undefined
+   * @see_also [escapeDartKeywords, dartKeywordEscapePrefix]
+   *
+   * ```yaml
+   * generates:
+   *   flutter_app/lib/data/models/app_models.dart
+   *     plugins:
+   *       - flutter-freezed
+   *     config:
+   *       dartKeywordEscapeCasing: camelCase
+   *
+   * ```
+   */
+  dartKeywordEscapeCasing?: DartIdentifierCasing;
+  /**
+   * @name dartKeywordEscapePrefix
+   * @description prefix GraphQL type and field names that are valid dart keywords. Don't use only a underscore(`_`) as the `dartKeywordEscapePrefix` since it will make that identifier hidden or produce unexpected results. However, if you would want to change the case after escaping the keyword with `dartKeywordEscapeCasing`, you may use either an `_`, `-` or an empty space ` `.
+   * @default undefined
+   * @see_also [escapeDartKeywords, dartKeywordEscapeSuffix]
+   *
+   * @exampleMarkdown
+   * ```yaml
+   * generates:
+   *   flutter_app/lib/data/models/app_models.dart
+   *     plugins:
+   *       - flutter-freezed
+   *     config:
+   *       dartKeywordEscapePrefix: "k_"
+   *      # Example: let keyword = 'in'
+   *      # dartKeywordEscapeCasing === 'snake_case' => 'k_in'
+   *      # dartKeywordEscapeCasing === 'camelCase' => 'kIn'
+   *      # dartKeywordEscapeCasing === 'PascalCase' => 'KIn'
+   *      # dartKeywordEscapeCasing === undefined => 'k_in'
+   *
+   * ```
+   */
+  dartKeywordEscapePrefix?: string;
+  /**
+   * @name dartKeywordEscapeSuffix
+   * @description suffix GraphQL type and field names that are valid dart keywords. If the value of `dartKeywordEscapeSuffix` is an `_` and if `dartKeywordEscapeCasing` is `snake_case` or `camelCase`, then the casing will be ignored because it will remove the trailing `_` making the escapedKeyword invalid again
+   * @default "_"
+   * @see_also [escapeDartKeywords, dartKeywordEscapePrefix]
+   *
+   * ```yaml
+   * generates:
+   *   flutter_app/lib/data/models/app_models.dart
+   *     plugins:
+   *       - flutter-freezed
+   *     config:
+   *       dartKeywordEscapeSuffix: "_k" or using the default '_'
+   *      # Example: let keyword = 'in'
+   *      # dartKeywordEscapeCasing === 'snake_case'=> 'in_k' or 'in_' // ignored casing
+   *      # dartKeywordEscapeCasing === 'camelCase' =>'inK' or in_ // ignored casing
+   *      # dartKeywordEscapeCasing === 'PascalCase' => 'InK' or 'In'
+   *      # dartKeywordEscapeCasing === undefined  => 'in_k' or 'in_'
+   *
+   * ```
+   */
+  dartKeywordEscapeSuffix?: string;
+  appliesOn?: AppliesOnParameters[];
+};
+
+//#endregion
+
+export type NodeType =
+  | ObjectTypeDefinitionNode
+  | InputObjectTypeDefinitionNode
+  | UnionTypeDefinitionNode
+  | EnumTypeDefinitionNode;
+
+export type FieldType = FieldDefinitionNode | InputValueDefinitionNode;
+
+export type ObjectType = ObjectTypeDefinitionNode | InputObjectTypeDefinitionNode;
+
+export type OptionInConfig = keyof FlutterFreezedPluginConfig;
+
+export type OptionInTypeConfig = keyof TypeConfig;
+
+/**
+ * @name ApplyDecoratorOn
+ * @description Values that are passed to the `DecoratorToFreezed.applyOn` field that specifies where the custom decorator should be applied
+ */
+export type AppliesOn =
+  | 'enum' // applies on the Enum itself
+  | 'enum_value' // applies to the value of an Enum
+  | 'class' // applies on the class itself
+  | 'factory' // applies on all class factory constructor
+  | 'default_factory' // applies on the main default factory constructor
+  | 'named_factory' // applies on all of the named factory constructors in a class
+  | 'named_factory_for_union_types' // applies on the named factory constructors for a specified(or all when the `*` is used as the key) GraphQL Object Type when it appears in a class as a named factory constructor and that class was generated for a GraphQL Union Type. E.g: `Droid` in `SearchResult` in the StarWars Schema
+  | 'named_factory_for_merged_inputs' // applies on the named factory constructors for a GraphQL Input Type when it appears in a class as a named factory constructor and that class was generated for a GraphQL Object Type and it Type is to be merged with the GraphQL Object Type. E.g: `CreateMovieInput` merged with `Movie` in the StarWars Schema
+  | 'parameter' // applies on all parameters for both default constructors and named factory constructors
+  | 'default_factory_parameter' // applies on parameters for ONLY default constructors for a specified(or all when the `*` is used as the key) field on a GraphQL Object/Input Type
+  | 'named_factory_parameter' // applies on parameters for all named factory constructors for a specified(or all when the `*` is used as the key) field on a GraphQL Object/Input Type
+  | 'named_factory_parameter_for_union_types' // like `named_factory_parameters` but ONLY for a parameter in a named factory constructor which for a GraphQL Union Type
+  | 'named_factory_parameter_for_merged_inputs'; // like `named_factory_parameters` but ONLY for a parameter in a named factory constructor which for a GraphQL Input Type that is merged inside an a class generated for a GraphQL Object Type
+
+export type AppliesOnEnum = Extract<AppliesOn, 'enum'>;
+export type AppliesOnEnumValue = Extract<AppliesOn, 'enum_value'>;
+
+export type AppliesOnClass = Extract<AppliesOn, 'class'>;
+
+export type AppliesOnDefaultFactory = Extract<AppliesOn, 'factory' | 'default_factory'>;
+export type AppliesOnNamedFactory = Extract<
+  AppliesOn,
+  'factory' | 'named_factory' | 'named_factory_for_union_types' | 'named_factory_for_merged_inputs'
+>;
+export type AppliesOnFactory = AppliesOnDefaultFactory | AppliesOnNamedFactory;
+
+export type AppliesOnDefaultParameters = Extract<AppliesOn, 'parameter' | 'default_factory_parameter'>;
+
+export type AppliesOnNamedParametersForUnionTypes = Extract<
+  AppliesOn,
+  'parameter' | 'named_factory_parameter' | 'named_factory_parameter_for_union_types'
+>;
+export type AppliesOnNamedParametersForMergedInputs = Extract<
+  AppliesOn,
+  'parameter' | 'named_factory_parameter' | 'named_factory_parameter_for_merged_inputs'
+>;
+
+export type AppliesOnNamedParameters = AppliesOnNamedParametersForUnionTypes | AppliesOnNamedParametersForMergedInputs;
+export type AppliesOnParameters = AppliesOnDefaultParameters | AppliesOnNamedParameters;
+
+type CamelCasedEnums = boolean | DartIdentifierCasing;
+
+export type DartKeyword = keyof typeof DART_KEYWORDS;
+
+export type DartKeywordType = 'built-in' | 'context' | 'reserved' | 'async-reserved';
+
+export type DartIdentifierCasing = 'snake_case' | 'camelCase' | 'PascalCase';
+
+export type EscapeDartKeywords = boolean | Record<FieldName, EscapeDartKeywordConfig>;
+
+export type DefaultValueConfig = {
+  value: string;
+  valueAsString?: boolean;
+  appliesOn?: AppliesOnParameters[];
+};
+
+export type DefaultFieldValues = Record<FieldName, DefaultValueConfig>;
+
+export type DeprecatedFields = Record<FieldName, AppliesOn[]>;
+
+export type FinalFieldValues = Record<FieldName, AppliesOnParameters[]>;
+
+export type FromToJsonConfig = {
+  name: JsonConvertorClassName | FromToJsonFunctionName;
+  useClassConverter?: boolean;
+  appliesOn?: AppliesOnParameters[];
+};
+
+export type FromJsonToJson = boolean | Record<FieldName, JsonConvertorClassName | FromToJsonConfig>;
+
+type GlobalNameConfig = {
+  typeName?: GlobalName;
+  fieldName?: GlobalName;
+};
+export type MergeInputs = TypeName[];
+
+export type UnionValueCase = 'FreezedUnionCase.camel' | 'FreezedUnionCase.pascal';
+
 /** initializes a FreezedPluginConfig with the defaults values */
 export const defaultFreezedPluginConfig: FlutterFreezedPluginConfig = {
-  globalName: { rootBlock: '@*RootBlock', typeName: '@*TypeName', fieldName: '@*FieldName' },
+  globalName: { typeName: '@*TypeName', fieldName: '@*FieldName' },
   camelCasedEnums: true,
   customScalars: {},
   fileName: 'app_models',
@@ -710,127 +755,21 @@ export const defaultFreezedPluginConfig: FlutterFreezedPluginConfig = {
   ignoreTypes: [],
 };
 
-export type OptionInConfig = keyof FlutterFreezedPluginConfig;
-
-type CamelCasedEnums = boolean | DartIdentifierCasing;
-
-type GlobalNameConfig = {
-  rootBlock?: GlobalName;
-  typeName?: GlobalName;
-  fieldName?: GlobalName;
+/** initializes a TypeConfig with the defaults values */
+export const defaultTypeConfig: TypeConfig = {
+  alwaysUseJsonKeyName: undefined,
+  copyWith: undefined,
+  defaultValue: undefined,
+  deprecated: undefined,
+  equal: undefined,
+  escapeDartKeywords: true,
+  final: undefined,
+  fromJsonToJson: true,
+  immutable: true,
+  makeCollectionsUnmodifiable: undefined,
+  mergeInputs: undefined,
+  mutableInputs: true,
+  privateEmptyConstructor: true,
+  unionKey: undefined,
+  unionValueCase: undefined,
 };
-
-/**
- * @name FlutterFreezedPluginConfig
- * @description configure the `flutter-freezed` plugin
- */
-export type FlutterFreezedPluginConfig = {
-  /**
-   * @name camelCasedEnums
-   * @description Dart's recommended lint uses camelCase for enum fields. You can specify your preferred casing. Set this option to `false` to use the same case as used in the GraphQL Schema but note this can cause lint issues.
-   * @default true
-   *
-   * @exampleMarkdown
-    ```yaml
-    generates:
-      flutter_app/lib/data/models/app_models.dart
-        plugins:
-          - flutter-freezed
-        config:
-          camelCasedEnums: true
-    ```
-   */
-  camelCasedEnums?: CamelCasedEnums;
-
-  /**
-   * @name customScalars
-   * @description map GraphQL Scalar Types to Dart built-in types
-   * @default {}
-   *
-   * @exampleMarkdown
-   * ```yaml
-    generates:
-      flutter_app/lib/data/models/app_models.dart
-        plugins:
-          - flutter-freezed
-        config:
-          customScalars: {
-            "jsonb": "Map<String, dynamic>",
-            "timestamptz": "DateTime",
-            "UUID": "String",
-          }
-   * ```
-   */
-
-  customScalars?: Record<GraphQLScalarType, DartCompatibleType>;
-
-  /**
-   * @name fileName
-   * @description this fileName will be used for the generated output file
-   * @default "app_models"
-   *
-   * @exampleMarkdown
-   * ```yaml
-   * generates:
-   *   flutter_app/lib/data/models/app_models.dart
-   *     plugins:
-   *       - flutter-freezed
-   *     config:
-   *       fileName: app_models
-   * ```
-   */
-
-  fileName?: string;
-
-  /**
-   * @name globalName
-   * @description the `globalName` is used when you want to set the same config options value to every item or on the root object
-   * @default "@*"
-   *
-   * @exampleMarkdown
-   * ```yaml
-   * generates:
-   *   flutter_app/lib/data/models/app_models.dart
-   *     plugins:
-   *       - flutter-freezed
-   *     config:
-   *       globalName: "@all"
-   *
-   * ```
-   */
-  globalName?: GlobalNameConfig;
-
-  /**
-   * @name typeConfig
-   * @description The GraphQL Type name is used as the key. Use `allKey` config value to set global 
-   * @default undefined
-   *
-   * @exampleMarkdown
-   * ```yaml
-
-  * ```
-  */
-
-  typeConfig?: Record<TypeName, TypeConfig>;
-
-  /**
-   * @name ignoreTypes
-   * @description names of GraphQL types to ignore when generating Freezed classes
-   * @default []
-   *
-   * @exampleMarkdown
-   * ```yaml
-   * generates:
-   *   flutter_app/lib/data/models/app_models.dart
-   *     plugins:
-   *       - flutter-freezed
-   *     config:
-   *       ignoreTypes: ["PaginatorInfo"]
-   *
-   * ```
-   */
-
-  ignoreTypes?: string[];
-};
-
-// TODO: Include an @type for each config element
