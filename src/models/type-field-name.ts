@@ -1,4 +1,4 @@
-import { FlutterFreezedPluginConfig, defaultFreezedPluginConfig } from '../config';
+import { FlutterFreezedPluginConfig, defaultFreezedPluginConfig } from '../config-olf';
 
 export type TypeNameValue = string;
 export type FieldNameValue = string;

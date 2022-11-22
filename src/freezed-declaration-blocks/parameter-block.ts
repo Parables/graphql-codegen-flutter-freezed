@@ -1,4 +1,4 @@
-import { AppliesOnParameters, FieldType, FlutterFreezedPluginConfig, NodeType } from '../config';
+import { AppliesOnParameters, FieldType, FlutterFreezedPluginConfig, NodeType } from '../config-olf';
 import { TypeName } from '../models/type-field-name';
 import { buildBlockComment, buildBlockDecorators, buildBlockHeader } from '../utils';
 

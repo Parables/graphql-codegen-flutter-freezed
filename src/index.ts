@@ -1,7 +1,7 @@
 import { oldVisit, PluginFunction, Types } from '@graphql-codegen/plugin-helpers';
 import { transformSchemaAST } from '@graphql-codegen/schema-ast';
 import { GraphQLSchema } from 'graphql';
-import { FlutterFreezedPluginConfig } from './config';
+import { FlutterFreezedPluginConfig } from './config-olf';
 import { schemaVisitor } from './schema-visitor';
 import { buildImportStatements, defaultFreezedPluginConfig } from './utils';
 

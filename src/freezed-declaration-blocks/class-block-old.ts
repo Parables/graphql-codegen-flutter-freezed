@@ -1,7 +1,7 @@
 import { indent } from '@graphql-codegen/visitor-plugin-common';
 import { EnumValueDefinitionNode, FieldDefinitionNode, InputValueDefinitionNode, Kind, NamedTypeNode } from 'graphql';
 import { camelCase, pascalCase } from 'change-case-all';
-import { FlutterFreezedPluginConfig } from '../config';
+import { FlutterFreezedPluginConfig } from '../config-olf';
 import {
   getCustomDecorators,
   transformCustomDecorators,

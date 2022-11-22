@@ -35,7 +35,7 @@ import {
   AppliesOnDefaultFactory,
   MergeInputs,
   DeprecatedFields,
-} from './config';
+} from './config-olf';
 import { FreezedDeclarationBlock, FreezedFactoryBlock } from './freezed-declaration-blocks';
 import { FreezedParameterBlock } from './freezed-declaration-blocks/parameter-block';
 import { BlockName } from './models/block-name';
@@ -69,7 +69,7 @@ export const appliesOnFactoryBlock = <T extends AppliesOn>(appliesOn: T[]) => {
     'factory',
     'default_factory',
     'named_factory',
-    'named_factory_for_merged_inputs',
+    'named_factory_for_merged_types',
     'named_factory_for_union_types',
   ] as T[]);
 };
@@ -79,7 +79,7 @@ export const appliesOnParameterBlock = <T extends AppliesOn>(appliesOn: T[]) => 
     'parameter',
     'default_factory_parameter',
     'named_factory_parameter',
-    'named_factory_parameter_for_merged_inputs',
+    'named_factory_parameter_for_merged_types',
     'named_factory_parameter_for_union_types',
   ] as T[]);
 };
@@ -576,7 +576,7 @@ export const buildBlockFooter = (
     return buildClassFooter(config, typeName, fromJsonToJson);
   } else if (
     appliesOn.includes('default_factory') ||
-    ((appliesOn.includes('named_factory_for_union_types') || appliesOn.includes('named_factory_for_merged_inputs')) &&
+    ((appliesOn.includes('named_factory_for_union_types') || appliesOn.includes('named_factory_for_merged_types')) &&
       namedConstructor.length > 0)
   ) {
     return buildFactoryFooter(config, appliesOn as AppliesOnFactory[], namedConstructor);
@@ -657,7 +657,7 @@ export const buildClassBody = (config: FlutterFreezedPluginConfig, node: NodeTyp
           return FreezedFactoryBlock.serializeNamedFactory(typeName, namedConstructor, [
             'factory',
             'named_factory',
-            'named_factory_for_merged_inputs',
+            'named_factory_for_merged_types',
           ]);
         })
       )
@@ -707,8 +707,8 @@ export const buildFactoryBody = (
     appliesOnParameters = ['parameter', 'default_factory_parameter'];
   } else if (appliesOn.includes('named_factory_for_union_types')) {
     appliesOnParameters = ['parameter', 'named_factory_parameter', 'named_factory_parameter_for_union_types'];
-  } else if (appliesOn.includes('named_factory_for_merged_inputs')) {
-    appliesOnParameters = ['parameter', 'named_factory_parameter', 'named_factory_parameter_for_merged_inputs'];
+  } else if (appliesOn.includes('named_factory_for_merged_types')) {
+    appliesOnParameters = ['parameter', 'named_factory_parameter', 'named_factory_parameter_for_merged_types'];
   }
 
   return (

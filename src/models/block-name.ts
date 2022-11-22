@@ -6,7 +6,7 @@ import {
   defaultTypeConfig,
   EscapeDartKeywords,
   FlutterFreezedPluginConfig,
-} from '../config';
+} from '../config-olf';
 import { dartCasing, getTypeConfigOption, optionFromAnyConfig } from '../utils';
 import { FieldName, TypeName } from './type-field-name';
 

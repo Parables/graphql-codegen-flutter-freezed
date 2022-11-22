@@ -12,12 +12,12 @@ export type ApplyDecoratorOn =
   | 'default_factory' // applies on the main default factory constructor
   | 'named_factory' // applies on all of the named factory constructors in a class
   | 'named_factory_for_union_types' // applies on the named factory constructors when the GraphQL Object Type appears in a class as a named factory constructor and that class was generated for a GraphQL Union Type. E.g: `Droid` in `SearchResult` in the StarWars Schema
-  | 'named_factory_for_merged_inputs' // applies on the named factory constructors when the GraphQL Input Type appears in a class as a named factory constructor and that class was generated for a GraphQL Object Type and the GraphQL Input Type is to be merged with t. E.g: `Droid` in `SearchResult` in the StarWars Schema
+  | 'named_factory_for_merged_types' // applies on the named factory constructors when the GraphQL Input Type appears in a class as a named factory constructor and that class was generated for a GraphQL Object Type and the GraphQL Input Type is to be merged with t. E.g: `Droid` in `SearchResult` in the StarWars Schema
   | 'parameter'
   | 'default_factory_parameter'
   | 'named_factory_parameter'
   | 'named_factory_parameter_for_union_types'
-  | 'named_factory_parameter_for_merged_inputs';
+  | 'named_factory_parameter_for_merged_types';
 
 /**
  * maps GraphQL scalar types to Dart's scalar types

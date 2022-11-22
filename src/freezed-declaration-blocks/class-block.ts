@@ -1,5 +1,5 @@
 import { Kind } from 'graphql';
-import { AppliesOnClass, AppliesOnEnum, FlutterFreezedPluginConfig, NodeType } from '../config';
+import { AppliesOnClass, AppliesOnEnum, FlutterFreezedPluginConfig, NodeType } from '../config-olf';
 import { TypeName } from '../models/type-field-name';
 import { buildBlockComment, buildBlockDecorators, buildBlockHeader, buildBlockBody, buildBlockFooter } from '../utils';
 

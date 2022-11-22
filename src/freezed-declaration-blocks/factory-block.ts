@@ -4,7 +4,7 @@ import {
   AppliesOnNamedFactory,
   FlutterFreezedPluginConfig,
   NodeType,
-} from '../config';
+} from '../config-olf';
 import { TypeName } from '../models/type-field-name';
 import {
   buildBlockComment,
