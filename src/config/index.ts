@@ -6,6 +6,7 @@ import {
   FieldDefinitionNode,
   InputValueDefinitionNode,
 } from 'graphql';
+import { FlutterFreezedPluginConfig } from './config';
 
 /**
  * @name ApplyDecoratorOn
@@ -64,11 +65,11 @@ export type FieldType = FieldDefinitionNode | InputValueDefinitionNode;
 
 export type ObjectType = ObjectTypeDefinitionNode | InputObjectTypeDefinitionNode;
 
-export type UnionValueCase = 'FreezedUnionCase.camel' | 'FreezedUnionCase.pascal';
-
 export type OptionInConfig = keyof FlutterFreezedPluginConfig;
 
-export type OptionInTypeConfig = keyof TypeConfig;
+export type OptionInTypeConfig = keyof FlutterFreezedPluginConfig['typeConfig'];
+
+export type UnionValueCase = 'FreezedUnionCase.camel' | 'FreezedUnionCase.pascal';
 
 /**
  * maps GraphQL scalar types to Dart's scalar types
@@ -162,6 +163,35 @@ export const DART_KEYWORDS = {
   Enum: 'reserved',
   Future: 'reserved',
   Iterable: 'reserved',
+};
+
+export const AnyTypeName = Symbol('@*TypeName');
+export const AnyFieldName = Symbol('@*FieldName');
+
+/** initializes a FreezedPluginConfig with the defaults values */
+export const defaultFreezedPluginConfig: FlutterFreezedPluginConfig = {
+  camelCasedEnums: true,
+  customScalars: {},
+  ignoreTypes: [],
+};
+
+/** initializes a TypeConfig with the defaults values */
+export const defaultTypeConfig: FlutterFreezedPluginConfig['typeConfig'] = {
+  alwaysUseJsonKeyName: undefined,
+  copyWith: undefined,
+  defaultValue: undefined,
+  deprecated: undefined,
+  equal: undefined,
+  escapeDartKeywords: true,
+  final: undefined,
+  fromJsonToJson: true,
+  immutable: true,
+  makeCollectionsUnmodifiable: undefined,
+  mergeInputs: undefined,
+  mutableInputs: true,
+  privateEmptyConstructor: true,
+  unionKey: undefined,
+  unionValueCase: undefined,
 };
 
 export * from './config';

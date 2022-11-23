@@ -8,7 +8,8 @@ import { buildImportStatements, defaultFreezedPluginConfig } from './utils';
 export const plugin: PluginFunction<FlutterFreezedPluginConfig> = (
   schema: GraphQLSchema,
   _documents: Types.DocumentFile[],
-  _config: FlutterFreezedPluginConfig
+  _config: FlutterFreezedPluginConfig,
+  info
 ): string => {
   // sets the defaults for the config
   const config = { ...defaultFreezedPluginConfig, ..._config };
@@ -21,7 +22,7 @@ export const plugin: PluginFunction<FlutterFreezedPluginConfig> = (
   const generated: string[] = visitorResult.definitions.filter((def: any) => typeof def === 'string' && def.length > 0);
 
   return (
-    buildImportStatements(config.fileName) +
+    buildImportStatements(info?.outputFile ?? 'app_models') +
     generated // TODO: replace placeholders with factory blocks
       /*       .map(freezedDeclarationBlock =>
         freezedDeclarationBlock.toString().replace(/==>factory==>.+\n/gm, s => {
