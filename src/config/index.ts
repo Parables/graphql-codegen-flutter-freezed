@@ -173,25 +173,22 @@ export const defaultFreezedPluginConfig: FlutterFreezedPluginConfig = {
   camelCasedEnums: true,
   customScalars: {},
   ignoreTypes: [],
-};
-
-/** initializes a TypeConfig with the defaults values */
-export const defaultTypeConfig: FlutterFreezedPluginConfig['typeConfig'] = {
-  alwaysUseJsonKeyName: undefined,
-  copyWith: undefined,
-  defaultValue: undefined,
-  deprecated: undefined,
-  equal: undefined,
-  escapeDartKeywords: true,
-  final: undefined,
-  fromJsonToJson: true,
-  immutable: true,
-  makeCollectionsUnmodifiable: undefined,
-  mergeInputs: undefined,
-  mutableInputs: true,
-  privateEmptyConstructor: true,
-  unionKey: undefined,
-  unionValueCase: undefined,
+  typeConfig: {
+    copyWith: undefined,
+    defaultValue: undefined,
+    deprecated: undefined,
+    equal: undefined,
+    escapeDartKeywords: true,
+    final: undefined,
+    fromJsonToJson: true,
+    immutable: true,
+    makeCollectionsUnmodifiable: undefined,
+    mergeInputs: undefined,
+    mutableInputs: true,
+    privateEmptyConstructor: true,
+    unionKey: undefined,
+    unionValueCase: undefined,
+  },
 };
 
 export * from './config';

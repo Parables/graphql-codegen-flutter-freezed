@@ -1,45 +1,38 @@
-import {
-  AppliesOn,
-  AppliesOnClass,
-  AppliesOnFactory,
-  AppliesOnParameters,
-  DartIdentifierCasing,
-  UnionValueCase,
-} from '.';
+import { AppliesOnFactory, AppliesOnParameters, DartIdentifierCasing, UnionValueCase } from '.';
 
 //#region string type alias
-type GlobalTypeFieldName = string;
 
-type JsonConvertorClassName = string;
-type FromToJsonFunctionName = string;
-
-type GraphQLScalarType = string;
-type DartCompatibleType = string;
-
-type Decorator = string;
+/**
+ * @name GraphQLTypeName
+ * @description A comma-separated string of GraphQL Type Names. Use the `globalTypeFieldName` to apply the same config options to all GraphQL Types.
+ * @exampleMarkdown
+ * ### Configuring GraphQL Types
+ * ```ts
+ * let typeName1:GraphQLTypeName = 'Droid' // This example applies on the Droid GraphQL Type
+ *
+ * let typeName2:GraphQLTypeName = 'Droid, Starship' // a comma-separated string of GraphQL Type names. This example applies on the Droid and Starship GraphQL Types
+ *
+ * let typeName3:GraphQLTypeName = '@*TypeName' //  This example applies for all GraphQL Types
+ *
+ * let typeName4:GraphQLTypeName = '@*TypeName-[Human,Movie]' // if there are many types to be specified, use this to specify those to be **excluded**. This example applies on all types in the GraphQL Schema except the `Human` and `Movie` types
+ * ```
+ *
+ */
+type GraphQLTypeName = string;
 
 /**
  * @name GraphQLTypeFieldName
  * @description A comma-separated string of GraphQL Type and Field Names separated with a `.` .Use the `globalTypeFieldName` to apply the same config options to all GraphQL Types.
  * @exampleMarkdown
- * ### Configuring GraphQL Types
- * ```ts
- * let graphQLTypeFieldName1:GraphQLTypeFieldName = 'Droid' // This example applies on the Droid GraphQL Type
- *
- * let graphQLTypeFieldName2:GraphQLTypeFieldName = 'Droid, Starship' // a comma-separated string of GraphQL Type names. This example applies on the Droid and Starship GraphQL Types
- *
- * let graphQLTypeFieldName3:GraphQLTypeFieldName = '@*TypeName' //  This example applies for all GraphQL Types
- * ```
- *
  * ### Configuring the fields of GraphQL Types
  * ```ts
- * let graphQLTypeFieldName4:GraphQLTypeFieldName = 'Droid.[id,friends]' // in an array, specify one or more fields for that GraphQL Type. This example applies on the `id` and `friends` fields of the Droid GraphQL Type
+ * let typeFieldName1:GraphQLTypeFieldName = 'Droid.[id,friends]' // in an array, specify one or more fields for that GraphQL Type. This example applies on the `id` and `friends` fields of the Droid GraphQL Type
  *
- * let graphQLTypeFieldName5:GraphQLTypeFieldName = 'Droid.[id,friends], Starship.[id]' // same as `graphQLTypeFieldName4` but for more than one GraphQL Type
+ * let typeFieldName2:GraphQLTypeFieldName = 'Droid.[id,friends], Starship.[id]' // same as `graphQLTypeFieldName1` but for more than one GraphQL Type
  *
- * let graphQLTypeFieldName6:GraphQLTypeFieldName = 'Droid.@*FieldName' // applies on all fields of the Droid GraphQL Type
+ * let typeFieldName3:GraphQLTypeFieldName = 'Droid.@*FieldName' // applies on all fields of the Droid GraphQL Type
  *
- * let graphQLTypeFieldName7:GraphQLTypeFieldName = 'Droid.@*FieldName-[name,appearsIn]' // if there are many fields to be specified, use this to specify those to be **excluded**. This example applies on all of the fields of the Droid GraphQL Type except the `name` and `appearsIn` fields
+ * let typeFieldName4:GraphQLTypeFieldName = 'Droid.@*FieldName-[name,appearsIn]' // if there are many fields to be specified, use this to specify those to be **excluded**. This example applies on all of the fields of the Droid GraphQL Type except the `name` and `appearsIn` fields
  * ```
  * */
 type GraphQLTypeFieldName = string;
@@ -164,7 +157,7 @@ export type FlutterFreezedPluginConfig = {
      * ```
      */
 
-    copyWith?: boolean | GraphQLTypeFieldName | GraphQLTypeFieldName[];
+    copyWith?: boolean | GraphQLTypeName | GraphQLTypeName[];
 
     /**
      * @name defaultValue
@@ -172,11 +165,12 @@ export type FlutterFreezedPluginConfig = {
      * @default undefined
      */
 
-    defaultValue?: [
-      GraphQLTypeFieldName,
-      string, // use backticks for string values
-      AppliesOnParameters[]
-    ];
+    defaultValue?:
+      | [
+          typeFieldName: GraphQLTypeFieldName,
+          value: string, // use backticks for string values
+          appliesOn: AppliesOnParameters[]
+        ][];
 
     /**
      * @name deprecated
@@ -184,7 +178,7 @@ export type FlutterFreezedPluginConfig = {
      * @default undefined
      */
 
-    deprecated?: [GraphQLTypeFieldName, AppliesOnFactory[] | AppliesOnParameters[]];
+    deprecated?: [typeFieldName: GraphQLTypeFieldName, appliesOn: (AppliesOnFactory | AppliesOnParameters)[]][];
 
     /**
      * @name equal
@@ -202,7 +196,7 @@ export type FlutterFreezedPluginConfig = {
      * ```
      */
 
-    equal?: boolean;
+    equal?: boolean | GraphQLTypeName | GraphQLTypeName[];
 
     /**
      * @name escapeDartKeywords
@@ -229,72 +223,82 @@ export type FlutterFreezedPluginConfig = {
      */
 
     escapeDartKeywords?:
-      | [GraphQLTypeFieldName, DartIdentifierCasing, string, string, AppliesOnParameters[]]
-      | {
-          /**
-           * @name dartKeywordEscapeCasing
-           * @description after escaping a valid dart keyword, this option transforms the casing to `snake_cased`, `camelCase` or `PascalCase`. Defaults to `undefined` to leave the casing as it is.
-           * @default undefined
-           * @see_also [escapeDartKeywords, dartKeywordEscapePrefix]
-           *
-           * ```yaml
-           * generates:
-           *   flutter_app/lib/data/models/app_models.dart
-           *     plugins:
-           *       - flutter-freezed
-           *     config:
-           *       dartKeywordEscapeCasing: camelCase
-           *
-           * ```
-           */
-          dartKeywordEscapeCasing?: DartIdentifierCasing;
-          /**
-           * @name dartKeywordEscapePrefix
-           * @description prefix GraphQL type and field names that are valid dart keywords. Don't use only a underscore(`_`) as the `dartKeywordEscapePrefix` since it will make that identifier hidden or produce unexpected results. However, if you would want to change the case after escaping the keyword with `dartKeywordEscapeCasing`, you may use either an `_`, `-` or an empty space ` `.
-           * @default undefined
-           * @see_also [escapeDartKeywords, dartKeywordEscapeSuffix]
-           *
-           * @exampleMarkdown
-           * ```yaml
-           * generates:
-           *   flutter_app/lib/data/models/app_models.dart
-           *     plugins:
-           *       - flutter-freezed
-           *     config:
-           *       dartKeywordEscapePrefix: "k_"
-           *      # Example: let keyword = 'in'
-           *      # dartKeywordEscapeCasing === 'snake_case' => 'k_in'
-           *      # dartKeywordEscapeCasing === 'camelCase' => 'kIn'
-           *      # dartKeywordEscapeCasing === 'PascalCase' => 'KIn'
-           *      # dartKeywordEscapeCasing === undefined => 'k_in'
-           *
-           * ```
-           */
-          dartKeywordEscapePrefix?: string;
-          /**
-           * @name dartKeywordEscapeSuffix
-           * @description suffix GraphQL type and field names that are valid dart keywords. If the value of `dartKeywordEscapeSuffix` is an `_` and if `dartKeywordEscapeCasing` is `snake_case` or `camelCase`, then the casing will be ignored because it will remove the trailing `_` making the escapedKeyword invalid again
-           * @default "_"
-           * @see_also [escapeDartKeywords, dartKeywordEscapePrefix]
-           *
-           * ```yaml
-           * generates:
-           *   flutter_app/lib/data/models/app_models.dart
-           *     plugins:
-           *       - flutter-freezed
-           *     config:
-           *       dartKeywordEscapeSuffix: "_k" or using the default '_'
-           *      # Example: let keyword = 'in'
-           *      # dartKeywordEscapeCasing === 'snake_case'=> 'in_k' or 'in_' // ignored casing
-           *      # dartKeywordEscapeCasing === 'camelCase' =>'inK' or in_ // ignored casing
-           *      # dartKeywordEscapeCasing === 'PascalCase' => 'InK' or 'In'
-           *      # dartKeywordEscapeCasing === undefined  => 'in_k' or 'in_'
-           *
-           * ```
-           */
-          dartKeywordEscapeSuffix?: string;
-          appliesOn?: AppliesOnParameters[];
-        };
+      | boolean
+      | [
+          typeFieldName: GraphQLTypeFieldName,
+          casing: DartIdentifierCasing,
+          prefix: string,
+          suffix: string,
+          appliesOn: AppliesOnParameters[]
+        ][]
+      | Record<
+          GraphQLTypeFieldName,
+          {
+            /**
+             * @name dartKeywordEscapeCasing
+             * @description after escaping a valid dart keyword, this option transforms the casing to `snake_cased`, `camelCase` or `PascalCase`. Defaults to `undefined` to leave the casing as it is.
+             * @default undefined
+             * @see_also [escapeDartKeywords, dartKeywordEscapePrefix]
+             *
+             * ```yaml
+             * generates:
+             *   flutter_app/lib/data/models/app_models.dart
+             *     plugins:
+             *       - flutter-freezed
+             *     config:
+             *       dartKeywordEscapeCasing: camelCase
+             *
+             * ```
+             */
+            dartKeywordEscapeCasing?: DartIdentifierCasing;
+            /**
+             * @name dartKeywordEscapePrefix
+             * @description prefix GraphQL type and field names that are valid dart keywords. Don't use only a underscore(`_`) as the `dartKeywordEscapePrefix` since it will make that identifier hidden or produce unexpected results. However, if you would want to change the case after escaping the keyword with `dartKeywordEscapeCasing`, you may use either an `_`, `-` or an empty space ` `.
+             * @default undefined
+             * @see_also [escapeDartKeywords, dartKeywordEscapeSuffix]
+             *
+             * @exampleMarkdown
+             * ```yaml
+             * generates:
+             *   flutter_app/lib/data/models/app_models.dart
+             *     plugins:
+             *       - flutter-freezed
+             *     config:
+             *       dartKeywordEscapePrefix: "k_"
+             *      # Example: let keyword = 'in'
+             *      # dartKeywordEscapeCasing === 'snake_case' => 'k_in'
+             *      # dartKeywordEscapeCasing === 'camelCase' => 'kIn'
+             *      # dartKeywordEscapeCasing === 'PascalCase' => 'KIn'
+             *      # dartKeywordEscapeCasing === undefined => 'k_in'
+             *
+             * ```
+             */
+            dartKeywordEscapePrefix?: string;
+            /**
+             * @name dartKeywordEscapeSuffix
+             * @description suffix GraphQL type and field names that are valid dart keywords. If the value of `dartKeywordEscapeSuffix` is an `_` and if `dartKeywordEscapeCasing` is `snake_case` or `camelCase`, then the casing will be ignored because it will remove the trailing `_` making the escapedKeyword invalid again
+             * @default "_"
+             * @see_also [escapeDartKeywords, dartKeywordEscapePrefix]
+             *
+             * ```yaml
+             * generates:
+             *   flutter_app/lib/data/models/app_models.dart
+             *     plugins:
+             *       - flutter-freezed
+             *     config:
+             *       dartKeywordEscapeSuffix: "_k" or using the default '_'
+             *      # Example: let keyword = 'in'
+             *      # dartKeywordEscapeCasing === 'snake_case'=> 'in_k' or 'in_' // ignored casing
+             *      # dartKeywordEscapeCasing === 'camelCase' =>'inK' or in_ // ignored casing
+             *      # dartKeywordEscapeCasing === 'PascalCase' => 'InK' or 'In'
+             *      # dartKeywordEscapeCasing === undefined  => 'in_k' or 'in_'
+             *
+             * ```
+             */
+            dartKeywordEscapeSuffix?: string;
+            appliesOn: AppliesOnParameters[];
+          }
+        >;
 
     /**
      * @name final
@@ -302,7 +306,7 @@ export type FlutterFreezedPluginConfig = {
      * @default undefined
      */
 
-    final?: [GraphQLTypeFieldName, AppliesOnParameters[]] | Record<GraphQLTypeFieldName, AppliesOnParameters[]>;
+    final?: [typeFieldName: GraphQLTypeFieldName, appliesOn: AppliesOnParameters[]][];
 
     /**
      *
@@ -394,16 +398,12 @@ export type FlutterFreezedPluginConfig = {
      */
     fromJsonToJson?:
       | boolean
-      | [GraphQLTypeFieldName, string, AppliesOnClass[], boolean]
-      | Record<
-          GraphQLTypeFieldName,
-          | string
-          | {
-              name: string;
-              useClassConverter?: boolean;
-              appliesOn?: AppliesOnParameters[];
-            }
-        >;
+      | [
+          typeFieldName: GraphQLTypeFieldName,
+          classOrFunctionName: string,
+          appliesOn?: AppliesOnParameters[],
+          useClassConverter?: boolean
+        ];
 
     /**
      * @name immutable
@@ -422,7 +422,7 @@ export type FlutterFreezedPluginConfig = {
      * ```
      */
 
-    immutable?: boolean | [GraphQLTypeFieldName, AppliesOnClass[]];
+    immutable?: boolean | GraphQLTypeName | GraphQLTypeName[];
 
     /**
      * @name makeCollectionsUnmodifiable
@@ -440,7 +440,7 @@ export type FlutterFreezedPluginConfig = {
      *
      * ```
      */
-    makeCollectionsUnmodifiable?: boolean | [GraphQLTypeFieldName, AppliesOnClass[]];
+    makeCollectionsUnmodifiable?: boolean | GraphQLTypeName | GraphQLTypeName[];
 
     /**
      * @name mergeInputs
@@ -457,7 +457,7 @@ export type FlutterFreezedPluginConfig = {
      *      mergeInputs: ["Create$Input", "Update$Input", "Delete$Input"]
      * ```
      */
-    mergeInputs?: [GraphQLTypeFieldName, GraphQLTypeFieldName[], AppliesOn[]];
+    mergeInputs?: [typeName: GraphQLTypeName, mergeWithTypeNames: GraphQLTypeName[]][];
 
     /**
      * @name mutableInputs
@@ -475,7 +475,7 @@ export type FlutterFreezedPluginConfig = {
      *
      * ```
      */
-    mutableInputs?: boolean | [GraphQLTypeFieldName, AppliesOnClass[]];
+    mutableInputs?: boolean | GraphQLTypeName | GraphQLTypeName[];
 
     /**
      * @name privateEmptyConstructor
@@ -493,7 +493,7 @@ export type FlutterFreezedPluginConfig = {
      *
      * ```
      */
-    privateEmptyConstructor?: boolean | [GraphQLTypeFieldName, AppliesOnClass[]];
+    privateEmptyConstructor?: boolean | GraphQLTypeName | GraphQLTypeName[];
 
     /**
      * @name unionKey
@@ -529,7 +529,7 @@ export type FlutterFreezedPluginConfig = {
      *
      * ```
      */
-    unionValueCase?: [GraphQLTypeFieldName, UnionValueCase, AppliesOnClass[]];
+    unionValueCase?: UnionValueCase | [typeName: GraphQLTypeName, casing: UnionValueCase][];
   };
 
   /**
@@ -549,5 +549,5 @@ export type FlutterFreezedPluginConfig = {
    * ```
    */
 
-  ignoreTypes?: GraphQLTypeFieldName[];
+  ignoreTypes?: GraphQLTypeName[];
 };
