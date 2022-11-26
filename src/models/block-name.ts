@@ -1,4 +1,5 @@
 import { camelCase } from 'change-case-all';
+import { Config } from 'src/config/value-from-config';
 import {
   DartIdentifierCasing,
   DART_KEYWORDS,
@@ -6,7 +7,7 @@ import {
   defaultTypeConfig,
   EscapeDartKeywords,
   FlutterFreezedPluginConfig,
-} from '../config-olf';
+} from '../config';
 import { dartCasing, getTypeConfigOption, optionFromAnyConfig } from '../utils';
 import { FieldName, TypeName } from './type-field-name';
 
@@ -125,13 +126,7 @@ export class BlockName {
     fieldName: FieldName
   ): string => {
     const decorateWithAtJsonKey = BlockName.shouldDecorateWithAtJsonKey('enum_field', config, typeName, fieldName);
-    const camelCasedEnums = optionFromAnyConfig(config, 'camelCasedEnums', defaultFreezedPluginConfig.camelCasedEnums);
-    let casing: DartIdentifierCasing | undefined = undefined;
-    if (typeof camelCasedEnums === 'boolean') {
-      casing = camelCasedEnums ? 'camelCase' : undefined;
-    } else if (camelCasedEnums !== undefined) {
-      casing = camelCasedEnums;
-    }
+    const casing = Config.camelCasedEnums(config);
     return BlockName.fromString(config, fieldName, typeName, casing, decorateWithAtJsonKey).value;
   };
 

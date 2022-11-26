@@ -10,11 +10,19 @@ const config: CodegenConfig = {
       plugins: {
         'flutter-freezed': {
           // ...
-          copyWith: true,
-          // OR: a list of GRaphQL Type names
-          copyWith: ['Droid', 'Starship'],
-          // OR: a comma-separated string
-          copyWith: 'Droid,Starship',
+          fromJsonWithMultiConstructors: [
+            [
+              'SearchResult', // <-- unionTypeName
+              'namedConstructor', // <-- unionKey
+              'FreezedUnionCase.pascal', // <-- unionValueCase
+              {
+                // <-- unionValuesNameMap
+                Droid: 'special droid',
+                Human: 'astronaut',
+                Starship: 'space_Shuttle',
+              },
+            ],
+          ],
         },
       },
     },

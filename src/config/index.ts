@@ -65,9 +65,13 @@ export type FieldType = FieldDefinitionNode | InputValueDefinitionNode;
 
 export type ObjectType = ObjectTypeDefinitionNode | InputObjectTypeDefinitionNode;
 
-export type OptionInConfig = keyof FlutterFreezedPluginConfig;
+export type ConfigOption = keyof FlutterFreezedPluginConfig;
+export type FreezedOption = Extract<
+  ConfigOption,
+  'copyWith' | 'equal' | 'immutable' | 'makeCollectionsUnmodifiable' | 'mutableInputs' | 'privateEmptyConstructor'
+>;
 
-export type OptionInTypeConfig = keyof FlutterFreezedPluginConfig['typeConfig'];
+export type MultiConstructorOption = FlutterFreezedPluginConfig['fromJsonWithMultiConstructors'];
 
 export type UnionValueCase = 'FreezedUnionCase.camel' | 'FreezedUnionCase.pascal';
 
@@ -171,24 +175,21 @@ export const AnyFieldName = Symbol('@*FieldName');
 /** initializes a FreezedPluginConfig with the defaults values */
 export const defaultFreezedPluginConfig: FlutterFreezedPluginConfig = {
   camelCasedEnums: true,
+  copyWith: undefined,
   customScalars: {},
+  defaultValues: undefined,
+  deprecated: undefined,
+  equal: undefined,
+  escapeDartKeywords: true,
+  final: undefined,
+  fromJsonToJson: true,
+  fromJsonWithMultiConstructors: undefined,
+  immutable: true,
   ignoreTypes: [],
-  typeConfig: {
-    copyWith: undefined,
-    defaultValue: undefined,
-    deprecated: undefined,
-    equal: undefined,
-    escapeDartKeywords: true,
-    final: undefined,
-    fromJsonToJson: true,
-    immutable: true,
-    makeCollectionsUnmodifiable: undefined,
-    mergeInputs: undefined,
-    mutableInputs: true,
-    privateEmptyConstructor: true,
-    unionKey: undefined,
-    unionValueCase: undefined,
-  },
+  makeCollectionsUnmodifiable: undefined,
+  mergeInputs: undefined,
+  mutableInputs: true,
+  privateEmptyConstructor: true,
 };
 
 export * from './config';

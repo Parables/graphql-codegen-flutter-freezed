@@ -36,6 +36,7 @@ import {
   MergeInputs,
   DeprecatedFields,
 } from './config-olf';
+import { Config } from './config/value-from-config';
 import { FreezedDeclarationBlock, FreezedFactoryBlock } from './freezed-declaration-blocks';
 import { FreezedParameterBlock } from './freezed-declaration-blocks/parameter-block';
 import { BlockName } from './models/block-name';
@@ -48,8 +49,8 @@ export const nodeIsObjectType = (
 ): node is ObjectTypeDefinitionNode | InputObjectTypeDefinitionNode =>
   node.kind === Kind.OBJECT_TYPE_DEFINITION || node.kind === Kind.INPUT_OBJECT_TYPE_DEFINITION;
 
-export const appliesOnBlock = <T extends AppliesOn>(appliesOn: T[], expected: T[]) => {
-  return appliesOn.every(a => expected.includes(a));
+export const appliesOnBlock = <T extends AppliesOn>(appliesOn: T[], expected: T[], matchSome = false) => {
+  return matchSome ? appliesOn.some(a => expected.includes(a)) : appliesOn.every(a => expected.includes(a));
 };
 
 export const appliesOnEnumBlock = <T extends AppliesOn>(appliesOn: T[]) => {
@@ -84,6 +85,9 @@ export const appliesOnParameterBlock = <T extends AppliesOn>(appliesOn: T[]) => 
   ] as T[]);
 };
 
+/**
+ * @deprecated
+ */
 export const mergeConfig = (
   baseConfig?: Partial<FlutterFreezedPluginConfig>,
   newConfig?: Partial<FlutterFreezedPluginConfig>
@@ -109,6 +113,14 @@ export const mergeConfig = (
   return (config?.[option] ?? defaultFreezedPluginConfig?.[option]) as T | undefined;
 }; */
 
+/**
+ * @deprecated
+ * @param config
+ * @param typeName
+ * @param option
+ * @param defaultValue
+ * @returns
+ */
 export const getTypeConfigOption = <T>(
   config: FlutterFreezedPluginConfig,
   typeName: TypeName,
@@ -382,12 +394,11 @@ export const decorateAsFreezed = (config: FlutterFreezedPluginConfig, node: Node
 
 export const isCustomizedFreezed = (config: FlutterFreezedPluginConfig, typeName: TypeName) => {
   return (
-    getTypeConfigOption<boolean>(config, typeName, 'copyWith') !== undefined ||
-    getTypeConfigOption<boolean>(config, typeName, 'equal') !== undefined ||
-    getTypeConfigOption<boolean>(config, typeName, 'makeCollectionsUnmodifiable') !== undefined ||
-    getTypeConfigOption<string>(config, typeName, 'unionKey') !== undefined ||
-    getTypeConfigOption<'FreezedUnionCase.camel' | 'FreezedUnionCase.pascal'>(config, typeName, 'unionValueCase') !==
-      undefined
+    Config.copyWith(config, typeName) !== undefined ||
+    Config.equal(config, typeName) !== undefined ||
+    Config.makeCollectionsUnmodifiable(config, typeName) !== undefined ||
+    Config.unionKey(config, typeName) !== undefined ||
+    Config.unionValueCase(config, typeName) !== undefined
   );
 };
 
