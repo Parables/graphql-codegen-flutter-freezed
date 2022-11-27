@@ -1,21 +1,95 @@
+import { indent } from '@graphql-codegen/visitor-plugin-common';
+import { buildComment } from '.';
 import {
+  TypeName,
   AppliesOnDefaultFactory,
-  AppliesOnFactory,
   AppliesOnNamedFactory,
   FlutterFreezedPluginConfig,
-  NodeType,
-} from '../config-olf';
-import { TypeName } from '../models/type-field-name';
-import {
-  buildBlockComment,
-  buildBlockDecorators,
-  buildBlockHeader,
-  buildBlockBody,
-  buildBlockFooter,
   NodeRepository,
-} from '../utils';
+  AppliesOnFactory,
+  Config,
+  ObjectType,
+  AppliesOnParameters,
+} from '../config';
+import { BlockName } from './block-name';
+import { ParameterBlock } from './parameter-block';
 
-export class FreezedFactoryBlock {
+export class FactoryBlock {
+  public static build(
+    config: FlutterFreezedPluginConfig,
+    node: ObjectType,
+    appliesOn: AppliesOnFactory[],
+    typeName: TypeName,
+    namedConstructor = ''
+  ): string {
+    let block = '';
+
+    block += buildComment(node);
+
+    block += this.buildDecorators();
+
+    block += this.buildHeader(config, typeName, namedConstructor);
+
+    block += this.buildBody(config, node, appliesOn);
+
+    const _namedConstructor = appliesOn.includes('default_factory') ? node.name.value : namedConstructor;
+    block += this.buildFooter(config, appliesOn, _namedConstructor);
+
+    return block;
+  }
+
+  //#region Step 03.03. Build Factory Block
+  public static buildDecorators = (): string => {
+    return '';
+  };
+
+  public static buildHeader = (config: FlutterFreezedPluginConfig, typeName: TypeName, namedConstructor?: string) => {
+    const immutable = Config.immutable(config, typeName);
+    const constFactory = immutable ? indent('const factory') : indent('factory');
+
+    if (namedConstructor && namedConstructor?.length > 0) {
+      return `${constFactory} ${BlockName.asNamedConstructor(config, typeName, namedConstructor)}({\n`;
+    }
+
+    return `${constFactory} ${BlockName.asClassName(config, typeName)}({\n`;
+  };
+
+  public static buildBody = (
+    config: FlutterFreezedPluginConfig,
+    node: ObjectType,
+    appliesOn: AppliesOnFactory[]
+  ): string => {
+    let appliesOnParameters: AppliesOnParameters[] = [];
+    if (appliesOn.includes('default_factory')) {
+      appliesOnParameters = ['parameter', 'default_factory_parameter'];
+    } else if (appliesOn.includes('named_factory_for_union_types')) {
+      appliesOnParameters = ['parameter', 'named_factory_parameter', 'named_factory_parameter_for_union_types'];
+    } else if (appliesOn.includes('named_factory_for_merged_types')) {
+      appliesOnParameters = ['parameter', 'named_factory_parameter', 'named_factory_parameter_for_merged_types'];
+    }
+
+    return (
+      node.fields
+        ?.map(field => {
+          return ParameterBlock.build(config, node, appliesOnParameters, field);
+        })
+        .join('') ?? ''
+    );
+  };
+
+  public static buildFooter = (
+    config: FlutterFreezedPluginConfig,
+    appliesOn: AppliesOnFactory[],
+    namedConstructor: string
+  ) => {
+    const typeName = TypeName.fromString(namedConstructor);
+    const prefix = appliesOn.includes('default_factory') ? '_' : '';
+    const factoryFooterName = BlockName.asClassName(config, typeName);
+    return indent(`}) = ${prefix}${factoryFooterName};\n\n`);
+  };
+
+  //#endregion
+
   public static serializeFactory = (typeName: TypeName, appliesOn: AppliesOnDefaultFactory[]): string => {
     return `==>factory==>${typeName.value}==>${appliesOn.join(',')}\n`;
   };
@@ -31,9 +105,9 @@ export class FreezedFactoryBlock {
   public static extractAndReplaceTokens = (
     config: FlutterFreezedPluginConfig,
     nodeRepository: NodeRepository,
-    buildBlockOutput: string[]
+    generatedBlocks: string[]
   ): string => {
-    return buildBlockOutput
+    return generatedBlocks
       .map(block => {
         if (block.includes('==>factory==>')) {
           return block.replace(/==>factory==>.+\n?/gm, token => {
@@ -73,7 +147,7 @@ export class FreezedFactoryBlock {
     const node = nodeRepository.get(typeName.value);
 
     if (node) {
-      return FreezedFactoryBlock.buildFromFactory(config, node, typeName, appliesOn);
+      return FactoryBlock.buildFromFactory(config, node, typeName, appliesOn);
     }
 
     return '';
@@ -89,7 +163,7 @@ export class FreezedFactoryBlock {
     const node = nodeRepository.get(namedConstructor);
 
     if (node) {
-      return FreezedFactoryBlock.buildFromNamedFactory(config, node, typeName, namedConstructor, appliesOn);
+      return FactoryBlock.buildFromNamedFactory(config, node, typeName, namedConstructor, appliesOn);
     }
 
     return '';
@@ -97,44 +171,20 @@ export class FreezedFactoryBlock {
 
   public static buildFromFactory = (
     config: FlutterFreezedPluginConfig,
-    node: NodeType,
+    node: ObjectType,
     typeName: TypeName,
     appliesOn: AppliesOnDefaultFactory[]
   ): string => {
-    return FreezedFactoryBlock.build(config, node, appliesOn, typeName);
+    return FactoryBlock.build(config, node, appliesOn, typeName);
   };
 
   public static buildFromNamedFactory = (
     config: FlutterFreezedPluginConfig,
-    node: NodeType,
+    node: ObjectType,
     typeName: TypeName,
     namedConstructor: string,
     appliesOn: AppliesOnNamedFactory[]
   ): string => {
-    return FreezedFactoryBlock.build(config, node, appliesOn, typeName, namedConstructor);
+    return FactoryBlock.build(config, node, appliesOn, typeName, namedConstructor);
   };
-
-  public static build(
-    config: FlutterFreezedPluginConfig,
-    node: NodeType,
-    appliesOn: AppliesOnFactory[],
-    typeName: TypeName,
-
-    namedConstructor = ''
-  ): string {
-    let block = '';
-
-    block += buildBlockComment(node);
-
-    block += buildBlockDecorators(config, node, appliesOn);
-
-    block += buildBlockHeader(config, node, appliesOn, typeName, namedConstructor);
-
-    block += buildBlockBody(config, node, appliesOn);
-
-    const _namedConstructor = appliesOn.includes('default_factory') ? node.name.value : namedConstructor;
-    block += buildBlockFooter(config, node, appliesOn, _namedConstructor);
-
-    return block;
-  }
 }

@@ -1,5 +1,4 @@
-import { AnyTypeName } from 'src/config';
-import { FlutterFreezedPluginConfig, defaultFreezedPluginConfig } from '../config';
+import { AnyTypeName } from '../config';
 
 export type TypeNameValue = string;
 export type FieldNameValue = string;
@@ -16,23 +15,6 @@ class TypeFieldName {
   }
 
   public static fromString = (value: string) => new TypeFieldName(value);
-
-  /**
-   * @deprecated
-   */
-  public static fromConfig = (config: Record<string, unknown>, name: string): TypeFieldName => {
-    const commaSeparatedNames = Object.keys(config);
-    const targetName = commaSeparatedNames.find(n => n.includes(name));
-    return TypeFieldName.fromString(targetName ?? name);
-  };
-
-  /**
-   * @deprecated
-   */
-  public static rootBlockFromGlobalName = (config: FlutterFreezedPluginConfig) =>
-    TypeName.fromString(
-      config.globalName?.rootBlock ?? defaultFreezedPluginConfig.globalName?.rootBlock ?? '@*RootBlock'
-    );
 }
 
 /**
@@ -47,9 +29,6 @@ export class TypeName extends TypeFieldName {
   private constructor(value: string) {
     super(value);
   }
-
-  public static fromGlobalName = (config: FlutterFreezedPluginConfig) =>
-    TypeName.fromString(config.globalName?.typeName ?? defaultFreezedPluginConfig.globalName?.typeName ?? '@*TypeName');
 
   public static byPrecedence = (graphqlTypName: string, commaSeparatedNames: string | string[]) => {
     const found =
@@ -75,9 +54,4 @@ export class FieldName extends TypeFieldName {
   private constructor(value: string) {
     super(value);
   }
-
-  public static fromGlobalName = (config: FlutterFreezedPluginConfig) =>
-    FieldName.fromString(
-      config.globalName?.fieldName ?? defaultFreezedPluginConfig.globalName?.fieldName ?? '@*FieldName'
-    );
 }

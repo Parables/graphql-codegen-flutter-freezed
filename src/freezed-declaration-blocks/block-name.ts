@@ -9,7 +9,7 @@ import {
   FlutterFreezedPluginConfig,
 } from '../config';
 import { dartCasing, getTypeConfigOption, optionFromAnyConfig } from '../utils';
-import { FieldName, TypeName } from './type-field-name';
+import { FieldName, TypeName } from '../config/type-field-name';
 
 export type BlockNameValue = string;
 

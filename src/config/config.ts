@@ -1,46 +1,13 @@
-import { AppliesOnFactory, AppliesOnParameters, DartIdentifierCasing, UnionValueCase } from '.';
+import {
+  ObjectTypeDefinitionNode,
+  InputObjectTypeDefinitionNode,
+  UnionTypeDefinitionNode,
+  EnumTypeDefinitionNode,
+  FieldDefinitionNode,
+  InputValueDefinitionNode,
+} from 'graphql';
 
-//#region string type alias
-
-/**
- * @name GraphQLTypeName
- * @description A comma-separated string of GraphQL Type Names. Use the `globalTypeFieldName` to apply the same config options to all GraphQL Types.
- * @exampleMarkdown
- * ### Configuring GraphQL Types
- * ```ts
- * let typeName1:GraphQLTypeName = 'Droid' // This example applies on the Droid GraphQL Type
- *
- * let typeName2:GraphQLTypeName = 'Droid, Starship' // a comma-separated string of GraphQL Type names. This example applies on the Droid and Starship GraphQL Types
- *
- * let typeName3:GraphQLTypeName = '@*TypeName' //  This example applies for all GraphQL Types
- *
- * let typeName4:GraphQLTypeName = '@*TypeName-[Human,Movie]' // if there are many types to be specified, use this to specify those to be **excluded**. This example applies on all types in the GraphQL Schema except the `Human` and `Movie` types
- * ```
- *
- */
-type GraphQLTypeName = string;
-
-/**
- * @name GraphQLTypeFieldName
- * @description A comma-separated string of GraphQL Type and Field Names separated with a `.` .Use the `globalTypeFieldName` to apply the same config options to all GraphQL Types.
- * @exampleMarkdown
- * ### Configuring the fields of GraphQL Types
- * ```ts
- * let typeFieldName1:GraphQLTypeFieldName = 'Droid.[id,friends]' // in an array, specify one or more fields for that GraphQL Type. This example applies on the `id` and `friends` fields of the Droid GraphQL Type
- *
- * let typeFieldName2:GraphQLTypeFieldName = 'Droid.[id,friends], Starship.[id]' // same as `graphQLTypeFieldName1` but for more than one GraphQL Type
- *
- * let typeFieldName3:GraphQLTypeFieldName = 'Droid.@*FieldName' // applies on all fields of the Droid GraphQL Type
- *
- * let typeFieldName4:GraphQLTypeFieldName = 'Droid.@*FieldName-[name,appearsIn]' // if there are many fields to be specified, use this to specify those to be **excluded**. This example applies on all of the fields of the Droid GraphQL Type except the `name` and `appearsIn` fields
- *
- * let typeFieldName5:GraphQLTypeFieldName = '@*TypeName.@*FieldName' // applies on all of the fields of the GraphQL Types
- * ```
- * */
-type GraphQLTypeFieldName = string;
-
-//#endregion
-
+//#region PluginConfig
 /**
  * @name FlutterFreezedPluginConfig
  * @description configure the `flutter-freezed` plugin
@@ -174,7 +141,7 @@ export type FlutterFreezedPluginConfig = {
    *         'flutter-freezed': {
    *           // ...
    *           defaultValues: [
-   *             ['MovieCharacter.[appearsIn]', `[Episode.jedi]`, ['default_factory_parameter']],
+   *             ['MovieCharacter.[appearsIn]', `Episode.jedi`, ['default_factory_parameter']],
    *             ['@*TypeName.[id]', `UUID.new()`, ['parameter']],
    *           ],
    *         },
@@ -650,3 +617,281 @@ export type FlutterFreezedPluginConfig = {
    */
   privateEmptyConstructor?: boolean | GraphQLTypeName | GraphQLTypeName[];
 };
+//#endregion
+
+//#region type alias
+
+export const AnyTypeName = Symbol('@*TypeName');
+export const AnyFieldName = Symbol('@*FieldName');
+
+/**
+ * @name GraphQLTypeName
+ * @description A comma-separated string of GraphQL Type Names. Use the `globalTypeFieldName` to apply the same config options to all GraphQL Types.
+ * @exampleMarkdown
+ * ### Configuring GraphQL Types
+ * ```ts
+ * let typeName1:GraphQLTypeName = 'Droid' // This example applies on the Droid GraphQL Type
+ *
+ * let typeName2:GraphQLTypeName = 'Droid, Starship' // a comma-separated string of GraphQL Type names. This example applies on the Droid and Starship GraphQL Types
+ *
+ * let typeName3:GraphQLTypeName = '@*TypeName' //  This example applies for all GraphQL Types
+ *
+ * let typeName4:GraphQLTypeName = '@*TypeName-[Human,Movie]' // if there are many types to be specified, use this to specify those to be **excluded**. This example applies on all types in the GraphQL Schema except the `Human` and `Movie` types
+ * ```
+ *
+ */
+type GraphQLTypeName = string;
+
+/**
+ * @name GraphQLTypeFieldName
+ * @description A comma-separated string of GraphQL Type and Field Names separated with a `.` .Use the `globalTypeFieldName` to apply the same config options to all GraphQL Types.
+ * @exampleMarkdown
+ * ### Configuring the fields of GraphQL Types
+ * ```ts
+ * let typeFieldName1:GraphQLTypeFieldName = 'Droid.[id,friends]' // in an array, specify one or more fields for that GraphQL Type. This example applies on the `id` and `friends` fields of the Droid GraphQL Type
+ *
+ * let typeFieldName2:GraphQLTypeFieldName = 'Droid.[id,friends], Starship.[id], @*TypeName.[id]' // same as `graphQLTypeFieldName1` but for more than one GraphQL Type
+ *
+ * let typeFieldName3:GraphQLTypeFieldName = 'Droid.@*FieldName' // applies on all fields of the Droid GraphQL Type
+ *
+ * let typeFieldName4:GraphQLTypeFieldName = 'Droid.@*FieldName-[name,appearsIn]' // if there are many fields to be specified, use this to specify those to be **excluded**. This example applies on all of the fields of the Droid GraphQL Type except the `name` and `appearsIn` fields
+ *
+ * let typeFieldName5:GraphQLTypeFieldName = '@*TypeName.@*FieldName' // applies on all of the fields of the GraphQL Types
+ * ```
+ * */
+type GraphQLTypeFieldName = string;
+
+/**
+ * @name ApplyDecoratorOn
+ * @description Values that are passed to the `DecoratorToFreezed.applyOn` field that specifies where the custom decorator should be applied
+ */
+export type AppliesOn =
+  | 'enum' // applies on the Enum itself
+  | 'enum_value' // applies to the value of an Enum
+  | 'class' // applies on the class itself
+  | 'factory' // applies on all class factory constructor
+  | 'default_factory' // applies on the main default factory constructor
+  | 'named_factory' // applies on all of the named factory constructors in a class
+  | 'named_factory_for_union_types' // applies on the named factory constructors for a specified(or all when the `*` is used as the key) GraphQL Object Type when it appears in a class as a named factory constructor and that class was generated for a GraphQL Union Type. E.g: `Droid` in `SearchResult` in the StarWars Schema
+  | 'named_factory_for_merged_types' // applies on the named factory constructors for a GraphQL Input Type when it appears in a class as a named factory constructor and that class was generated for a GraphQL Object Type and it Type is to be merged with the GraphQL Object Type. E.g: `CreateMovieInput` merged with `Movie` in the StarWars Schema
+  | 'parameter' // applies on all parameters for both default constructors and named factory constructors
+  | 'default_factory_parameter' // applies on parameters for ONLY default constructors for a specified(or all when the `*` is used as the key) field on a GraphQL Object/Input Type
+  | 'named_factory_parameter' // applies on parameters for all named factory constructors for a specified(or all when the `*` is used as the key) field on a GraphQL Object/Input Type
+  | 'named_factory_parameter_for_union_types' // like `named_factory_parameters` but ONLY for a parameter in a named factory constructor which for a GraphQL Union Type
+  | 'named_factory_parameter_for_merged_types'; // like `named_factory_parameters` but ONLY for a parameter in a named factory constructor which for a GraphQL Input Type that is merged inside an a class generated for a GraphQL Object Type
+
+export const APPLIES_ON_ENUM = <const>['enum'];
+
+export type AppliesOnEnum = typeof APPLIES_ON_ENUM[number];
+
+export const APPLIES_ON_ENUM_VALUE = <const>['enum_value'];
+
+export type AppliesOnEnumValue = typeof APPLIES_ON_ENUM_VALUE[number];
+
+export const APPLIES_ON_CLASS = <const>['class'];
+
+export type AppliesOnClass = typeof APPLIES_ON_CLASS[number];
+
+export const APPLIES_ON_DEFAULT_FACTORY = <const>['factory', 'default_factory'];
+
+export type AppliesOnDefaultFactory = typeof APPLIES_ON_DEFAULT_FACTORY[number];
+
+export const APPLIES_ON_NAMED_FACTORY_FOR_UNION_TYPES = <const>[
+  'factory',
+  'named_factory',
+  'named_factory_for_union_types',
+];
+export type AppliesOnNamedFactoryForUnionTypes = typeof APPLIES_ON_NAMED_FACTORY_FOR_UNION_TYPES[number];
+
+export const APPLIES_ON_NAMED_FACTORY_FOR_MERGED_TYPES = <const>[
+  'factory',
+  'named_factory',
+  'named_factory_for_merged_types',
+];
+export type AppliesOnNamedFactoryForMergedTypes = typeof APPLIES_ON_NAMED_FACTORY_FOR_MERGED_TYPES[number];
+
+export type AppliesOnNamedFactory = AppliesOnNamedFactoryForUnionTypes | AppliesOnNamedFactoryForMergedTypes;
+
+export type AppliesOnFactory = AppliesOnDefaultFactory | AppliesOnNamedFactory;
+
+export const APPLIES_ON_FACTORY = [
+  'factory',
+  'default_factory',
+  'named_factory',
+  'named_factory_for_merged_types',
+  'named_factory_for_union_types',
+];
+
+export const APPLIES_ON_DEFAULT_PARAMETERS = <const>['parameter', 'default_factory_parameter'];
+
+export type AppliesOnDefaultParameters = typeof APPLIES_ON_DEFAULT_PARAMETERS[number];
+
+export const APPLIES_ON_NAMED_FACTORY_PARAMETERS_FOR_UNION_TYPES = <const>[
+  'parameter',
+  'named_factory_parameter',
+  'named_factory_parameter_for_union_types',
+];
+
+export type AppliesOnNamedFactoryParametersForUnionTypes =
+  typeof APPLIES_ON_NAMED_FACTORY_PARAMETERS_FOR_UNION_TYPES[number];
+
+export const APPLIES_ON_NAMED_FACTORY_PARAMETERS_FOR_MERGED_TYPES = <const>[
+  'parameter',
+  'named_factory_parameter',
+  'named_factory_parameter_for_merged_types',
+];
+
+export type AppliesOnNamedFactoryParametersForMergedTypes =
+  typeof APPLIES_ON_NAMED_FACTORY_PARAMETERS_FOR_MERGED_TYPES[number];
+
+export type AppliesOnNamedParameters =
+  | AppliesOnNamedFactoryParametersForUnionTypes
+  | AppliesOnNamedFactoryParametersForMergedTypes;
+
+export type AppliesOnParameters = AppliesOnDefaultParameters | AppliesOnNamedParameters;
+
+export const APPLIES_ON_PARAMETERS = <const>[
+  'parameter',
+  'default_factory_parameter',
+  'named_factory_parameter',
+  'named_factory_parameter_for_union_types',
+  'named_factory_parameter_for_merged_types',
+];
+
+export type DartIdentifierCasing = 'snake_case' | 'camelCase' | 'PascalCase';
+
+export type NodeType =
+  | ObjectTypeDefinitionNode
+  | InputObjectTypeDefinitionNode
+  | UnionTypeDefinitionNode
+  | EnumTypeDefinitionNode;
+
+export type FieldType = FieldDefinitionNode | InputValueDefinitionNode;
+
+export type ObjectType = ObjectTypeDefinitionNode | InputObjectTypeDefinitionNode;
+
+export type ConfigOption = keyof FlutterFreezedPluginConfig;
+export type FreezedOption = Extract<
+  ConfigOption,
+  'copyWith' | 'equal' | 'immutable' | 'makeCollectionsUnmodifiable' | 'mutableInputs' | 'privateEmptyConstructor'
+>;
+
+export type MultiConstructorOption = FlutterFreezedPluginConfig['fromJsonWithMultiConstructors'];
+
+export type UnionValueCase = 'FreezedUnionCase.camel' | 'FreezedUnionCase.pascal';
+
+/**
+ * maps GraphQL scalar types to Dart's scalar types
+ */
+export const DART_SCALARS: Record<string, string> = {
+  ID: 'String',
+  String: 'String',
+  Boolean: 'bool',
+  Int: 'int',
+  Float: 'double',
+  DateTime: 'DateTime',
+};
+
+export const DART_KEYWORDS = {
+  abstract: 'built-in',
+  else: 'reserved',
+  import: 'built-in',
+  show: 'context',
+  as: 'built-in',
+  enum: 'reserved',
+  in: 'reserved',
+  static: 'built-in',
+  assert: 'reserved',
+  export: 'built-in',
+  interface: 'built-in',
+  super: 'reserved',
+  async: 'context',
+  extends: 'reserved',
+  is: 'reserved',
+  switch: 'reserved',
+  await: 'async-reserved',
+  extension: 'built-in',
+  late: 'built-in',
+  sync: 'context',
+  break: 'reserved',
+  external: 'built-in',
+  library: 'built-in',
+  this: 'reserved',
+  case: 'reserved',
+  factory: 'built-in',
+  mixin: 'built-in',
+  throw: 'reserved',
+  catch: 'reserved',
+  false: 'reserved',
+  new: 'reserved',
+  true: 'reserved',
+  class: 'reserved',
+  final: 'reserved',
+  null: 'reserved',
+  try: 'reserved',
+  const: 'reserved',
+  finally: 'reserved',
+  on: 'context',
+  typedef: 'built-in',
+  continue: 'reserved',
+  for: 'reserved',
+  operator: 'built-in',
+  var: 'reserved',
+  covariant: 'built-in',
+  Function: 'built-in',
+  part: 'built-in',
+  void: 'reserved',
+  default: 'reserved',
+  get: 'built-in',
+  required: 'built-in',
+  while: 'reserved',
+  deferred: 'built-in',
+  hide: 'context',
+  rethrow: 'reserved',
+  with: 'reserved',
+  do: 'reserved',
+  if: 'reserved',
+  return: 'reserved',
+  yield: 'async-reserved',
+  dynamic: 'built-in',
+  implements: 'built-in',
+  set: 'built-in',
+  // built-in types
+  int: 'reserved',
+  double: 'reserved',
+  String: 'reserved',
+  bool: 'reserved',
+  List: 'reserved',
+  Set: 'reserved',
+  Map: 'reserved',
+  Runes: 'reserved',
+  Symbol: 'reserved',
+  Object: 'reserved',
+  Null: 'reserved',
+  Never: 'reserved',
+  Enum: 'reserved',
+  Future: 'reserved',
+  Iterable: 'reserved',
+};
+
+/** initializes a FreezedPluginConfig with the defaults values */
+export const defaultFreezedPluginConfig: FlutterFreezedPluginConfig = {
+  camelCasedEnums: true,
+  copyWith: undefined,
+  customScalars: {},
+  defaultValues: undefined,
+  deprecated: undefined,
+  equal: undefined,
+  escapeDartKeywords: true,
+  final: undefined,
+  fromJsonToJson: true,
+  fromJsonWithMultiConstructors: undefined,
+  immutable: true,
+  ignoreTypes: [],
+  makeCollectionsUnmodifiable: undefined,
+  mergeInputs: undefined,
+  mutableInputs: true,
+  privateEmptyConstructor: true,
+};
+
+//#endregion

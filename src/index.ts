@@ -1,9 +1,9 @@
 import { oldVisit, PluginFunction, Types } from '@graphql-codegen/plugin-helpers';
 import { transformSchemaAST } from '@graphql-codegen/schema-ast';
 import { GraphQLSchema } from 'graphql';
-import { FlutterFreezedPluginConfig } from './config-olf';
+import { FlutterFreezedPluginConfig, defaultFreezedPluginConfig } from './config';
 import { schemaVisitor } from './schema-visitor';
-import { buildImportStatements, defaultFreezedPluginConfig } from './utils';
+import { buildImportStatements } from './utils';
 
 export const plugin: PluginFunction<FlutterFreezedPluginConfig> = (
   schema: GraphQLSchema,
@@ -24,17 +24,7 @@ export const plugin: PluginFunction<FlutterFreezedPluginConfig> = (
   return (
     buildImportStatements(info?.outputFile ?? 'app_models') +
     generated // TODO: replace placeholders with factory blocks
-      /*       .map(freezedDeclarationBlock =>
-        freezedDeclarationBlock.toString().replace(/==>factory==>.+\n/gm, s => {
-          const pattern = s.replace('==>factory==>', '').trim();
-          // console.log('pattern:-->', pattern);
-          const [key, appliesOn, name, typeName] = pattern.split('==>');
-          if (appliesOn === 'class_factory') {
-            return freezedFactoryBlockRepository.retrieve(key, appliesOn, name);
-          }
-          return freezedFactoryBlockRepository.retrieve(key, appliesOn, name, typeName);
-        })
-      ) */
+
       .join('')
       .trim()
   );

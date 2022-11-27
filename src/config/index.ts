@@ -1,195 +1,162 @@
+import { indent } from '@graphql-codegen/visitor-plugin-common';
 import {
-  ObjectTypeDefinitionNode,
-  InputObjectTypeDefinitionNode,
-  UnionTypeDefinitionNode,
-  EnumTypeDefinitionNode,
-  FieldDefinitionNode,
-  InputValueDefinitionNode,
-} from 'graphql';
-import { FlutterFreezedPluginConfig } from './config';
+  FlutterFreezedPluginConfig,
+  AppliesOnParameters,
+  FreezedOption,
+  defaultFreezedPluginConfig,
+  DART_SCALARS,
+} from './config';
+import { TypeName, FieldName } from './type-field-name';
 
-/**
- * @name ApplyDecoratorOn
- * @description Values that are passed to the `DecoratorToFreezed.applyOn` field that specifies where the custom decorator should be applied
- */
-export type AppliesOn =
-  | 'enum' // applies on the Enum itself
-  | 'enum_value' // applies to the value of an Enum
-  | 'class' // applies on the class itself
-  | 'factory' // applies on all class factory constructor
-  | 'default_factory' // applies on the main default factory constructor
-  | 'named_factory' // applies on all of the named factory constructors in a class
-  | 'named_factory_for_union_types' // applies on the named factory constructors for a specified(or all when the `*` is used as the key) GraphQL Object Type when it appears in a class as a named factory constructor and that class was generated for a GraphQL Union Type. E.g: `Droid` in `SearchResult` in the StarWars Schema
-  | 'named_factory_for_merged_types' // applies on the named factory constructors for a GraphQL Input Type when it appears in a class as a named factory constructor and that class was generated for a GraphQL Object Type and it Type is to be merged with the GraphQL Object Type. E.g: `CreateMovieInput` merged with `Movie` in the StarWars Schema
-  | 'parameter' // applies on all parameters for both default constructors and named factory constructors
-  | 'default_factory_parameter' // applies on parameters for ONLY default constructors for a specified(or all when the `*` is used as the key) field on a GraphQL Object/Input Type
-  | 'named_factory_parameter' // applies on parameters for all named factory constructors for a specified(or all when the `*` is used as the key) field on a GraphQL Object/Input Type
-  | 'named_factory_parameter_for_union_types' // like `named_factory_parameters` but ONLY for a parameter in a named factory constructor which for a GraphQL Union Type
-  | 'named_factory_parameter_for_merged_types'; // like `named_factory_parameters` but ONLY for a parameter in a named factory constructor which for a GraphQL Input Type that is merged inside an a class generated for a GraphQL Object Type
+export class Config {
+  static camelCasedEnums = (config: FlutterFreezedPluginConfig) => {
+    const value = config['camelCasedEnums'];
 
-export type AppliesOnEnum = Extract<AppliesOn, 'enum'>;
-export type AppliesOnEnumValue = Extract<AppliesOn, 'enum_value'>;
+    if (typeof value === 'boolean') {
+      return value ? 'camelCase' : undefined;
+    } else if (value !== undefined) {
+      return value;
+    }
+  };
 
-export type AppliesOnClass = Extract<AppliesOn, 'class'>;
+  static copyWith = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
+    return this.freezedOption(config, 'copyWith', typeName);
+  };
 
-export type AppliesOnDefaultFactory = Extract<AppliesOn, 'factory' | 'default_factory'>;
-export type AppliesOnNamedFactory = Extract<
-  AppliesOn,
-  'factory' | 'named_factory' | 'named_factory_for_union_types' | 'named_factory_for_merged_types'
->;
-export type AppliesOnFactory = AppliesOnDefaultFactory | AppliesOnNamedFactory;
+  static customScalars = (config: FlutterFreezedPluginConfig, graphqlScalar: string): string => {
+    return config?.customScalars?.[graphqlScalar] ?? DART_SCALARS[graphqlScalar] ?? graphqlScalar;
+  };
 
-export type AppliesOnDefaultParameters = Extract<AppliesOn, 'parameter' | 'default_factory_parameter'>;
+  static defaultValues = (
+    config: FlutterFreezedPluginConfig,
+    typeName: TypeName,
+    fieldName: FieldName,
+    appliesOn: AppliesOnParameters
+  ) => {
+    return this.freezedOption(config, 'copyWith', typeName);
+  };
 
-export type AppliesOnNamedParametersForUnionTypes = Extract<
-  AppliesOn,
-  'parameter' | 'named_factory_parameter' | 'named_factory_parameter_for_union_types'
->;
-export type AppliesOnNamedParametersForMergedInputs = Extract<
-  AppliesOn,
-  'parameter' | 'named_factory_parameter' | 'named_factory_parameter_for_merged_types'
->;
+  static equal = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
+    return this.freezedOption(config, 'equal', typeName);
+  };
 
-export type AppliesOnNamedParameters = AppliesOnNamedParametersForUnionTypes | AppliesOnNamedParametersForMergedInputs;
-export type AppliesOnParameters = AppliesOnDefaultParameters | AppliesOnNamedParameters;
+  static fromJsonToJson = (
+    config: FlutterFreezedPluginConfig,
+    typeName?: TypeName,
+    fieldName?: FieldName,
+    appliesOn?: AppliesOnParameters[]
+  ) => {
+    const value = config['fromJsonToJson'];
+    const expectedAppliesOn = appliesOn ?? [];
 
-export type DartIdentifierCasing = 'snake_case' | 'camelCase' | 'PascalCase';
+    if (typeof value === 'boolean') {
+      return value;
+    } else if (value !== undefined) {
+      // TODO: Like CSS find the most explicit value, or fallback to the most general value
+    }
+  };
 
-export type NodeType =
-  | ObjectTypeDefinitionNode
-  | InputObjectTypeDefinitionNode
-  | UnionTypeDefinitionNode
-  | EnumTypeDefinitionNode;
+  static ignoreTypes = (config: FlutterFreezedPluginConfig, typeName: TypeName) => {
+    return (
+      (config.ignoreTypes?.filter(commaSeparatedTypeNames => commaSeparatedTypeNames.includes(typeName.value)).length ??
+        0) > 0
+    );
+  };
 
-export type FieldType = FieldDefinitionNode | InputValueDefinitionNode;
+  static immutable = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
+    return this.freezedOption(config, 'immutable', typeName);
+  };
 
-export type ObjectType = ObjectTypeDefinitionNode | InputObjectTypeDefinitionNode;
+  static makeCollectionsUnmodifiable = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
+    return this.freezedOption(config, 'makeCollectionsUnmodifiable', typeName);
+  };
 
-export type ConfigOption = keyof FlutterFreezedPluginConfig;
-export type FreezedOption = Extract<
-  ConfigOption,
-  'copyWith' | 'equal' | 'immutable' | 'makeCollectionsUnmodifiable' | 'mutableInputs' | 'privateEmptyConstructor'
->;
+  static mergeInputs = (config: FlutterFreezedPluginConfig, typeName: TypeName) => {
+    // works with composition
+    const value = config['mergeInputs'];
+    return (
+      value
+        ?.filter(([graphQLTypeName]) => graphQLTypeName.includes(typeName.value))
+        .map(([, mergeWithTypeNames]) => mergeWithTypeNames)
+        .reduce(
+          (acc, mergeWithTypeNames) => [
+            ...acc,
+            ...mergeWithTypeNames
+              .map(typeName => typeName.split(','))
+              .reduce((acc2, typeNames) => [...acc2, ...typeNames], []),
+          ],
+          []
+        ) ?? []
+    );
+  };
+  static mutableInputs = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
+    return this.freezedOption(config, 'mutableInputs', typeName);
+  };
 
-export type MultiConstructorOption = FlutterFreezedPluginConfig['fromJsonWithMultiConstructors'];
+  static privateEmptyConstructor = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
+    return this.freezedOption(config, 'privateEmptyConstructor', typeName);
+  };
 
-export type UnionValueCase = 'FreezedUnionCase.camel' | 'FreezedUnionCase.pascal';
+  static unionKey = (config: FlutterFreezedPluginConfig, unionTypeName?: TypeName): string | undefined => {
+    return this.multiConstructorConfig(config, 1, unionTypeName) as string | undefined;
+  };
 
-/**
- * maps GraphQL scalar types to Dart's scalar types
- */
-export const DART_SCALARS: Record<string, string> = {
-  ID: 'String',
-  String: 'String',
-  Boolean: 'bool',
-  Int: 'int',
-  Float: 'double',
-  DateTime: 'DateTime',
-};
+  static unionValueCase = (config: FlutterFreezedPluginConfig, unionTypeName?: TypeName): string | undefined => {
+    return this.multiConstructorConfig(config, 2, unionTypeName) as string | undefined;
+  };
 
-export const DART_KEYWORDS = {
-  abstract: 'built-in',
-  else: 'reserved',
-  import: 'built-in',
-  show: 'context',
-  as: 'built-in',
-  enum: 'reserved',
-  in: 'reserved',
-  static: 'built-in',
-  assert: 'reserved',
-  export: 'built-in',
-  interface: 'built-in',
-  super: 'reserved',
-  async: 'context',
-  extends: 'reserved',
-  is: 'reserved',
-  switch: 'reserved',
-  await: 'async-reserved',
-  extension: 'built-in',
-  late: 'built-in',
-  sync: 'context',
-  break: 'reserved',
-  external: 'built-in',
-  library: 'built-in',
-  this: 'reserved',
-  case: 'reserved',
-  factory: 'built-in',
-  mixin: 'built-in',
-  throw: 'reserved',
-  catch: 'reserved',
-  false: 'reserved',
-  new: 'reserved',
-  true: 'reserved',
-  class: 'reserved',
-  final: 'reserved',
-  null: 'reserved',
-  try: 'reserved',
-  const: 'reserved',
-  finally: 'reserved',
-  on: 'context',
-  typedef: 'built-in',
-  continue: 'reserved',
-  for: 'reserved',
-  operator: 'built-in',
-  var: 'reserved',
-  covariant: 'built-in',
-  Function: 'built-in',
-  part: 'built-in',
-  void: 'reserved',
-  default: 'reserved',
-  get: 'built-in',
-  required: 'built-in',
-  while: 'reserved',
-  deferred: 'built-in',
-  hide: 'context',
-  rethrow: 'reserved',
-  with: 'reserved',
-  do: 'reserved',
-  if: 'reserved',
-  return: 'reserved',
-  yield: 'async-reserved',
-  dynamic: 'built-in',
-  implements: 'built-in',
-  set: 'built-in',
-  // built-in types
-  int: 'reserved',
-  double: 'reserved',
-  String: 'reserved',
-  bool: 'reserved',
-  List: 'reserved',
-  Set: 'reserved',
-  Map: 'reserved',
-  Runes: 'reserved',
-  Symbol: 'reserved',
-  Object: 'reserved',
-  Null: 'reserved',
-  Never: 'reserved',
-  Enum: 'reserved',
-  Future: 'reserved',
-  Iterable: 'reserved',
-};
+  static unionValueDecorator = (
+    config: FlutterFreezedPluginConfig,
+    unionTypeName: TypeName,
+    unionValueTypeName: TypeName
+  ) => {
+    const unionValuesNameMap = this.multiConstructorConfig(config, 3, unionTypeName);
+    if (unionValuesNameMap && typeof unionValuesNameMap !== 'string') {
+      const unionValueName = unionValuesNameMap[unionValueTypeName.value];
+      return indent(`@FreezedUnionValue('${unionValueName}')`); // TODO: add this to the factory block decorators
+    }
+    return '';
+  };
 
-export const AnyTypeName = Symbol('@*TypeName');
-export const AnyFieldName = Symbol('@*FieldName');
+  private static multiConstructorConfig = (
+    config: FlutterFreezedPluginConfig,
+    index: number,
+    unionTypeName?: TypeName
+  ) => {
+    const value = config['fromJsonWithMultiConstructors'];
+    if (Array.isArray(value)) {
+      const v = value.find(([commaSeparatedUnionTypeNames]) =>
+        TypeName.byPrecedence(unionTypeName?.value ?? '', commaSeparatedUnionTypeNames)
+      );
+      return v?.[index];
+    }
+  };
 
-/** initializes a FreezedPluginConfig with the defaults values */
-export const defaultFreezedPluginConfig: FlutterFreezedPluginConfig = {
-  camelCasedEnums: true,
-  copyWith: undefined,
-  customScalars: {},
-  defaultValues: undefined,
-  deprecated: undefined,
-  equal: undefined,
-  escapeDartKeywords: true,
-  final: undefined,
-  fromJsonToJson: true,
-  fromJsonWithMultiConstructors: undefined,
-  immutable: true,
-  ignoreTypes: [],
-  makeCollectionsUnmodifiable: undefined,
-  mergeInputs: undefined,
-  mutableInputs: true,
-  privateEmptyConstructor: true,
-};
+  private static freezedOption = (config: FlutterFreezedPluginConfig, option: FreezedOption, typeName?: TypeName) => {
+    const value = config[option];
+
+    if (Array.isArray(value)) {
+      return typeName ? value.filter(v => v.includes(typeName.value)).length > 0 : undefined;
+    } else if (typeof value === 'string') {
+      return typeName ? value.includes(typeName.value) : undefined;
+    }
+    return value;
+  };
+
+  public static unpackConfig = (config: FlutterFreezedPluginConfig, typeName: TypeName, fieldName: FieldName) => {
+    const result = {
+      specific: undefined,
+      general: undefined,
+    };
+
+    return result;
+  };
+
+  public static extend = (...config: Partial<FlutterFreezedPluginConfig>[]): FlutterFreezedPluginConfig => {
+    return Object.assign(defaultFreezedPluginConfig, ...config);
+  };
+}
 
 export * from './config';
+export * from './node-repository';
+export * from './type-field-name';
