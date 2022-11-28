@@ -626,6 +626,7 @@ export const AnyFieldName = Symbol('@*FieldName');
 
 /**
  * @name GraphQLTypeName
+ * @see [GraphQLTypeFieldName]()
  * @description A comma-separated string of GraphQL Type Names. Use the `globalTypeFieldName` to apply the same config options to all GraphQL Types.
  * @exampleMarkdown
  * ### Configuring GraphQL Types
@@ -645,6 +646,7 @@ type GraphQLTypeName = string;
 /**
  * @name GraphQLTypeFieldName
  * @description A comma-separated string of GraphQL Type and Field Names separated with a `.` .Use the `globalTypeFieldName` to apply the same config options to all GraphQL Types.
+ * @see [GraphQLTypeName]()
  * @exampleMarkdown
  * ### Configuring the fields of GraphQL Types
  * ```ts
@@ -656,7 +658,19 @@ type GraphQLTypeName = string;
  *
  * let typeFieldName4:GraphQLTypeFieldName = 'Droid.@*FieldName-[name,appearsIn]' // if there are many fields to be specified, use this to specify those to be **excluded**. This example applies on all of the fields of the Droid GraphQL Type except the `name` and `appearsIn` fields
  *
- * let typeFieldName5:GraphQLTypeFieldName = '@*TypeName.@*FieldName' // applies on all of the fields of the GraphQL Types
+ * let typeFieldName5:GraphQLTypeFieldName = '@*TypeName.[id]' // applies on the `id` field of any GraphQL Types
+ *
+ * let typeFieldName6:GraphQLTypeFieldName = '@*TypeName-[Human,Starship].[id]' // applies on the `id` field of any GraphQL Types except the `Human` and `Starship` types
+ *
+ * let typeFieldName7:GraphQLTypeFieldName = '@*TypeName.@*FieldName' // applies on all of the fields of the GraphQL Types
+ *
+ * let typeFieldName8:GraphQLTypeFieldName = '@*TypeName-[Human,Movie].@*FieldName' // applies on all of the fields of the GraphQL Types except the `Human` and `Starship` types
+ *
+ * let typeFieldName9:GraphQLTypeFieldName = '@*TypeName-[Human,Starship].@*FieldName' // applies on all of the fields of the GraphQL Types except the `Human` and `Starship` types
+ *
+ * let typeFieldName10:GraphQLTypeFieldName = '@*TypeName.@*FieldName-[id,name]' // applies on all of the fields of the GraphQL Types except the `id` and `name` fields
+ *
+ * let typeFieldName11:GraphQLTypeFieldName = '@*TypeName-[Human,Movie].@*FieldName-[id,name]' // applies on all of the fields of the GraphQL Types except the `Human` and `Starship` types and the `id` and `name` fields
  * ```
  * */
 type GraphQLTypeFieldName = string;

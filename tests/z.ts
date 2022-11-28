@@ -1,93 +1,45 @@
-import {
-  AnyTypeName,
-  AppliesOn,
-  APPLIES_ON_CLASS,
-  APPLIES_ON_DEFAULT_FACTORY,
-  APPLIES_ON_DEFAULT_PARAMETERS,
-  APPLIES_ON_ENUM,
-  APPLIES_ON_ENUM_VALUE,
-  APPLIES_ON_NAMED_FACTORY_FOR_MERGED_TYPES,
-  APPLIES_ON_NAMED_FACTORY_FOR_UNION_TYPES,
-  APPLIES_ON_NAMED_FACTORY_PARAMETERS_FOR_MERGED_TYPES,
-  APPLIES_ON_NAMED_FACTORY_PARAMETERS_FOR_UNION_TYPES,
-  Config,
-} from '../src/config';
-import { appliesOnBlock } from '../src/utils';
+import { Config } from '../src/config';
 
 const config = Config.extend({
   camelCasedEnums: false,
   final: [
-    ['@*TypeName.@*FieldName-[name,appearsIn]', ['parameter']], // 3
-    ['Droid.[id, name], Starship.[id]', ['parameter']], // 0
-    ['@*TypeName.[id]', ['parameter']], // 2
-    ['Droid.@*FieldName-[name]', ['parameter']], // 1
+    // in order of specificity, explicit has a higher precedence than general ones
+    ['Droid.[id, name], Starship.[id]', ['parameter']], // 1
+    ['Droid.@*FieldName-[name,appearsIn],Droid.@*FieldName-[id]', ['parameter']], // 2
+    ['Droid.@*FieldName', ['parameter']], // 3
+
+    ['@*TypeName.[id]', ['parameter']], // 4
+    ['@*TypeName-[Human,Movie].[id]', ['parameter']], // 5
+    ['@*TypeName-[Human,Movie].@*FieldName-[name,appearsIn], @*TypeName.@*FieldName-[id],', ['parameter']], // 6
+    ['@*TypeName-[Human,Movie].@*FieldName', ['parameter']], // 7
+    ['@*TypeName.@*FieldName-[name,appearsIn], @*TypeName.@*FieldName-[id],', ['parameter']], // 8
+    ['@*TypeName.@*FieldName', ['parameter']], // 9
   ],
 });
-console.log(config);
 
-const fieldName = 'id';
-const typeName = 'Droid';
+// TODO: Handle for edge cases where code formatting might put spaces and new lines in between tokens and commas
+const regexp1 = /\w+\s?\.\s?\[((\s?\w+\s?,?\s?)+)\]/gim;
+// const regexp1 = /\w+\.\[((\w+\s?,?\s+)+)\]/gim;
 
-const sample = '@*TypeName.@*FieldName-[name,appearsIn]';
-const regexp3 = /@\*TypeName\.@\*FieldName-\[((\w+,?)+)\]/gi;
+const regexp2 = /\w+\.@\*FieldName-\[((\w+,?.+)+)\]/gim;
+const regexp3 = /\w+\.@\*FieldName/gim;
+const regexp4 = /@\*TypeName\.\[((\w+,?.+)+)\]/gim;
 
-console.log(sample.replace(regexp3, '$1'));
+const regexp6 = /@\*TypeName-\[((\w+,?.+)+)\]\.@\*FieldName-\[((\w+,?.+)+)\],?/gim;
+const regexp7 = /@\*TypeName-\[((\w+,?.+)+)\]\.@\*FieldName-\[((\w+,?.+)+)\],?/gim;
+const regexp8 = /@\*TypeName\.@\*FieldName-\[((\w+,?.+)+)\],?/gim;
 
-const output = {
-  appliesOnEnum: {},
-  appliesOnEnumValue: {},
-  appliesOnClass: {},
-  appliesOnDefaultFactory: {},
-  appliesOnNamedFactoryForUnionTypes: {},
-  appliesOnNamedFactoryForMergedTypes: {},
-  appliesOnDefaultParameters: {},
-  appliesOnNamedFactoryParametersForUnionTypes: {},
-  appliesOnNamedFactoryParametersForMergedTypes: {},
-};
-/* 
-config.final?.forEach(([graphQLTypeName, appliesOn]) => {
-  if (appliesOnBlock(appliesOn, APPLIES_ON_ENUM)) {
-    if (regexp3.test(graphQLTypeName)) {
-      graphQLTypeName
-        .replace(regexp3, '$1')
-        .split(',')
-        .forEach(f => (output.appliesOnEnum[f] = ''));
-    }
-  }
-  if (appliesOnBlock(appliesOn, APPLIES_ON_ENUM_VALUE)) {
-    if (regexp3.test(graphQLTypeName)) {
-      graphQLTypeName
-        .replace(regexp3, '$1')
-        .split(',')
-        .forEach(f => (output.appliesOnEnumValue[f] = ''));
-    }
-  }
-}); */
-
-console.log(output);
-
-const setFields = (strField: string, acc: Record<string, any>, key: string, value: any) => {
-  strField
+/* console.log(
+  sample3
+    .replace(regexp3, '$1,')
     .split(',')
-    .map(f => f.trim())
-    .forEach(f => (acc[key][f] = value));
-  return acc;
-};
+    .filter(v => v.length > 0)
+);
 
-const onBlock = (appliesOn: AppliesOn[], callback: any) => {
-  [
-    APPLIES_ON_ENUM,
-    APPLIES_ON_ENUM_VALUE,
-    APPLIES_ON_CLASS,
-    APPLIES_ON_DEFAULT_FACTORY,
-    APPLIES_ON_NAMED_FACTORY_FOR_UNION_TYPES,
-    APPLIES_ON_NAMED_FACTORY_FOR_MERGED_TYPES,
-    APPLIES_ON_DEFAULT_PARAMETERS,
-    APPLIES_ON_NAMED_FACTORY_PARAMETERS_FOR_UNION_TYPES,
-    APPLIES_ON_NAMED_FACTORY_PARAMETERS_FOR_MERGED_TYPES,
-  ].forEach(expected => {
-    if (appliesOnBlock(appliesOn, expected, true)) {
-      callback();
-    }
-  });
-};
+console.log(
+  sample1
+    .replace(regexp1, '$1,')
+    .split(',')
+    .filter(v => v.length > 0)
+);
+ */

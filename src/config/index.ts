@@ -1,4 +1,5 @@
 import { indent } from '@graphql-codegen/visitor-plugin-common';
+import { appliesOnBlock } from '../utils';
 import {
   FlutterFreezedPluginConfig,
   AppliesOnParameters,
@@ -27,17 +28,58 @@ export class Config {
     return config?.customScalars?.[graphqlScalar] ?? DART_SCALARS[graphqlScalar] ?? graphqlScalar;
   };
 
-  static defaultValues = (
+  static defaultValueDecorator = (
     config: FlutterFreezedPluginConfig,
     typeName: TypeName,
     fieldName: FieldName,
     appliesOn: AppliesOnParameters
   ) => {
-    return this.freezedOption(config, 'copyWith', typeName);
+    const decorator = (value: string) => `@Default(${value})`;
   };
 
   static equal = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
     return this.freezedOption(config, 'equal', typeName);
+  };
+
+  static markFinal = (
+    config: FlutterFreezedPluginConfig,
+    typeName: TypeName,
+    fieldName: FieldName,
+    appliesOn: AppliesOnParameters[]
+  ) => {
+    const expectedAppliesOn = appliesOn;
+    let final = false;
+    const regexp3 = /@\*TypeName\.@\*FieldName-\[((\w+,?)+)\],?/gim;
+    const regexp1 = /\w+\.@\*FieldName-\[((\w+,?)+)\]/gim;
+
+    config.final?.forEach(([typeFieldName, appliesOn]) => {
+      const fieldNames = typeFieldName
+        .replace(regexp3, '$1,')
+        .split(',')
+        .filter(v => v.length > 0);
+
+      if (regexp3.test(typeFieldName) && appliesOnBlock(appliesOn, expectedAppliesOn, true)) {
+        if (fieldNames.includes(fieldName.value)) {
+          final = false;
+        } else {
+          final = true;
+        }
+      }
+
+      if (
+        (regexp3.test(typeFieldName) || regexp1.test(typeFieldName)) &&
+        fieldNames.includes(fieldName.value) &&
+        appliesOnBlock(appliesOn, expectedAppliesOn, true)
+      ) {
+        final = false;
+      }
+
+      if (regexp3.test(typeFieldName)) {
+        final = true;
+      }
+    });
+
+    return final;
   };
 
   static fromJsonToJson = (

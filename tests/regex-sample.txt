@@ -1,0 +1,31 @@
+'Droid'
+'Droid, Starship'
+'@*TypeName'
+'@*TypeName-[Human,Movie]'
+'@*TypeName.[id]'
+'Droid.[id,friends]'
+'Droid.[id,friends], Starship.[id]'
+'Droid.@*FieldName'
+'Droid.@*FieldName-[name,appearsIn],Droid.@*FieldName-[id]'
+'@*TypeName.@*FieldName'
+'@*TypeName.@*FieldName-[name,appearsIn],     @*TypeName.@*FieldName-[id],'
+
+I need to understand how this is handled in CSS.
+Composition, Cascading, and Precedence
+
+const config = Config.extend({
+  camelCasedEnums: false,
+  final: [
+    // in order of specificity, explicit has a higher precedence than general ones
+    ['Droid.[id,name], Starship.[id ]', ['parameter']], // 1
+    ['Droid.@*FieldName-[name,appearsIn],Droid.@*FieldName-[id]', ['parameter']], // 2
+    ['Droid.@*FieldName', ['parameter']], // 3
+
+    ['@*TypeName.[id]', ['parameter']], // 4
+    ['@*TypeName-[Human,Movie].[id]', ['parameter']], // 5
+    ['@*TypeName-[Human,Movie].@*FieldName-[name,appearsIn], @*TypeName.@*FieldName-[id],', ['parameter']], // 6
+    ['@*TypeName-[Human,Movie].@*FieldName', ['parameter']], // 7
+    ['@*TypeName.@*FieldName-[name,appearsIn], @*TypeName.@*FieldName-[id],', ['parameter']], // 8
+    ['@*TypeName.@*FieldName', ['parameter']], // 9
+  ],
+});
