@@ -2,10 +2,20 @@
 'Droid, Starship'
 '@*TypeName'
 '@*TypeName-[Human,Movie]'
-'@*TypeName.[id]'
-'Droid.[id,friends]'
+'@
+*
+TypeName
+.
+[
+  id
+  ]'
+'Droid.[
+  name, 
+  id,
+  friends,
+  ]'
 'Droid.[id,friends], Starship.[id]'
-'Droid.@*FieldName'
+'Droid.@*FieldName, Starship.[id], Droid.@*FieldName'
 'Droid.@*FieldName-[name,appearsIn],Droid.@*FieldName-[id]'
 '@*TypeName.@*FieldName'
 '@*TypeName.@*FieldName-[name,appearsIn],     @*TypeName.@*FieldName-[id],'
@@ -13,15 +23,35 @@
 I need to understand how this is handled in CSS.
 Composition, Cascading, and Precedence
 
+'Droid . @ * FieldName'  
+
 const config = Config.extend({
   camelCasedEnums: false,
   final: [
+    // edge cases
+    ['Droid.[
+      id
+      edge,
+    id, 
+    name], Starship.[id], Droid.[id]', ['parameter']], // 1
+    
     // in order of specificity, explicit has a higher precedence than general ones
-    ['Droid.[id,name], Starship.[id ]', ['parameter']], // 1
-    ['Droid.@*FieldName-[name,appearsIn],Droid.@*FieldName-[id]', ['parameter']], // 2
-    ['Droid.@*FieldName', ['parameter']], // 3
+    ['Droid.[id,name], Starship.[id]', ['parameter']], // 1
+    ['Droid.[id, name], Starship.[id ]', ['parameter']], // 1
+    'Droid.@*FieldName-[name, appearsIn ],Droid.@*FieldName - [id]'
+    ['Droid.@*FieldName-[name,appearsIn],Droid
+    .
+    @
+    *
+    FieldName
+    -
+    [
 
-    ['@*TypeName.[id]', ['parameter']], // 4
+      id
+       ]', ['parameter']], // 2
+    ['Droid.@*FieldName,     ', ['parameter']], // 3
+
+    ['@*TypeName.[id, name, edge ]', ['parameter']], // 4
     ['@*TypeName-[Human,Movie].[id]', ['parameter']], // 5
     ['@*TypeName-[Human,Movie].@*FieldName-[name,appearsIn], @*TypeName.@*FieldName-[id],', ['parameter']], // 6
     ['@*TypeName-[Human,Movie].@*FieldName', ['parameter']], // 7

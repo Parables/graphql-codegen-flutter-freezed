@@ -641,7 +641,7 @@ export const AnyFieldName = Symbol('@*FieldName');
  * ```
  *
  */
-type GraphQLTypeName = string;
+export type GraphQLTypeName = string;
 
 /**
  * @name GraphQLTypeFieldName
@@ -673,7 +673,7 @@ type GraphQLTypeName = string;
  * let typeFieldName11:GraphQLTypeFieldName = '@*TypeName-[Human,Movie].@*FieldName-[id,name]' // applies on all of the fields of the GraphQL Types except the `Human` and `Starship` types and the `id` and `name` fields
  * ```
  * */
-type GraphQLTypeFieldName = string;
+export type GraphQLTypeFieldName = string;
 
 /**
  * @name ApplyDecoratorOn

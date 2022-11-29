@@ -6,10 +6,100 @@ import {
   FreezedOption,
   defaultFreezedPluginConfig,
   DART_SCALARS,
+  GraphQLTypeFieldName,
 } from './config';
 import { TypeName, FieldName } from './type-field-name';
 
 export class Config {
+  //#region RegExp patterns
+  static matchesTypeNameFieldName = (
+    config: FlutterFreezedPluginConfig,
+    graphQLTypeFieldName: GraphQLTypeFieldName,
+    typeName: TypeName,
+    fieldNames: FieldName[]
+  ) => {
+    const pattern = new RegExp(`${typeName.value}\\s*\\.\\s*\\[\\s*((\\w+?,?\\s*)*)\\]`, 'gim');
+  };
+
+  static matchesTypeNameAnyFieldNameExcept = (
+    config: FlutterFreezedPluginConfig,
+    graphQLTypeFieldName: GraphQLTypeFieldName,
+    typeName: TypeName,
+    fieldNames: FieldName[]
+  ) => {
+    const pattern = new RegExp(
+      `${typeName.value}\\s*.\\s*@\\s*\\*\\s*FieldName\\s*-\\s*\\[\\s*((\\w+?,?\\s*)*)\\]`,
+      'gim'
+    );
+  };
+
+  static matchesTypeNameAnyFieldName = (
+    config: FlutterFreezedPluginConfig,
+    graphQLTypeFieldName: GraphQLTypeFieldName,
+    typeName: TypeName,
+    fieldNames: FieldName[]
+  ) => {
+    const pattern = new RegExp(`${typeName.value}\\*.\\s*@\\s*\\*\\s*FieldName\\s*,?[^-\\s*]`, 'gim');
+  };
+
+  static matchesAnyTypeNameFieldName = (
+    config: FlutterFreezedPluginConfig,
+    graphQLTypeFieldName: GraphQLTypeFieldName,
+    typeName: TypeName,
+    fieldNames: FieldName[]
+  ) => {
+    const pattern = /@\s*\*\s*TypeName\s*\.\s*\[\s*((\w+?,?\s*)*)\]/gim;
+  };
+
+  static matchesAnyTypeNameExceptFieldName = (
+    config: FlutterFreezedPluginConfig,
+    graphQLTypeFieldName: GraphQLTypeFieldName,
+    typeName: TypeName,
+    fieldNames: FieldName[]
+  ) => {
+    // /Droid\s*\.\s*\[\s*(?:(\w+?,?\s*)*)(id,?\s*)(?:(\w+?,?\s*)*)\]/gim
+
+    const pattern = /@\s*\*\s*TypeName\s*-\s*\[\s*((\w+?,?\s*)*)\]\s*\.\s*\[\s*((\w+?,?\s*)*)\]/gim;
+  };
+
+  static matchesAnyTypeNameExceptAnyFieldNameExcept = (
+    config: FlutterFreezedPluginConfig,
+    graphQLTypeFieldName: GraphQLTypeFieldName,
+    typeName: TypeName,
+    fieldNames: FieldName[]
+  ) => {
+    const pattern =
+      /@\s*\*\s*TypeName\s*-\s*\[\s*((\w+?,?\s*)*)\]\s*.\s*@\s*\*\s*FieldName\s*-\s*\[\s*((\w+?,?\s*)*)\]/gim;
+  };
+
+  static matchesAnyTypeNameExceptAnyFieldName = (
+    config: FlutterFreezedPluginConfig,
+    graphQLTypeFieldName: GraphQLTypeFieldName,
+    typeName: TypeName,
+    fieldNames: FieldName[]
+  ) => {
+    const pattern = /@\s*\*\s*TypeName\s*-\s*\[\s*((\w+?,?\s*)*)\]\s*.\s*@\s*\*\s*FieldName\s*,?[^-\s*]/gim;
+  };
+
+  static matchesAnyTypeNameAnyFieldNameExcept = (
+    config: FlutterFreezedPluginConfig,
+    graphQLTypeFieldName: GraphQLTypeFieldName,
+    typeName: TypeName,
+    fieldNames: FieldName[]
+  ) => {
+    const pattern = /@\s*\*\s*TypeName\s*.\s*@\s*\*\s*FieldName\s*-\s*\[\s*((\w+?,?\s*)*)\]/gim;
+  };
+
+  static matchesAnyTypeNameAnyFieldName = (
+    config: FlutterFreezedPluginConfig,
+    graphQLTypeFieldName: GraphQLTypeFieldName,
+    typeName: TypeName,
+    fieldNames: FieldName[]
+  ) => {
+    const pattern = /@\s*\*\s*TypeName\s*.\s*@\s*\*\s*FieldName\s*,?[^-\s*]/gim;
+  };
+  //#endregion
+
   static camelCasedEnums = (config: FlutterFreezedPluginConfig) => {
     const value = config['camelCasedEnums'];
 
