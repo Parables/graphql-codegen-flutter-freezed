@@ -13,19 +13,30 @@ import { TypeName, FieldName } from './type-field-name';
 export class Config {
   //#region RegExp patterns
   static matchesTypeNameFieldName = (
-    config: FlutterFreezedPluginConfig,
     graphQLTypeFieldName: GraphQLTypeFieldName,
     typeName: TypeName,
-    fieldNames: FieldName[]
+    fieldNames: FieldName[],
+    matchSome = false
   ) => {
     const pattern = new RegExp(`${typeName.value}\\s*\\.\\s*\\[\\s*((\\w+?,?\\s*)*)\\]`, 'gim');
+    if (pattern.test(graphQLTypeFieldName)) {
+      const result = graphQLTypeFieldName
+        .replace(pattern, '$1,')
+        .split(',')
+        .filter(f => f.length > 0);
+      console.log('🚀 ~ file: index.ts ~ line 28 ~ Config ~ result', result);
+
+      return matchSome
+        ? fieldNames.some(fieldName => result.includes(fieldName.value))
+        : fieldNames.every(fieldName => result.includes(fieldName.value));
+    }
   };
 
   static matchesTypeNameAnyFieldNameExcept = (
-    config: FlutterFreezedPluginConfig,
     graphQLTypeFieldName: GraphQLTypeFieldName,
     typeName: TypeName,
-    fieldNames: FieldName[]
+    fieldNames: FieldName[],
+    matchSome = false
   ) => {
     const pattern = new RegExp(
       `${typeName.value}\\s*.\\s*@\\s*\\*\\s*FieldName\\s*-\\s*\\[\\s*((\\w+?,?\\s*)*)\\]`,
@@ -60,16 +71,6 @@ export class Config {
     // /Droid\s*\.\s*\[\s*(?:(\w+?,?\s*)*)(id,?\s*)(?:(\w+?,?\s*)*)\]/gim
 
     const pattern = /@\s*\*\s*TypeName\s*-\s*\[\s*((\w+?,?\s*)*)\]\s*\.\s*\[\s*((\w+?,?\s*)*)\]/gim;
-  };
-
-  static matchesAnyTypeNameExceptAnyFieldNameExcept = (
-    config: FlutterFreezedPluginConfig,
-    graphQLTypeFieldName: GraphQLTypeFieldName,
-    typeName: TypeName,
-    fieldNames: FieldName[]
-  ) => {
-    const pattern =
-      /@\s*\*\s*TypeName\s*-\s*\[\s*((\w+?,?\s*)*)\]\s*.\s*@\s*\*\s*FieldName\s*-\s*\[\s*((\w+?,?\s*)*)\]/gim;
   };
 
   static matchesAnyTypeNameExceptAnyFieldName = (
@@ -290,5 +291,4 @@ export class Config {
 }
 
 export * from './config';
-export * from './node-repository';
 export * from './type-field-name';

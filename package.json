@@ -20,7 +20,7 @@
   ],
   "scripts": {
     "type-check": "tsc --noEmit",
-    "test": "jest --no-watchman",
+    "test": "jest --no-watchman --coverage",
     "build": "run-p build:*",
     "build:main": "tsc -p tsconfig.main.json",
     "build:module": "tsc -p tsconfig.module.json",
@@ -58,9 +58,11 @@
   },
   "license": "MIT",
   "devDependencies": {
+    "@babel/core": "^7.20.5",
     "@graphql-codegen/cli": "^2.11.3",
     "@tsconfig/recommended": "1.0.1",
-    "@types/jest": "^28.1.6",
+    "@types/jest": "^29.2.3",
+    "@types/node": "^18.11.9",
     "@typescript-eslint/eslint-plugin": "5.32.0",
     "@typescript-eslint/parser": "5.32.0",
     "eslint": "8.21.0",
@@ -68,7 +70,8 @@
     "npm-run-all": "4.1.5",
     "prettier": "2.7.1",
     "ts-jest": "28.0.7",
-    "typescript": "^4.7.4"
+    "ts-node": "^10.9.1",
+    "typescript": "^4.9.3"
   },
   "dependencies": {
     "@graphql-codegen/core": "^2.6.0",

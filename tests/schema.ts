@@ -138,7 +138,7 @@ export const starWarsSchema = buildSchema(/* GraphQL */ `
 
   type Starship {
     id: ID!
-    name: String! @constraint(minLength: 5, maxLength: 10)
+    name: String! #@constraint(minLength: 5, maxLength: 10)
     length: Float
   }
 

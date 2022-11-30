@@ -621,9 +621,6 @@ export type FlutterFreezedPluginConfig = {
 
 //#region type alias
 
-export const AnyTypeName = Symbol('@*TypeName');
-export const AnyFieldName = Symbol('@*FieldName');
-
 /**
  * @name GraphQLTypeName
  * @see [GraphQLTypeFieldName]()
@@ -664,13 +661,11 @@ export type GraphQLTypeName = string;
  *
  * let typeFieldName7:GraphQLTypeFieldName = '@*TypeName.@*FieldName' // applies on all of the fields of the GraphQL Types
  *
- * let typeFieldName8:GraphQLTypeFieldName = '@*TypeName-[Human,Movie].@*FieldName' // applies on all of the fields of the GraphQL Types except the `Human` and `Starship` types
+ * let typeFieldName8:GraphQLTypeFieldName = '@*TypeName-[Human,Starship].@*FieldName' // applies on all of the fields of the GraphQL Types except the `Human` and `Starship` types
  *
- * let typeFieldName9:GraphQLTypeFieldName = '@*TypeName-[Human,Starship].@*FieldName' // applies on all of the fields of the GraphQL Types except the `Human` and `Starship` types
+ * let typeFieldName9:GraphQLTypeFieldName = '@*TypeName.@*FieldName-[id,name]' // applies on all of the fields of the GraphQL Types except the `id` and `name` fields
  *
- * let typeFieldName10:GraphQLTypeFieldName = '@*TypeName.@*FieldName-[id,name]' // applies on all of the fields of the GraphQL Types except the `id` and `name` fields
- *
- * let typeFieldName11:GraphQLTypeFieldName = '@*TypeName-[Human,Movie].@*FieldName-[id,name]' // applies on all of the fields of the GraphQL Types except the `Human` and `Starship` types and the `id` and `name` fields
+ * let typeFieldName10:GraphQLTypeFieldName = '@*TypeName-[Human,Movie].@*FieldName-[id,name]' // applies on all of the fields of the GraphQL Types except the `Human` and `Starship` types and the `id` and `name` fields
  * ```
  * */
 export type GraphQLTypeFieldName = string;
@@ -900,8 +895,8 @@ export const defaultFreezedPluginConfig: FlutterFreezedPluginConfig = {
   final: undefined,
   fromJsonToJson: true,
   fromJsonWithMultiConstructors: undefined,
-  immutable: true,
   ignoreTypes: [],
+  immutable: true,
   makeCollectionsUnmodifiable: undefined,
   mergeInputs: undefined,
   mutableInputs: true,

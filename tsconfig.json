@@ -1,13 +1,29 @@
-{
-  "extends": "@tsconfig/recommended/tsconfig.json",
+{  
   "compilerOptions": {
     "incremental": true,
-    "declaration": true,
-    "noEmit": false,
-    "outDir": "dist",
     "baseUrl": ".",
-    "paths": {},
-    "lib": ["ESNext"]
+    "outDir": "dist",
+    "rootDir": "packages",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "importHelpers": true,
+    "experimentalDecorators": true,
+    "module": "esnext",
+    "target": "es2018",
+    "lib": ["es6", "esnext", "es2015", "dom"],
+    "suppressImplicitAnyIndexErrors": true,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "sourceMap": true,
+    "declaration": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "noEmit": false,
+    "paths": {}  
   },
   "include": [
     "src",
