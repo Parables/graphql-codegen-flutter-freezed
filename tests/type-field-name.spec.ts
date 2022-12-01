@@ -66,10 +66,16 @@ describe('TypeFieldName can be created with builder methods', () => {
     const fieldNamesOfTypeName = `Droid.[id,name,friends]`;
     expect(TypeFieldName.fieldNamesOfTypeName(typeName, fieldNames)).toBe(fieldNamesOfTypeName);
 
-    // expect(TypeFieldName.matchesFieldNamesOfTypeName(fieldNamesOfTypeName, 'Droid', 'id')).toBe(true);
-    // expect(TypeFieldName.matchesFieldNamesOfTypeName(fieldNamesOfTypeName, 'Droid', 'name')).toBe(true);
-    // expect(TypeFieldName.matchesFieldNamesOfTypeName(fieldNamesOfTypeName, 'Droid', 'friends')).toBe(true);
-    // expect(TypeFieldName.matchesFieldNamesOfTypeName(fieldNamesOfTypeName, 'Droid', 'notfriends')).toBe(false);
+    expect(TypeFieldName.matchesFieldNamesOfTypeName(fieldNamesOfTypeName, 'Droid', 'id')).toBe(true);
+    expect(TypeFieldName.matchesFieldNamesOfTypeName(fieldNamesOfTypeName, 'Droid', 'name')).toBe(true);
+    expect(TypeFieldName.matchesFieldNamesOfTypeName(fieldNamesOfTypeName, 'Droid', 'friends')).toBe(true);
+    // using matchAll: all child elements are in parent
+    expect(TypeFieldName.matchesFieldNamesOfTypeName(fieldNamesOfTypeName, 'Droid', 'notfriends')).toBe(false);
+    expect(TypeFieldName.matchesFieldNamesOfTypeName(fieldNamesOfTypeName, 'Droid', fieldNames)).toBe(true);
+    // using matchAll: not all child elements are in parent
+    expect(
+      TypeFieldName.matchesFieldNamesOfTypeName(fieldNamesOfTypeName, 'Droid', fieldNames + ', notfriends', false)
+    ).toBe(true);
 
     // '@*TypeName.[fieldNames]'
     expect(TypeFieldName.fieldNamesOfAnyTypeName(fieldNames)).toBe(`${anyTypeName}.[id,name,friends]`);

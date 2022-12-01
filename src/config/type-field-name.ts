@@ -169,7 +169,11 @@ export class FieldName extends GraphqlTypeFieldName {
 
 /**
  * @name TypeFieldName
- * @description A compact string of GraphQL Type and Field Names separated with a  dot(`.`) used in the config for specifying options for a list of Graphql Types and Fields
+ * @description A compact string of GraphQL Type and Field Names used in the config for specifying options for a list of Graphql Types and Fields
+ * The string can contain more than one pattern, each pattern separated by a semi-colon(`;`).
+ * Each pattern consists of TypeName and FieldName separated by a dot(`.`)
+ * Both TypeName and FieldName can specify a list of values to be included(`[]`) or excluded(`-[]`)
+ * To apply an option to any TypeName or FieldName, use the anyTypeName(`@*TypeName`) and anyFieldName(`@*FieldName`) tokens respectively
  * @exampleMarkdown
  * ### Configuring GraphQL Types
  * ```ts
@@ -179,7 +183,7 @@ export class FieldName extends GraphqlTypeFieldName {
  *
  * let typeName1:TypeFieldName = 'Droid' // This example applies on the Droid GraphQL Type
  *
- * let typeName2:TypeFieldName = 'Droid, Starship' // a comma-separated string of GraphQL Type names. This example applies on the Droid and Starship GraphQL Types
+ * let typeName2:TypeFieldName = 'Droid; Starship' // a comma-separated string of GraphQL Type names. This example applies on the Droid and Starship GraphQL Types
  *
  * ```
  *
@@ -187,7 +191,7 @@ export class FieldName extends GraphqlTypeFieldName {
  * ```ts
  * let typeFieldName1:TypeFieldName = 'Droid.[id,friends]' // in an array, specify one or more fields for that GraphQL Type. This example applies on the `id` and `friends` fields of the Droid GraphQL Type
  *
- * let typeFieldName2:TypeFieldName = 'Droid.[id,friends], Starship.[id], @*TypeName.[id]' // same as `typeFieldName1` but for more than one GraphQL Type
+ * let typeFieldName2:TypeFieldName = 'Droid.[id,friends]; Starship.[id]; @*TypeName.[id]' // same as `typeFieldName1` but for multiple patterns
  *
  * let typeFieldName3:TypeFieldName = 'Droid.@*FieldName' // applies on all fields of the Droid GraphQL Type
  *
@@ -253,12 +257,12 @@ export class TypeFieldName extends GraphqlTypeFieldName {
     while ((result = pattern.exec(_typeFieldName)) !== null) {
       const typeName = result.groups.typeName;
       const fieldNames = result.groups.fieldNames;
-      console.log('🚀 ~ file: type-field-name.ts:249 ~ TypeFieldName ~ typeName', typeName, fieldNames, result.groups);
 
       matchFound = typeName === _typeName && this.matchAll(fieldNames, _fieldNames, matchAllFieldNames);
 
       if (matchFound) break;
     }
+    pattern.lastIndex = 0;
     return matchFound;
   };
 
