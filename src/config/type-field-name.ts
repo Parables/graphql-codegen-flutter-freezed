@@ -1,3 +1,13 @@
+/**
+ * A list of GraphQL Type Names
+ */
+type TypeNames = string | string[] | TypeName[];
+
+/**
+ * A list of field names of a GraphQL Type
+ */
+type FieldNames = string | string[] | FieldName[];
+
 class GraphqlTypeFieldName {
   private _value: string;
 
@@ -7,6 +17,13 @@ class GraphqlTypeFieldName {
 
   public get value(): string {
     return this._value;
+  }
+  public static get anyTypeName(): string {
+    return '@*TypeName';
+  }
+
+  public static get anyFieldName(): string {
+    return '@*FieldName';
   }
 
   public static valueOf = (value: string | string[] | GraphqlTypeFieldName | GraphqlTypeFieldName[]) => {
@@ -35,6 +52,22 @@ class GraphqlTypeFieldName {
       .split(/\s*,\s*/gim)
       .filter(type => type.length > 0)
       .join();
+  };
+
+  /**
+   * checks whether the child contains every element in parent
+   * @param parent contains all the elements
+   * @param child contains some or all elements in parent but may not be in any order as parent
+   * @param matchAll if true, will return true if every child element is found in parent, otherwise false.
+   * Defaults to false for the scope of this project since the schema visitor would have only one element at a time so we can't do a full match
+   * @returns boolean
+   */
+  public static matchAll = (parent: string, child: string, matchAll = false) => {
+    const parentList = parent.split(',');
+    const childList = child.split(',');
+    return matchAll
+      ? childList.every(c => parentList.find(p => p === c))
+      : childList.some(c => parentList.find(f => f === c));
   };
 }
 
@@ -65,6 +98,44 @@ export class TypeName extends GraphqlTypeFieldName {
     }
     return new TypeName(value);
   };
+
+  //#region `'TypeName, TypeName' or [TypeName, TypeName]`
+
+  /**
+   * Use this in the config to specify an option that applies on **any** field of **any** type **excluding** some of its fields
+   * @param exceptFieldNames field names to be excluded
+   * @returns `'TypeName.[fieldNames]'`
+   */
+  public static multipleTypeNames = (typeNames: TypeNames): string => {
+    return this.valueOf(typeNames);
+  };
+
+  /**
+   * returns true or false if typeFieldName matches `'@*TypeName.@*FieldName-[exceptFieldNames]'` and the typeFieldName includes the `exceptFieldNames`.
+   * @param typeFieldName
+   * @param typeNames
+   * @returns boolean
+   */
+  static matchesMultipleTypeNames = (typeFieldName: string | TypeFieldName, typeNames: TypeNames, matchAll = false) => {
+    const _typeFieldName = this.valueOf(typeFieldName);
+    const _typeNames = this.valueOf(typeNames);
+
+    return this.matchAll(_typeFieldName, _typeNames, matchAll);
+  };
+
+  //#endregion
+
+  //#region `'@*TypeName'`
+  /**
+   * returns true or false if typeFieldName matches `'@*TypeName.@*FieldName-[exceptFieldNames]'` and the typeFieldName includes the `exceptFieldNames`.
+   * @param typeFieldName
+   * @returns boolean
+   */
+  static matchesAnyTypeName = (typeFieldName: string | TypeFieldName) => {
+    return this.anyTypeName === typeFieldName;
+  };
+
+  //#endregion
 }
 
 /**
@@ -138,283 +209,6 @@ export class FieldName extends GraphqlTypeFieldName {
  * ```
  * */
 export class TypeFieldName extends GraphqlTypeFieldName {
-  public static get anyTypeName(): string {
-    return '@*TypeName';
-  }
-  public static get anyFieldName(): string {
-    return '@*FieldName';
-  }
-
-  //#region `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'`
-
-  /**
-   * Use this in the config to specify an option that applies on **any** field of **any** type **excluding** some types and its fields
-   * @param exceptTypeNames type names to be excluded
-   * @param exceptFieldNames field names to be excluded
-   * @returns `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'`
-   */
-  public static anyFieldNameExceptFieldNamesOfAnyTypeNameExceptTypeNames = (
-    exceptTypeNames: string | string[] | TypeName[],
-    exceptFieldNames: string | string[] | FieldName[]
-  ): string => {
-    const _typeNames = this.valueOf(exceptTypeNames);
-    const _fieldNames = this.valueOf(exceptFieldNames);
-    return `${this.anyTypeName}-[${_typeNames}].${this.anyFieldName}-[${_fieldNames}]`;
-  };
-
-  /**
-   * returns a RegExp that you can use to test if a string matches `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'`
-   */
-  public static regexForAnyFieldNameExceptFieldNamesOfAnyTypeNameExceptTypeNames =
-    /@\s*\*\s*TypeName\s*-\s*\[\s*(?<typeNames>((\w+?,?\s*)*))\]\s*\.\s*@\s*\*\s*FieldName\s*-\s*\[\s*(?<fieldNames>((\w+?,?\s*)*))\]/gim;
-
-  /**
-   * returns true or false if typeFieldName matches `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'` and the typeFieldName includes the `exceptTypeNames` and `exceptFieldNames`.
-   * @param typeFieldName
-   * @param exceptTypeNames
-   * @param exceptFieldNames
-   * @returns boolean
-   */
-  static matchesAnyFieldNameExceptFieldNamesOfAnyTypeNameExceptTypeNames = (
-    typeFieldName: TypeFieldName | string,
-    exceptTypeNames: string | string[] | TypeName[],
-    exceptFieldNames: string | string[] | FieldName[]
-  ) => {
-    const pattern = this.regexForAnyFieldNameExceptFieldNamesOfAnyTypeNameExceptTypeNames;
-
-    const _typeFieldName = this.valueOf(typeFieldName);
-    const _typeNames = this.valueOf(exceptTypeNames);
-    const _fieldNames = this.valueOf(exceptFieldNames);
-
-    let result: RegExpExecArray | null;
-    let matchFound: boolean;
-
-    while ((result = pattern.exec(_typeFieldName)) !== null) {
-      const typeNames = result.groups.typeNames;
-      const fieldNames = result.groups.fieldNames;
-
-      matchFound = typeNames.includes(_typeNames) && fieldNames.includes(_fieldNames);
-
-      if (matchFound) break;
-    }
-    return matchFound;
-  };
-
-  //#endregion
-
-  //#region `'@*TypeName-[exceptTypeNames].@*FieldName'`
-
-  /**
-   * Use this in the config to specify an option that applies on **any** field of **any** type **excluding** some types
-   * @param exceptTypeNames type names to be excluded
-   * @returns `'@*TypeName-[exceptTypeNames].@*FieldName'`
-   */
-  public static anyFieldNameOfAnyTypeNameExceptTypeNames = (
-    exceptTypeNames: string | string[] | TypeName[]
-  ): string => {
-    const _typeNames = this.valueOf(exceptTypeNames);
-    return `${this.anyTypeName}-[${_typeNames}].${this.anyFieldName}`;
-  };
-
-  /**
-   * returns a RegExp that you can use to test if a string matches `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'`
-   */
-  public static regexForAnyFieldNameOfAnyTypeNameExceptTypeNames =
-    /@\s*\*\s*TypeName\s*-\s*\[\s*(?<typeNames>((\w+?,?\s*)*))\]\s*\.\s*@\s*\*\s*FieldName\s*,?[^-.\s*]/gim;
-
-  /**
-   * returns true or false if typeFieldName matches `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'` and the typeFieldName includes the `exceptTypeNames` and `exceptFieldNames`.
-   * @param typeFieldName
-   * @param exceptTypeNames
-   * @param exceptFieldNames
-   * @returns boolean
-   */
-  static matchesAnyFieldNameOfAnyTypeNameExceptTypeNames = (
-    typeFieldName: TypeFieldName | string,
-    exceptTypeNames: string | string[] | TypeName[]
-  ) => {
-    const pattern = this.regexForAnyFieldNameOfAnyTypeNameExceptTypeNames;
-
-    const _typeFieldName = this.valueOf(typeFieldName);
-    const _typeNames = this.valueOf(exceptTypeNames);
-
-    let result: RegExpExecArray | null;
-    let matchFound: boolean;
-
-    while ((result = pattern.exec(_typeFieldName)) !== null) {
-      const typeNames = result.groups.typeNames;
-
-      matchFound = typeNames.includes(_typeNames);
-
-      if (matchFound) break;
-    }
-    return matchFound;
-  };
-
-  //#endregion
-
-  //#region `'@*TypeName-[exceptTypeNames].[fieldNames]'`
-
-  /**
-   * Use this in the config to specify an option that applies on **any** field of **any** type **excluding** some types and its fields
-   * @param exceptTypeNames type names to be excluded
-   * @param fieldNames field names to be excluded
-   * @returns `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'`
-   */
-  public static fieldNamesOfAnyTypeNameExceptTypeNames = (
-    exceptTypeNames: string | string[] | TypeName[],
-    fieldNames: string | string[] | FieldName[]
-  ): string => {
-    const _typeNames = this.valueOf(exceptTypeNames);
-    const _fieldNames = this.valueOf(fieldNames);
-    return `${this.anyTypeName}-[${_typeNames}].[${_fieldNames}]`;
-  };
-
-  /**
-   * returns a RegExp that you can use to test if a string matches `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'`
-   */
-  public static regexForFieldNamesOfAnyTypeNameExceptTypeNames =
-    /@\s*\*\s*TypeName\s*-\s*\[\s*(?<typeNames>((\w+?,?\s*)*))\]\s*\.\s*\[\s*(?<fieldNames>((\w+?,?\s*)*))\]/gim;
-
-  /**
-   * returns true or false if typeFieldName matches `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'` and the typeFieldName includes the `exceptTypeNames` and `exceptFieldNames`.
-   * @param typeFieldName
-   * @param exceptTypeNames
-   * @param fieldNames
-   * @returns boolean
-   */
-  static matchesFieldNamesOfAnyTypeNameExceptTypeNames = (
-    typeFieldName: TypeFieldName | string,
-    exceptTypeNames: string | string[] | TypeName[],
-    fieldNames: string | string[] | FieldName[]
-  ) => {
-    const pattern = this.regexForFieldNamesOfAnyTypeNameExceptTypeNames;
-
-    const _typeFieldName = this.valueOf(typeFieldName);
-    const _typeNames = this.valueOf(exceptTypeNames);
-    const _fieldNames = this.valueOf(fieldNames);
-
-    let result: RegExpExecArray | null;
-    let matchFound: boolean;
-
-    while ((result = pattern.exec(_typeFieldName)) !== null) {
-      const typeNames = result.groups.typeNames;
-      const fieldNames = result.groups.fieldNames;
-
-      matchFound = typeNames.includes(_typeNames) && fieldNames.includes(_fieldNames);
-
-      if (matchFound) break;
-    }
-    return matchFound;
-  };
-
-  //#endregion
-
-  //#region `'TypeName.@*FieldName-[exceptFieldNames]'`
-
-  /**
-   * Use this in the config to specify an option that applies on **any** field of **any** type **excluding** some of its fields
-   * @param exceptFieldNames field names to be excluded
-   * @returns `'TypeName.@*FieldName-[exceptFieldNames]'`
-   */
-  public static anyFieldNameOfTypeNameExceptFieldNames = (
-    typeName: string | TypeName,
-    exceptFieldName: string | string[] | FieldName[]
-  ): string => {
-    const _typeName = TypeName.fromString(this.valueOf(typeName)).value; // ensures that there is no comma-separated TypeNames in there
-    const _fieldNames = this.valueOf(exceptFieldName);
-    return `${_typeName}.${this.anyFieldName}-[${_fieldNames}]`;
-  };
-
-  /**
-   * returns a RegExp that you can use to test if a string matches `'@*TypeName.@*FieldName-[exceptFieldNames]'`
-   */
-  public static regexForAnyFieldNameExceptFieldNamesOfTypeName =
-    /[^@*TypeName](?<typeName>(\w+?))\s*\.\s*@\s*\*\s*FieldName\s*-\s*\[\s*(?<fieldNames>((\w+?,?\s*)*))\]/gim;
-
-  /**
-   * returns true or false if typeFieldName matches `'@*TypeName.@*FieldName-[exceptFieldNames]'` and the typeFieldName includes the `exceptFieldNames`.
-   * @param typeFieldName
-   * @param exceptFieldNames
-   * @returns boolean
-   */
-  static matchesAnyFieldNameExceptFieldNamesOfTypeName = (
-    typeFieldName: TypeFieldName | string,
-    typeName: string | TypeName,
-    exceptFieldNames: string | string[] | FieldName[]
-  ) => {
-    const pattern = this.regexForAnyFieldNameExceptFieldNamesOfTypeName;
-
-    const _typeFieldName = this.valueOf(typeFieldName);
-    const _typeName = TypeName.fromString(this.valueOf(typeName)).value; // ensures that there is no comma-separated TypeNames in there
-    const _fieldNames = this.valueOf(exceptFieldNames);
-
-    let result: RegExpExecArray | null;
-    let matchFound: boolean;
-
-    while ((result = pattern.exec(_typeFieldName)) !== null) {
-      const typeName = result.groups.typeName;
-      const fieldNames = result.groups.fieldNames;
-
-      matchFound = typeName === _typeName && fieldNames.includes(_fieldNames);
-
-      if (matchFound) break;
-    }
-    return matchFound;
-  };
-
-  //#endregion
-
-  //#region `'@*TypeName.@*FieldName-[exceptFieldNames]'`
-
-  /**
-   * Use this in the config to specify an option that applies on **any** field of **any** type **excluding** some of its fields
-   * @param exceptFieldNames field names to be excluded
-   * @returns `'@*TypeName.@*FieldName-[exceptFieldNames]'`
-   */
-  public static anyFieldNameOfAnyTypeNameExceptFieldNames = (
-    exceptFieldName: string | string[] | FieldName[]
-  ): string => {
-    const _fieldNames = this.valueOf(exceptFieldName);
-    return `${this.anyTypeName}.${this.anyFieldName}-[${_fieldNames}]`;
-  };
-
-  /**
-   * returns a RegExp that you can use to test if a string matches `'@*TypeName.@*FieldName-[exceptFieldNames]'`
-   */
-  public static regexForAnyFieldNameExceptFieldNamesOfAnyTypeName =
-    /@\s*\*\s*TypeName\s*\.\s*@\s*\*\s*FieldName\s*-\s*\[\s*(?<fieldNames>((\w+?,?\s*)*))\]/gim;
-
-  /**
-   * returns true or false if typeFieldName matches `'@*TypeName.@*FieldName-[exceptFieldNames]'` and the typeFieldName includes the `exceptFieldNames`.
-   * @param typeFieldName
-   * @param exceptFieldNames
-   * @returns boolean
-   */
-  static matchesAnyFieldNameExceptFieldNamesOfAnyTypeName = (
-    typeFieldName: TypeFieldName | string,
-    exceptFieldNames: string | string[] | FieldName[]
-  ) => {
-    const pattern = this.regexForAnyFieldNameExceptFieldNamesOfAnyTypeName;
-
-    const _typeFieldName = this.valueOf(typeFieldName);
-    const _fieldNames = this.valueOf(exceptFieldNames);
-
-    let result: RegExpExecArray | null;
-    let matchFound: boolean;
-
-    while ((result = pattern.exec(_typeFieldName)) !== null) {
-      const fieldNames = result.groups.fieldNames;
-
-      matchFound = fieldNames.includes(_fieldNames);
-
-      if (matchFound) break;
-    }
-    return matchFound;
-  };
-
-  //#endregion
-
   //#region `'TypeName.[fieldNames]'`
 
   /**
@@ -422,20 +216,17 @@ export class TypeFieldName extends GraphqlTypeFieldName {
    * @param exceptFieldNames field names to be excluded
    * @returns `'TypeName.[fieldNames]'`
    */
-  public static fieldNamesOfTypeName = (
-    typeName: string | TypeName,
-    fieldName: string | string[] | FieldName[]
-  ): string => {
+  public static fieldNamesOfTypeName = (typeName: string | TypeName, fieldNames: FieldNames): string => {
     const _typeName = TypeName.fromString(this.valueOf(typeName)).value; // ensures that there is no comma-separated TypeNames in there
-    const _fieldNames = this.valueOf(fieldName);
+    const _fieldNames = this.valueOf(fieldNames);
     return `${_typeName}.[${_fieldNames}]`;
   };
 
   /**
    * returns a RegExp that you can use to test if a string matches `'@*TypeName.@*FieldName-[exceptFieldNames]'`
    */
-  public static regexForFieldNamesOfTypeName =
-    /[^@*TypeName](?<typeName>(\w+?))\s*\.\s*\[\s*(?<fieldNames>((\w+?,?\s*)*))\]/gim;
+  public static regexpForFieldNamesOfTypeName =
+    /(?<typeName>\w+)(?<!@\s*\*\s*TypeName)\s*\.\s*\[\s*(?<fieldNames>(\w+?,?\s*)*)\]/gim;
 
   /**
    * returns true or false if typeFieldName matches `'@*TypeName.@*FieldName-[exceptFieldNames]'` and the typeFieldName includes the `exceptFieldNames`.
@@ -445,11 +236,12 @@ export class TypeFieldName extends GraphqlTypeFieldName {
    * @returns boolean
    */
   static matchesFieldNamesOfTypeName = (
-    typeFieldName: TypeFieldName | string,
+    typeFieldName: string | TypeFieldName,
     typeName: string | TypeName,
-    fieldNames: string | string[] | FieldName[]
+    fieldNames: FieldNames,
+    matchAllFieldNames = false
   ) => {
-    const pattern = this.regexForFieldNamesOfTypeName;
+    const pattern = this.regexpForFieldNamesOfTypeName;
 
     const _typeFieldName = this.valueOf(typeFieldName);
     const _typeName = TypeName.fromString(this.valueOf(typeName)).value; // ensures that there is no comma-separated TypeNames in there
@@ -461,8 +253,9 @@ export class TypeFieldName extends GraphqlTypeFieldName {
     while ((result = pattern.exec(_typeFieldName)) !== null) {
       const typeName = result.groups.typeName;
       const fieldNames = result.groups.fieldNames;
+      console.log('🚀 ~ file: type-field-name.ts:249 ~ TypeFieldName ~ typeName', typeName, fieldNames, result.groups);
 
-      matchFound = typeName === _typeName && fieldNames.includes(_fieldNames);
+      matchFound = typeName === _typeName && this.matchAll(fieldNames, _fieldNames, matchAllFieldNames);
 
       if (matchFound) break;
     }
@@ -478,15 +271,15 @@ export class TypeFieldName extends GraphqlTypeFieldName {
    * @param exceptFieldNames field names to be excluded
    * @returns `'@*TypeName.@*FieldName-[exceptFieldNames]'`
    */
-  public static fieldNamesOfAnyTypeName = (fieldName: string | string[]): string => {
-    const _fieldNames = this.valueOf(fieldName);
+  public static fieldNamesOfAnyTypeName = (fieldNames: FieldNames): string => {
+    const _fieldNames = this.valueOf(fieldNames);
     return `${this.anyTypeName}.[${_fieldNames}]`;
   };
 
   /**
    * returns a RegExp that you can use to test if a string matches `'@*TypeName.@*FieldName-[exceptFieldNames]'`
    */
-  public static regexForFieldNamesOfAnyTypeName = /@\s*\*\s*TypeName\s*\.\s*\[\s*(?<fieldNames>((\w+?,?\s*)*))\]/gim;
+  public static regexpForFieldNamesOfAnyTypeName = /@\s*\*\s*TypeName\s*\.\s*\[\s*(?<fieldNames>((\w+?,?\s*)*))\]/gim;
 
   /**
    * returns true or false if typeFieldName matches `'@*TypeName.@*FieldName-[exceptFieldNames]'` and the typeFieldName includes the `exceptFieldNames`.
@@ -495,10 +288,11 @@ export class TypeFieldName extends GraphqlTypeFieldName {
    * @returns boolean
    */
   static matchesFieldNamesOfAnyTypeName = (
-    typeFieldName: TypeFieldName | string,
-    fieldNames: string | string[] | FieldName[]
+    typeFieldName: string | TypeFieldName,
+    fieldNames: FieldNames,
+    matchAllFieldNames = false
   ) => {
-    const pattern = this.regexForFieldNamesOfAnyTypeName;
+    const pattern = this.regexpForFieldNamesOfAnyTypeName;
 
     const _typeFieldName = this.valueOf(typeFieldName);
     const _fieldNames = this.valueOf(fieldNames);
@@ -509,7 +303,7 @@ export class TypeFieldName extends GraphqlTypeFieldName {
     while ((result = pattern.exec(_typeFieldName)) !== null) {
       const fieldNames = result.groups.fieldNames;
 
-      matchFound = fieldNames.includes(_fieldNames);
+      matchFound = this.matchAll(fieldNames, _fieldNames, matchAllFieldNames);
 
       if (matchFound) break;
     }
@@ -533,8 +327,8 @@ export class TypeFieldName extends GraphqlTypeFieldName {
   /**
    * returns a RegExp that you can use to test if a string matches `'@*TypeName.@*FieldName-[exceptFieldNames]'`
    */
-  public static regexForAnyFieldNameOfTypeName =
-    /[^@*TypeName](?<typeName>(\w+?))\s*\.\s*@\s*\*\s*FieldName\s*,?[^-.\s*]/gim;
+  public static regexpForAnyFieldNameOfTypeName =
+    /(?<typeName>\w+?)(?<!@\s*\*\s*TypeName)\s*\.\s*@\s*\*\s*FieldName\s*,?[^-.\s*]/gim;
 
   /**
    * returns true or false if typeFieldName matches `'@*TypeName.@*FieldName-[exceptFieldNames]'` and the typeFieldName includes the `exceptFieldNames`.
@@ -542,8 +336,8 @@ export class TypeFieldName extends GraphqlTypeFieldName {
    * @param exceptFieldNames
    * @returns boolean
    */
-  static matchesAnyFieldNameOfTypeName = (typeFieldName: TypeFieldName | string, typeName: string | TypeName) => {
-    const pattern = this.regexForAnyFieldNameOfAnyTypeName;
+  static matchesAnyFieldNameOfTypeName = (typeFieldName: string | TypeFieldName, typeName: string | TypeName) => {
+    const pattern = this.regexpForAnyFieldNameOfAnyTypeName;
 
     const _typeFieldName = this.valueOf(typeFieldName);
     const _typeName = TypeName.fromString(this.valueOf(typeName)).value; // ensures that there is no comma-separated TypeNames in there
@@ -577,7 +371,7 @@ export class TypeFieldName extends GraphqlTypeFieldName {
   /**
    * returns a RegExp that you can use to test if a string matches `'@*TypeName.@*FieldName-[exceptFieldNames]'`
    */
-  public static regexForAnyFieldNameOfAnyTypeName = /@\s*\*\s*TypeName\s*\.\s*@\s*\*\s*FieldName\s*,?[^-.\s*]/gim;
+  public static regexpForAnyFieldNameOfAnyTypeName = /@\s*\*\s*TypeName\s*\.\s*@\s*\*\s*FieldName\s*,?[^-.\s*]/gim;
 
   /**
    * returns true or false if typeFieldName matches `'@*TypeName.@*FieldName-[exceptFieldNames]'` and the typeFieldName includes the `exceptFieldNames`.
@@ -585,8 +379,8 @@ export class TypeFieldName extends GraphqlTypeFieldName {
    * @param exceptFieldNames
    * @returns boolean
    */
-  static matchesAnyFieldNameOfAnyTypeName = (typeFieldName: TypeFieldName | string) => {
-    const pattern = this.regexForAnyFieldNameOfAnyTypeName;
+  static matchesAnyFieldNameOfAnyTypeName = (typeFieldName: string | TypeFieldName) => {
+    const pattern = this.regexpForAnyFieldNameOfAnyTypeName;
 
     const _typeFieldName = this.valueOf(typeFieldName);
 
@@ -595,8 +389,331 @@ export class TypeFieldName extends GraphqlTypeFieldName {
 
   //#endregion
 
-  //   public static anyTypeNameExceptTypeNames = (typeNames: string | string[]): string => {
-  //     const _typeNames = this.valueOf(typeNames);
-  //     return `${this.anyTypeName}-[${this.fromString(_typeNames).value}]`;
-  //   };
+  //#region `'TypeName.@*FieldName-[exceptFieldNames]'`
+
+  /**
+   * Use this in the config to specify an option that applies on **any** field of **any** type **excluding** some of its fields
+   * @param exceptFieldNames field names to be excluded
+   * @returns `'TypeName.@*FieldName-[exceptFieldNames]'`
+   */
+  public static anyFieldNameOfTypeNameExceptFieldNames = (
+    typeName: string | TypeName,
+    exceptFieldName: FieldNames
+  ): string => {
+    const _typeName = TypeName.fromString(this.valueOf(typeName)).value; // ensures that there is no comma-separated TypeNames in there
+    const _fieldNames = this.valueOf(exceptFieldName);
+    return `${_typeName}.${this.anyFieldName}-[${_fieldNames}]`;
+  };
+
+  /**
+   * returns a RegExp that you can use to test if a string matches `'@*TypeName.@*FieldName-[exceptFieldNames]'`
+   */
+  public static regexpForAnyFieldNameExceptFieldNamesOfTypeName =
+    /(?<typeName>\w+?)(?<!@\s*\*\s*TypeName)\s*\.\s*@\s*\*\s*FieldName\s*-\s*\[\s*(?<fieldNames>(\w+?,?\s*)*)\]/gim;
+
+  /**
+   * returns true or false if typeFieldName matches `'@*TypeName.@*FieldName-[exceptFieldNames]'` and the typeFieldName includes the `exceptFieldNames`.
+   * @param typeFieldName
+   * @param exceptFieldNames
+   * @returns boolean
+   */
+  static matchesAnyFieldNameExceptFieldNamesOfTypeName = (
+    typeFieldName: string | TypeFieldName,
+    typeName: string | TypeName,
+    exceptFieldNames: FieldNames,
+    matchAllFieldNames = false
+  ) => {
+    const pattern = this.regexpForAnyFieldNameExceptFieldNamesOfTypeName;
+
+    const _typeFieldName = this.valueOf(typeFieldName);
+    const _typeName = TypeName.fromString(this.valueOf(typeName)).value; // ensures that there is no comma-separated TypeNames in there
+    const _fieldNames = this.valueOf(exceptFieldNames);
+
+    let result: RegExpExecArray | null;
+    let matchFound: boolean;
+
+    while ((result = pattern.exec(_typeFieldName)) !== null) {
+      const typeName = result.groups.typeName;
+      const fieldNames = result.groups.fieldNames;
+
+      matchFound = typeName === _typeName && this.matchAll(fieldNames, _fieldNames, matchAllFieldNames);
+
+      if (matchFound) break;
+    }
+    return matchFound;
+  };
+
+  //#endregion
+
+  //#region `'@*TypeName.@*FieldName-[exceptFieldNames]'`
+
+  /**
+   * Use this in the config to specify an option that applies on **any** field of **any** type **excluding** some of its fields
+   * @param exceptFieldNames field names to be excluded
+   * @returns `'@*TypeName.@*FieldName-[exceptFieldNames]'`
+   */
+  public static anyFieldNameOfAnyTypeNameExceptFieldNames = (exceptFieldName: FieldNames): string => {
+    const _fieldNames = this.valueOf(exceptFieldName);
+    return `${this.anyTypeName}.${this.anyFieldName}-[${_fieldNames}]`;
+  };
+
+  /**
+   * returns a RegExp that you can use to test if a string matches `'@*TypeName.@*FieldName-[exceptFieldNames]'`
+   */
+  public static regexpForAnyFieldNameExceptFieldNamesOfAnyTypeName =
+    /@\s*\*\s*TypeName\s*\.\s*@\s*\*\s*FieldName\s*-\s*\[\s*(?<fieldNames>((\w+?,?\s*)*))\]/gim;
+
+  /**
+   * returns true or false if typeFieldName matches `'@*TypeName.@*FieldName-[exceptFieldNames]'` and the typeFieldName includes the `exceptFieldNames`.
+   * @param typeFieldName
+   * @param exceptFieldNames
+   * @returns boolean
+   */
+  static matchesAnyFieldNameExceptFieldNamesOfAnyTypeName = (
+    typeFieldName: string | TypeFieldName,
+    exceptFieldNames: FieldNames,
+    matchAllFieldNames = false
+  ) => {
+    const pattern = this.regexpForAnyFieldNameExceptFieldNamesOfAnyTypeName;
+
+    const _typeFieldName = this.valueOf(typeFieldName);
+    const _fieldNames = this.valueOf(exceptFieldNames);
+
+    let result: RegExpExecArray | null;
+    let matchFound: boolean;
+
+    while ((result = pattern.exec(_typeFieldName)) !== null) {
+      const fieldNames = result.groups.fieldNames;
+
+      matchFound = this.matchAll(fieldNames, _fieldNames, matchAllFieldNames);
+
+      if (matchFound) break;
+    }
+    return matchFound;
+  };
+
+  //#endregion
+
+  //#region `'@*TypeName-[exceptTypeNames]'`
+
+  /**
+   * Use this in the config to specify an option that applies on **any** field of **any** type **excluding** some types and its fields
+   * @param exceptTypeNames type names to be excluded
+   * @param fieldNames field names to be excluded
+   * @returns `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'`
+   */
+  public static anyTypeNameExceptTypeNames = (exceptTypeNames: TypeNames): string => {
+    const _typeNames = this.valueOf(exceptTypeNames);
+    return `${this.anyTypeName}-[${_typeNames}]`;
+  };
+
+  /**
+   * returns a RegExp that you can use to test if a string matches `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'`
+   */
+  public static regexpForAnyTypeNameExceptTypeNames =
+    /@\s*\*\s*TypeName\s*-\s*\[\s*(?<typeNames>((\w+?,?\s*)*))\]\s*,?[^-.\s*]/gim;
+
+  /**
+   * returns true or false if typeFieldName matches `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'` and the typeFieldName includes the `exceptTypeNames` and `exceptFieldNames`.
+   * @param typeFieldName
+   * @param exceptTypeNames
+   * @param fieldNames
+   * @returns boolean
+   */
+  static matchesAnyTypeNameExceptTypeNames = (
+    typeFieldName: string | TypeFieldName,
+    exceptTypeNames: TypeNames,
+    matchAllTypeNames = false
+  ) => {
+    const pattern = this.regexpForAnyTypeNameExceptTypeNames;
+
+    const _typeFieldName = this.valueOf(typeFieldName);
+    const _typeNames = this.valueOf(exceptTypeNames);
+
+    let result: RegExpExecArray | null;
+    let matchFound: boolean;
+
+    while ((result = pattern.exec(_typeFieldName)) !== null) {
+      const typeNames = result.groups.typeNames;
+
+      matchFound = this.matchAll(typeNames, _typeNames, matchAllTypeNames);
+
+      if (matchFound) break;
+    }
+    return matchFound;
+  };
+
+  //#endregion
+
+  //#region `'@*TypeName-[exceptTypeNames].[fieldNames]'`
+
+  /**
+   * Use this in the config to specify an option that applies on **any** field of **any** type **excluding** some types and its fields
+   * @param exceptTypeNames type names to be excluded
+   * @param fieldNames field names to be excluded
+   * @returns `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'`
+   */
+  public static fieldNamesOfAnyTypeNameExceptTypeNames = (
+    exceptTypeNames: TypeNames,
+    fieldNames: FieldNames
+  ): string => {
+    const _typeNames = this.valueOf(exceptTypeNames);
+    const _fieldNames = this.valueOf(fieldNames);
+    return `${this.anyTypeName}-[${_typeNames}].[${_fieldNames}]`;
+  };
+
+  /**
+   * returns a RegExp that you can use to test if a string matches `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'`
+   */
+  public static regexpForFieldNamesOfAnyTypeNameExceptTypeNames =
+    /@\s*\*\s*TypeName\s*-\s*\[\s*(?<typeNames>((\w+?,?\s*)*))\]\s*\.\s*\[\s*(?<fieldNames>((\w+?,?\s*)*))\]/gim;
+
+  /**
+   * returns true or false if typeFieldName matches `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'` and the typeFieldName includes the `exceptTypeNames` and `exceptFieldNames`.
+   * @param typeFieldName
+   * @param exceptTypeNames
+   * @param fieldNames
+   * @returns boolean
+   */
+  static matchesFieldNamesOfAnyTypeNameExceptTypeNames = (
+    typeFieldName: string | TypeFieldName,
+    exceptTypeNames: TypeNames,
+    fieldNames: FieldNames,
+    matchAllTypeNames = false,
+    matchAllFieldNames = false
+  ) => {
+    const pattern = this.regexpForFieldNamesOfAnyTypeNameExceptTypeNames;
+
+    const _typeFieldName = this.valueOf(typeFieldName);
+    const _typeNames = this.valueOf(exceptTypeNames);
+    const _fieldNames = this.valueOf(fieldNames);
+
+    let result: RegExpExecArray | null;
+    let matchFound: boolean;
+
+    while ((result = pattern.exec(_typeFieldName)) !== null) {
+      const typeNames = result.groups.typeNames;
+      const fieldNames = result.groups.fieldNames;
+
+      matchFound =
+        this.matchAll(typeNames, _typeNames, matchAllTypeNames) &&
+        this.matchAll(fieldNames, _fieldNames, matchAllFieldNames);
+
+      if (matchFound) break;
+    }
+    return matchFound;
+  };
+
+  //#endregion
+
+  //#region `'@*TypeName-[exceptTypeNames].@*FieldName'`
+
+  /**
+   * Use this in the config to specify an option that applies on **any** field of **any** type **excluding** some types
+   * @param exceptTypeNames type names to be excluded
+   * @returns `'@*TypeName-[exceptTypeNames].@*FieldName'`
+   */
+  public static anyFieldNameOfAnyTypeNameExceptTypeNames = (exceptTypeNames: TypeNames): string => {
+    const _typeNames = this.valueOf(exceptTypeNames);
+    return `${this.anyTypeName}-[${_typeNames}].${this.anyFieldName}`;
+  };
+
+  /**
+   * returns a RegExp that you can use to test if a string matches `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'`
+   */
+  public static regexpForAnyFieldNameOfAnyTypeNameExceptTypeNames =
+    /@\s*\*\s*TypeName\s*-\s*\[\s*(?<typeNames>((\w+?,?\s*)*))\]\s*\.\s*@\s*\*\s*FieldName\s*,?[^-.\s*]/gim;
+
+  /**
+   * returns true or false if typeFieldName matches `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'` and the typeFieldName includes the `exceptTypeNames` and `exceptFieldNames`.
+   * @param typeFieldName
+   * @param exceptTypeNames
+   * @param exceptFieldNames
+   * @returns boolean
+   */
+  static matchesAnyFieldNameOfAnyTypeNameExceptTypeNames = (
+    typeFieldName: string | TypeFieldName,
+    exceptTypeNames: TypeNames,
+    matchAllTypeNames = false
+  ) => {
+    const pattern = this.regexpForAnyFieldNameOfAnyTypeNameExceptTypeNames;
+
+    const _typeFieldName = this.valueOf(typeFieldName);
+    const _typeNames = this.valueOf(exceptTypeNames);
+
+    let result: RegExpExecArray | null;
+    let matchFound: boolean;
+
+    while ((result = pattern.exec(_typeFieldName)) !== null) {
+      const typeNames = result.groups.typeNames;
+
+      matchFound = this.matchAll(typeNames, _typeNames, matchAllTypeNames);
+
+      if (matchFound) break;
+    }
+    return matchFound;
+  };
+
+  //#endregion
+
+  //#region `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'`
+
+  /**
+   * Use this in the config to specify an option that applies on **any** field of **any** type **excluding** some types and its fields
+   * @param exceptTypeNames type names to be excluded
+   * @param exceptFieldNames field names to be excluded
+   * @returns `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'`
+   */
+  public static anyFieldNameExceptFieldNamesOfAnyTypeNameExceptTypeNames = (
+    exceptTypeNames: TypeNames,
+    exceptFieldNames: FieldNames
+  ): string => {
+    const _typeNames = this.valueOf(exceptTypeNames);
+    const _fieldNames = this.valueOf(exceptFieldNames);
+    return `${this.anyTypeName}-[${_typeNames}].${this.anyFieldName}-[${_fieldNames}]`;
+  };
+
+  /**
+   * returns a RegExp that you can use to test if a string matches `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'`
+   */
+  public static regexpForAnyFieldNameExceptFieldNamesOfAnyTypeNameExceptTypeNames =
+    /@\s*\*\s*TypeName\s*-\s*\[\s*(?<typeNames>((\w+?,?\s*)*))\]\s*\.\s*@\s*\*\s*FieldName\s*-\s*\[\s*(?<fieldNames>((\w+?,?\s*)*))\]/gim;
+
+  /**
+   * returns true or false if typeFieldName matches `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'` and the typeFieldName includes the `exceptTypeNames` and `exceptFieldNames`.
+   * @param typeFieldName
+   * @param exceptTypeNames
+   * @param exceptFieldNames
+   * @returns boolean
+   */
+  static matchesAnyFieldNameExceptFieldNamesOfAnyTypeNameExceptTypeNames = (
+    typeFieldName: string | TypeFieldName,
+    exceptTypeNames: TypeNames,
+    exceptFieldNames: FieldNames,
+    matchAllTypeNames = false,
+    matchAllFieldNames = false
+  ) => {
+    const pattern = this.regexpForAnyFieldNameExceptFieldNamesOfAnyTypeNameExceptTypeNames;
+
+    const _typeFieldName = this.valueOf(typeFieldName);
+    const _typeNames = this.valueOf(exceptTypeNames);
+    const _fieldNames = this.valueOf(exceptFieldNames);
+
+    let result: RegExpExecArray | null;
+    let matchFound: boolean;
+
+    while ((result = pattern.exec(_typeFieldName)) !== null) {
+      const typeNames = result.groups.typeNames;
+      const fieldNames = result.groups.fieldNames;
+
+      matchFound =
+        this.matchAll(typeNames, _typeNames, matchAllTypeNames) &&
+        this.matchAll(fieldNames, _fieldNames, matchAllFieldNames);
+
+      if (matchFound) break;
+    }
+    return matchFound;
+  };
+
+  //#endregion
 }

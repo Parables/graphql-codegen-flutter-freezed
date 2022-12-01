@@ -194,6 +194,3 @@ export class Config {
     return Object.assign(defaultFreezedPluginConfig, ...config);
   };
 }
-
-// export * from './config';
-// export * from './type-field-name';
