@@ -1,106 +1,16 @@
 import { indent } from '@graphql-codegen/visitor-plugin-common';
 import { appliesOnBlock } from '../utils';
+import { TypeFieldName } from './compact-graphql-type-field-name';
 import {
   FlutterFreezedPluginConfig,
   AppliesOnParameters,
   FreezedOption,
   defaultFreezedPluginConfig,
   DART_SCALARS,
-  GraphQLTypeFieldName,
 } from './config';
 import { TypeName, FieldName } from './type-field-name';
 
 export class Config {
-  //#region RegExp patterns
-  static matchesTypeNameFieldName = (
-    graphQLTypeFieldName: GraphQLTypeFieldName,
-    typeName: TypeName,
-    fieldNames: FieldName[],
-    matchSome = false
-  ) => {
-    const pattern = new RegExp(`${typeName.value}\\s*\\.\\s*\\[\\s*((\\w+?,?\\s*)*)\\]`, 'gim');
-    if (pattern.test(graphQLTypeFieldName)) {
-      const result = graphQLTypeFieldName
-        .replace(pattern, '$1,')
-        .split(',')
-        .filter(f => f.length > 0);
-      console.log('🚀 ~ file: index.ts ~ line 28 ~ Config ~ result', result);
-
-      return matchSome
-        ? fieldNames.some(fieldName => result.includes(fieldName.value))
-        : fieldNames.every(fieldName => result.includes(fieldName.value));
-    }
-  };
-
-  static matchesTypeNameAnyFieldNameExcept = (
-    graphQLTypeFieldName: GraphQLTypeFieldName,
-    typeName: TypeName,
-    fieldNames: FieldName[],
-    matchSome = false
-  ) => {
-    const pattern = new RegExp(
-      `${typeName.value}\\s*.\\s*@\\s*\\*\\s*FieldName\\s*-\\s*\\[\\s*((\\w+?,?\\s*)*)\\]`,
-      'gim'
-    );
-  };
-
-  static matchesTypeNameAnyFieldName = (
-    config: FlutterFreezedPluginConfig,
-    graphQLTypeFieldName: GraphQLTypeFieldName,
-    typeName: TypeName,
-    fieldNames: FieldName[]
-  ) => {
-    const pattern = new RegExp(`${typeName.value}\\*.\\s*@\\s*\\*\\s*FieldName\\s*,?[^-\\s*]`, 'gim');
-  };
-
-  static matchesAnyTypeNameFieldName = (
-    config: FlutterFreezedPluginConfig,
-    graphQLTypeFieldName: GraphQLTypeFieldName,
-    typeName: TypeName,
-    fieldNames: FieldName[]
-  ) => {
-    const pattern = /@\s*\*\s*TypeName\s*\.\s*\[\s*((\w+?,?\s*)*)\]/gim;
-  };
-
-  static matchesAnyTypeNameExceptFieldName = (
-    config: FlutterFreezedPluginConfig,
-    graphQLTypeFieldName: GraphQLTypeFieldName,
-    typeName: TypeName,
-    fieldNames: FieldName[]
-  ) => {
-    // /Droid\s*\.\s*\[\s*(?:(\w+?,?\s*)*)(id,?\s*)(?:(\w+?,?\s*)*)\]/gim
-
-    const pattern = /@\s*\*\s*TypeName\s*-\s*\[\s*((\w+?,?\s*)*)\]\s*\.\s*\[\s*((\w+?,?\s*)*)\]/gim;
-  };
-
-  static matchesAnyTypeNameExceptAnyFieldName = (
-    config: FlutterFreezedPluginConfig,
-    graphQLTypeFieldName: GraphQLTypeFieldName,
-    typeName: TypeName,
-    fieldNames: FieldName[]
-  ) => {
-    const pattern = /@\s*\*\s*TypeName\s*-\s*\[\s*((\w+?,?\s*)*)\]\s*.\s*@\s*\*\s*FieldName\s*,?[^-\s*]/gim;
-  };
-
-  static matchesAnyTypeNameAnyFieldNameExcept = (
-    config: FlutterFreezedPluginConfig,
-    graphQLTypeFieldName: GraphQLTypeFieldName,
-    typeName: TypeName,
-    fieldNames: FieldName[]
-  ) => {
-    const pattern = /@\s*\*\s*TypeName\s*.\s*@\s*\*\s*FieldName\s*-\s*\[\s*((\w+?,?\s*)*)\]/gim;
-  };
-
-  static matchesAnyTypeNameAnyFieldName = (
-    config: FlutterFreezedPluginConfig,
-    graphQLTypeFieldName: GraphQLTypeFieldName,
-    typeName: TypeName,
-    fieldNames: FieldName[]
-  ) => {
-    const pattern = /@\s*\*\s*TypeName\s*.\s*@\s*\*\s*FieldName\s*,?[^-\s*]/gim;
-  };
-  //#endregion
-
   static camelCasedEnums = (config: FlutterFreezedPluginConfig) => {
     const value = config['camelCasedEnums'];
 
@@ -109,6 +19,7 @@ export class Config {
     } else if (value !== undefined) {
       return value;
     }
+    return undefined;
   };
 
   static copyWith = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
@@ -119,14 +30,14 @@ export class Config {
     return config?.customScalars?.[graphqlScalar] ?? DART_SCALARS[graphqlScalar] ?? graphqlScalar;
   };
 
-  static defaultValueDecorator = (
-    config: FlutterFreezedPluginConfig,
-    typeName: TypeName,
-    fieldName: FieldName,
-    appliesOn: AppliesOnParameters
-  ) => {
-    const decorator = (value: string) => `@Default(${value})`;
-  };
+  static defaultValueDecorator = () =>
+    // config: FlutterFreezedPluginConfig,
+    // typeName: TypeName,
+    // fieldName: FieldName,
+    // appliesOn: AppliesOnParameters
+    {
+      // const decorator = (value: string) => `@Default(${value})`;
+    };
 
   static equal = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
     return this.freezedOption(config, 'equal', typeName);
@@ -174,19 +85,20 @@ export class Config {
   };
 
   static fromJsonToJson = (
-    config: FlutterFreezedPluginConfig,
-    typeName?: TypeName,
-    fieldName?: FieldName,
-    appliesOn?: AppliesOnParameters[]
+    config: FlutterFreezedPluginConfig
+    // typeName?: TypeName,
+    // fieldName?: FieldName,
+    // appliesOn?: AppliesOnParameters[]
   ) => {
     const value = config['fromJsonToJson'];
-    const expectedAppliesOn = appliesOn ?? [];
+    // const expectedAppliesOn = appliesOn ?? [];
 
     if (typeof value === 'boolean') {
       return value;
     } else if (value !== undefined) {
       // TODO: Like CSS find the most explicit value, or fallback to the most general value
     }
+    return true;
   };
 
   static ignoreTypes = (config: FlutterFreezedPluginConfig, typeName: TypeName) => {
@@ -257,12 +169,14 @@ export class Config {
     unionTypeName?: TypeName
   ) => {
     const value = config['fromJsonWithMultiConstructors'];
-    if (Array.isArray(value)) {
-      const v = value.find(([commaSeparatedUnionTypeNames]) =>
-        TypeName.byPrecedence(unionTypeName?.value ?? '', commaSeparatedUnionTypeNames)
-      );
-      return v?.[index];
-    }
+    // if (Array.isArray(value)) {
+    const v = value.find(
+      ([commaSeparatedUnionTypeNames]) =>
+        unionTypeName?.value === commaSeparatedUnionTypeNames ||
+        commaSeparatedUnionTypeNames.includes(unionTypeName.value ?? TypeFieldName.anyTypeName)
+    );
+    return v?.[index];
+    // }
   };
 
   private static freezedOption = (config: FlutterFreezedPluginConfig, option: FreezedOption, typeName?: TypeName) => {
@@ -276,19 +190,10 @@ export class Config {
     return value;
   };
 
-  public static unpackConfig = (config: FlutterFreezedPluginConfig, typeName: TypeName, fieldName: FieldName) => {
-    const result = {
-      specific: undefined,
-      general: undefined,
-    };
-
-    return result;
-  };
-
   public static extend = (...config: Partial<FlutterFreezedPluginConfig>[]): FlutterFreezedPluginConfig => {
     return Object.assign(defaultFreezedPluginConfig, ...config);
   };
 }
 
-export * from './config';
-export * from './type-field-name';
+// export * from './config';
+// export * from './type-field-name';

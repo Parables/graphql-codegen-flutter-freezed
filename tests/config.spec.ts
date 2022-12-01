@@ -1,4 +1,4 @@
-import { defaultFreezedPluginConfig } from '../src/config';
+import { defaultFreezedPluginConfig } from '../src/config/config';
 
 it('matches default plugin config', () => {
   expect(defaultFreezedPluginConfig).toMatchObject({

@@ -6,6 +6,7 @@ import {
   FieldDefinitionNode,
   InputValueDefinitionNode,
 } from 'graphql';
+import { TypeName as _TypeName, TypeFieldName as _TypeFieldName } from './compact-graphql-type-field-name';
 
 //#region PluginConfig
 /**
@@ -83,7 +84,7 @@ export type FlutterFreezedPluginConfig = {
    * ```
    */
 
-  copyWith?: boolean | GraphQLTypeName | GraphQLTypeName[];
+  copyWith?: boolean | TypeName | TypeName[];
 
   /**
    * @name customScalars
@@ -124,7 +125,7 @@ export type FlutterFreezedPluginConfig = {
    * @summary annotate a field with a @Default(value: defaultValue) decorator
    * @description Requires an array of tuples with the type signature below:
    *
-   * `[typeFieldName: GraphQLTypeFieldName, value: string, appliesOn: AppliesOnParameters[]]`.
+   * `[typeFieldName: TypeFieldName, value: string, appliesOn: AppliesOnParameters[]]`.
    *
    * Hint: Use backticks for the values so that you can use the quotation marks for string values
    * @default undefined
@@ -153,7 +154,7 @@ export type FlutterFreezedPluginConfig = {
    * ```
    */
   defaultValues?: [
-    typeFieldName: GraphQLTypeFieldName,
+    typeFieldName: TypeFieldName,
     value: string, // use backticks for string values
     appliesOn: AppliesOnParameters[]
   ][];
@@ -187,7 +188,7 @@ export type FlutterFreezedPluginConfig = {
    * export default config;
    * ```
    */
-  deprecated?: [typeFieldName: GraphQLTypeFieldName, appliesOn: (AppliesOnFactory | AppliesOnParameters)[]][];
+  deprecated?: [typeFieldName: TypeFieldName, appliesOn: (AppliesOnFactory | AppliesOnParameters)[]][];
 
   /**
    * @name equal
@@ -220,7 +221,7 @@ export type FlutterFreezedPluginConfig = {
    * export default config;
    * ```
    */
-  equal?: boolean | GraphQLTypeName | GraphQLTypeName[];
+  equal?: boolean | TypeName | TypeName[];
 
   /**
    * @name escapeDartKeywords
@@ -276,7 +277,7 @@ export type FlutterFreezedPluginConfig = {
   escapeDartKeywords?:
     | boolean
     | [
-        typeFieldName: GraphQLTypeFieldName,
+        typeFieldName: TypeFieldName,
         prefix?: string,
         suffix?: string,
         casing?: DartIdentifierCasing,
@@ -290,7 +291,7 @@ export type FlutterFreezedPluginConfig = {
    *
    *   Requires a an array of tuples with the type signature below:
    *
-   * ` [typeFieldName: GraphQLTypeFieldName, appliesOn: AppliesOnParameters[]]`
+   * ` [typeFieldName: TypeFieldName, appliesOn: AppliesOnParameters[]]`
    * @default undefined
    * @exampleMarkdown
    * ## Usage:
@@ -316,7 +317,7 @@ export type FlutterFreezedPluginConfig = {
    * export default config;
    * ```
    */
-  final?: [typeFieldName: GraphQLTypeFieldName, appliesOn: AppliesOnParameters[]][];
+  final?: [typeFieldName: TypeFieldName, appliesOn: AppliesOnParameters[]][];
 
   /**
    *
@@ -326,7 +327,7 @@ export type FlutterFreezedPluginConfig = {
    *
    * You can use custom encodings for each field by passing in an array of tuple with the type signature below:
    *
-   * `[typeFieldName: GraphQLTypeFieldName, classOrFunctionName: string, useClassConverter?: boolean, appliesOn?: AppliesOnParameters[]]`
+   * `[typeFieldName: TypeFieldName, classOrFunctionName: string, useClassConverter?: boolean, appliesOn?: AppliesOnParameters[]]`
    * @see {@link https://github.com/google/json_serializable.dart/tree/master/json_serializable#custom-types-and-custom-encoding Custom types and custom encoding}
    * @default true
    * @exampleMarkdown
@@ -394,7 +395,7 @@ export type FlutterFreezedPluginConfig = {
   fromJsonToJson?:
     | boolean
     | [
-        typeFieldName: GraphQLTypeFieldName,
+        typeFieldName: TypeFieldName,
         classOrFunctionName: string,
         useClassConverter?: boolean,
         appliesOn?: AppliesOnParameters[]
@@ -438,7 +439,7 @@ export type FlutterFreezedPluginConfig = {
    * ```
    */
   fromJsonWithMultiConstructors?: [
-    unionTypeName: GraphQLTypeName,
+    unionTypeName: TypeName,
     unionKey?: string,
     unionValueCase?: UnionValueCase,
     unionValuesNameMap?: Record<string, string>
@@ -470,7 +471,7 @@ export type FlutterFreezedPluginConfig = {
    * export default config;
    * ```
    */
-  ignoreTypes?: GraphQLTypeName[];
+  ignoreTypes?: TypeName[];
 
   /**
    * @name immutable
@@ -502,7 +503,7 @@ export type FlutterFreezedPluginConfig = {
    * export default config;
    * ```
    */
-  immutable?: boolean | GraphQLTypeName | GraphQLTypeName[];
+  immutable?: boolean | TypeName | TypeName[];
 
   /**
    * @name makeCollectionsUnmodifiable
@@ -534,7 +535,7 @@ export type FlutterFreezedPluginConfig = {
    * export default config;
    * ```
    */
-  makeCollectionsUnmodifiable?: boolean | GraphQLTypeName | GraphQLTypeName[];
+  makeCollectionsUnmodifiable?: boolean | TypeName | TypeName[];
 
   /**
    * @name mergeInputs
@@ -551,7 +552,7 @@ export type FlutterFreezedPluginConfig = {
    *      mergeInputs: ["Create$Input", "Update$Input", "Delete$Input"]
    * ```
    */
-  mergeInputs?: [typeName: GraphQLTypeName, mergeWithTypeNames: GraphQLTypeName[]][];
+  mergeInputs?: [typeName: TypeName, mergeWithTypeNames: TypeName[]][];
 
   /**
    * @name mutableInputs
@@ -583,7 +584,7 @@ export type FlutterFreezedPluginConfig = {
    * export default config;
    * ```
    */
-  mutableInputs?: boolean | GraphQLTypeName | GraphQLTypeName[];
+  mutableInputs?: boolean | TypeName | TypeName[];
 
   /**
    * @name privateEmptyConstructor
@@ -615,60 +616,65 @@ export type FlutterFreezedPluginConfig = {
    * export default config;
    * ```
    */
-  privateEmptyConstructor?: boolean | GraphQLTypeName | GraphQLTypeName[];
+  privateEmptyConstructor?: boolean | TypeName | TypeName[];
 };
 //#endregion
 
 //#region type alias
 
 /**
- * @name GraphQLTypeName
- * @see [GraphQLTypeFieldName]()
+ * @name TypeName
+ * @see [TypeName]()
  * @description A comma-separated string of GraphQL Type Names. Use the `globalTypeFieldName` to apply the same config options to all GraphQL Types.
+ * @exampleMarkdown
+
+ *
+ */
+export type TypeName = _TypeName['value'];
+
+/**
+ * @name TypeFieldName
+ * @see [TypeFieldName]()
+ * @description A compact string of GraphQL Type and Field Names separated with a  dot(`.`) used in the config for specifying options for a list of Graphql Types and Fields
  * @exampleMarkdown
  * ### Configuring GraphQL Types
  * ```ts
- * let typeName1:GraphQLTypeName = 'Droid' // This example applies on the Droid GraphQL Type
+ *  let typeName3:TypeFieldName = '@*TypeName' //  This example applies for all GraphQL Types
  *
- * let typeName2:GraphQLTypeName = 'Droid, Starship' // a comma-separated string of GraphQL Type names. This example applies on the Droid and Starship GraphQL Types
+ *  let typeName4:TypeFieldName = '@*TypeName-[Human,Movie]' // if there are many types to be specified, use this to specify those to be **excluded**. This example applies on all types in the GraphQL Schema except the `Human` and `Movie` types
  *
- * let typeName3:GraphQLTypeName = '@*TypeName' //  This example applies for all GraphQL Types
+ * let typeName1:TypeFieldName = 'Droid' // This example applies on the Droid GraphQL Type
  *
- * let typeName4:GraphQLTypeName = '@*TypeName-[Human,Movie]' // if there are many types to be specified, use this to specify those to be **excluded**. This example applies on all types in the GraphQL Schema except the `Human` and `Movie` types
+ * let typeName2:TypeFieldName = 'Droid, Starship' // a comma-separated string of GraphQL Type names. This example applies on the Droid and Starship GraphQL Types
+ *
  * ```
  *
- */
-export type GraphQLTypeName = string;
-
-/**
- * @name GraphQLTypeFieldName
- * @description A comma-separated string of GraphQL Type and Field Names separated with a `.` .Use the `globalTypeFieldName` to apply the same config options to all GraphQL Types.
- * @see [GraphQLTypeName]()
- * @exampleMarkdown
  * ### Configuring the fields of GraphQL Types
  * ```ts
- * let typeFieldName1:GraphQLTypeFieldName = 'Droid.[id,friends]' // in an array, specify one or more fields for that GraphQL Type. This example applies on the `id` and `friends` fields of the Droid GraphQL Type
+ * let typeFieldName1:TypeFieldName = 'Droid.[id,friends]' // in an array, specify one or more fields for that GraphQL Type. This example applies on the `id` and `friends` fields of the Droid GraphQL Type
  *
- * let typeFieldName2:GraphQLTypeFieldName = 'Droid.[id,friends], Starship.[id], @*TypeName.[id]' // same as `graphQLTypeFieldName1` but for more than one GraphQL Type
+ * let typeFieldName2:TypeFieldName = 'Droid.[id,friends], Starship.[id], @*TypeName.[id,name]' // same as `typeFieldName1` but for more than one GraphQL Type
  *
- * let typeFieldName3:GraphQLTypeFieldName = 'Droid.@*FieldName' // applies on all fields of the Droid GraphQL Type
+ * let typeFieldName3:TypeFieldName = 'Droid.@*FieldName' // applies on all fields of the Droid GraphQL Type
  *
- * let typeFieldName4:GraphQLTypeFieldName = 'Droid.@*FieldName-[name,appearsIn]' // if there are many fields to be specified, use this to specify those to be **excluded**. This example applies on all of the fields of the Droid GraphQL Type except the `name` and `appearsIn` fields
+ * let typeFieldName4:TypeFieldName = 'Droid.@*FieldName-[name,appearsIn]' // if there are many fields to be specified, use this to specify those to be **excluded**. This example applies on all of the fields of the Droid GraphQL Type except the `name` and `appearsIn` fields
  *
- * let typeFieldName5:GraphQLTypeFieldName = '@*TypeName.[id]' // applies on the `id` field of any GraphQL Types
  *
- * let typeFieldName6:GraphQLTypeFieldName = '@*TypeName-[Human,Starship].[id]' // applies on the `id` field of any GraphQL Types except the `Human` and `Starship` types
+ * let typeFieldName5:TypeFieldName = '@*TypeName.[id]' // applies on the `id` field of any GraphQL Types
  *
- * let typeFieldName7:GraphQLTypeFieldName = '@*TypeName.@*FieldName' // applies on all of the fields of the GraphQL Types
  *
- * let typeFieldName8:GraphQLTypeFieldName = '@*TypeName-[Human,Starship].@*FieldName' // applies on all of the fields of the GraphQL Types except the `Human` and `Starship` types
+ * let typeFieldName6:TypeFieldName = '@*TypeName-[Human,Starship].[id]' // applies on the `id` field of any GraphQL Types except the `Human` and `Starship` types
  *
- * let typeFieldName9:GraphQLTypeFieldName = '@*TypeName.@*FieldName-[id,name]' // applies on all of the fields of the GraphQL Types except the `id` and `name` fields
+ * let typeFieldName7:TypeFieldName = '@*TypeName.@*FieldName' // applies on all of the fields of the GraphQL Types
  *
- * let typeFieldName10:GraphQLTypeFieldName = '@*TypeName-[Human,Movie].@*FieldName-[id,name]' // applies on all of the fields of the GraphQL Types except the `Human` and `Starship` types and the `id` and `name` fields
+ * let typeFieldName8:TypeFieldName = '@*TypeName-[Human,Starship].@*FieldName' // applies on all of the fields of the GraphQL Types except the `Human` and `Starship` types
+ *
+ * let typeFieldName9:TypeFieldName = '@*TypeName.@*FieldName-[id,name]' // applies on all of the fields of the GraphQL Types except the `id` and `name` fields
+ *
+ * let typeFieldName10:TypeFieldName = '@*TypeName-[Human,Movie].@*FieldName-[id,name]' // applies on all of the fields of the GraphQL Types except the `Human` and `Starship` types and the `id` and `name` fields
  * ```
  * */
-export type GraphQLTypeFieldName = string;
+export type TypeFieldName = _TypeFieldName['value'];
 
 /**
  * @name ApplyDecoratorOn
