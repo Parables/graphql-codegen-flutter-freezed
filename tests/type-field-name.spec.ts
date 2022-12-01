@@ -64,6 +64,10 @@ describe('TypeFieldName can be created with builder methods', () => {
   it('should build and match typeFieldNames with the given args', () => {
     // 'TypeName.[fieldNames]'
     const fieldNamesOfTypeName = `Droid.[id,name,friends]`;
+    const pattern = TypeFieldName.RegExpForFieldNamesOfTypeName(typeName, 'id');
+    console.log(pattern);
+    console.log(pattern.test(fieldNamesOfTypeName));
+
     expect(TypeFieldName.fieldNamesOfTypeName(typeName, fieldNames)).toBe(fieldNamesOfTypeName);
 
     expect(TypeFieldName.matchesFieldNamesOfTypeName(fieldNamesOfTypeName, 'Droid', 'id')).toBe(true);

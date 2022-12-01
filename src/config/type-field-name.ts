@@ -233,6 +233,21 @@ export class TypeFieldName extends GraphqlTypeFieldName {
     /(?<typeName>\w+)(?<!@\s*\*\s*TypeName)\s*\.\s*\[\s*(?<fieldNames>(\w+?,?\s*)*)\]/gim;
 
   /**
+   * returns a RegExp that you can use to test if a string matches `'@*TypeName.@*FieldName-[exceptFieldNames]'`
+   */
+  public static RegExpForFieldNamesOfTypeName = (
+    typeName: string | TypeName,
+    fieldName: string | FieldName
+  ): RegExp => {
+    const _typeName = TypeName.fromString(this.valueOf(typeName)).value; // ensures that there is no comma-separated TypeNames in there
+    const _fieldName = FieldName.fromString(this.valueOf(fieldName)).value;
+    return new RegExp(
+      `${_typeName}(?<!@\\s*\\*\\s*TypeName)\\s*\\.\\s*\\[\\s*.*\\s*(${_fieldName},?\\s*).*,?\\s*\\]`,
+      'gim'
+    );
+  };
+
+  /**
    * returns true or false if typeFieldName matches `'@*TypeName.@*FieldName-[exceptFieldNames]'` and the typeFieldName includes the `exceptFieldNames`.
    * @param typeFieldName
    * @param typeName
@@ -402,10 +417,10 @@ export class TypeFieldName extends GraphqlTypeFieldName {
    */
   public static anyFieldNameOfTypeNameExceptFieldNames = (
     typeName: string | TypeName,
-    exceptFieldName: FieldNames
+    exceptFieldNames: FieldNames
   ): string => {
     const _typeName = TypeName.fromString(this.valueOf(typeName)).value; // ensures that there is no comma-separated TypeNames in there
-    const _fieldNames = this.valueOf(exceptFieldName);
+    const _fieldNames = this.valueOf(exceptFieldNames);
     return `${_typeName}.${this.anyFieldName}-[${_fieldNames}]`;
   };
 
@@ -415,6 +430,20 @@ export class TypeFieldName extends GraphqlTypeFieldName {
   public static regexpForAnyFieldNameExceptFieldNamesOfTypeName =
     /(?<typeName>\w+?)(?<!@\s*\*\s*TypeName)\s*\.\s*@\s*\*\s*FieldName\s*-\s*\[\s*(?<fieldNames>(\w+?,?\s*)*)\]/gim;
 
+  /**
+   * returns a RegExp that you can use to test if a string matches `'@*TypeName.@*FieldName-[exceptFieldNames]'`
+   */
+  public static RegExpForAnyFieldNameExceptFieldNamesOfTypeName = (
+    typeName: string | TypeName,
+    exceptFieldName: string | FieldName
+  ): RegExp => {
+    const _typeName = TypeName.fromString(this.valueOf(typeName)).value; // ensures that there is no comma-separated TypeNames in there
+    const _fieldName = FieldName.fromString(this.valueOf(exceptFieldName));
+    return new RegExp(
+      `${_typeName}(?<!@\\s*\\*\\s*TypeName)\\s*\\.\\s*@\\s*\\*\\s*FieldName\\s\\*-\\s*\\[\\s*(?<fieldName>\\w+,?\\s*)${_fieldName}\\k<fieldName>\\]`,
+      'gim'
+    );
+  };
   /**
    * returns true or false if typeFieldName matches `'@*TypeName.@*FieldName-[exceptFieldNames]'` and the typeFieldName includes the `exceptFieldNames`.
    * @param typeFieldName
