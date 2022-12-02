@@ -1,61 +1,106 @@
-'Droid'
-'Droid, Starship'
-'@*TypeName'
-'@*TypeName-[Human,Movie]'
-'@
-*
-TypeName
-.
-[
-  id
-  ]'
-'Droid.[
-  name, 
+regexr.com/73nir
+
+'Droid; Droid.[id,name,friends]; Droid.@*FieldName; Droid; Droid.@*FieldName-[name,id];  Droid.[id,name,friends]; Starship; Starship.[name,id]; Droid.@*FieldName-[name,id];Droid.@*FieldName-[name,id]; Starship.@*FieldName-[name,id]; @*TypeName; '@*TypeName.[id,name,friends]; @*TypeName.@*FieldName; @*TypeName-[Droid,Starship].@*FieldName-[id,name,friends]; @*TypeName.@*FieldName-[id,name,friends]; @*TypeName-[Droid,Starship]; @*TypeName-[Droid,Starship].[id,name,friends]; @*TypeName-[Droid,Starship].@*FieldName;  @*TypeName-[Droid,Starship].@*FieldName-[id,name,friends];'
+
+################################################
+# Single Type Declarations                     #
+################################################
+
+\b(?!TypeName|FieldName\b)\w+;
+'Droid;'
+
+/((?<typeName>\s*\w+\s*)\.\s*\[\s*(?<fieldNames>(\w+,?\s*)*)\];)(?<!\s*@\s*\*\s*.*\s*)/gim
+'Droid.[id,name,friends];'
+
+(?<typeName>\w+\s*)(?<!\s*@\s*\*\s*TypeName\s*)\.@\*FieldName;
+'Droid.@*FieldName;'
+
+
+(?<typeName>\w+\s*)(?<!\s*@\s*\*\s*TypeName\s*)\.@\*FieldName-\[\s*(?<exceptFieldNames>(\w+,?\s*)*)\];
+'Droid.@*FieldName-[name,id];'
+
+
+
+################################################
+# Multiple Types Declarations                  #
+################################################
+
+\b(?!TypeName|FieldName\b)\w+;
+'Droid; Starship;'
+
+/((?<typeName>\s*\w+\s*)\.\s*\[\s*(?<fieldNames>(\w+,?\s*)*)\];)(?<!\s*@\s*\*\s*.*\s*)/gim
+'Droid.[id,name,friends]; Starship.[name,id];'
+
+(?<typeName>\w+\s*)(?<!\s*@\s*\*\s*TypeName\s*)\.@\*FieldName;
+'Droid.@*FieldName; Starship.@*FieldName;'
+
+(?<typeName>\w+\s*)(?<!\s*@\s*\*\s*TypeName\s*)\.@\*FieldName-\[\s*(?<exceptFieldNames>(\w+,?\s*)*)\];
+'Droid.@*FieldName-[name,id];Droid.@*FieldName-[name,id]; Starship.@*FieldName-[name,id];'
+
+
+
+################################################
+# Global Type Declarations                     #
+################################################
+*************************************************************************************************************************
+@\*TypeName;
+
+'@*TypeName;'
+
+*************************************************************************************************************************
+@\*TypeName\.\[\s*(?<fieldNames>(\w+,?\s*)*)\];
+
+'@*TypeName.[id,name,friends];'
+
+*************************************************************************************************************************
+@\*TypeName\.@\*FieldName;
+
+'@*TypeName.@*FieldName;'
+
+*************************************************************************************************************************
+@\*TypeName\.@\*FieldName-\[\s*(?<exceptFieldNames>(\w+,?\s*)*)\];
+
+'@*TypeName.@*FieldName-[id,name,friends];'
+
+
+
+################################################
+# Global Type Declarations With Exceptions     #
+################################################
+
+*************************************************************************************************************************
+@\*TypeName-\[\s*(?<exceptTypeNames>(\w+,?\s*)*)\];
+
+'@*TypeName-[Droid,Starship];'
+
+
+*************************************************************************************************************************
+@\*TypeName-\[\s*(?<exceptTypeNames>(\w+,?\s*)*)\]\.\[\s*(?<fieldNames>(\w+,?\s*)*)\];
+
+'@*TypeName-[Droid,Starship].[id,name,friends];'
+
+*************************************************************************************************************************
+@\*TypeName-\[\s*(?<exceptTypeNames>(\w+,?\s*)*)\]\.@\*FieldName;
+
+'@*TypeName-[
+  Droid,
+  Starship
+].@*FieldName; 
+
+@*TypeName-[Droid,Starship].@*FieldName;'
+
+
+*************************************************************************************************************************
+@\*TypeName-\[\s*(?<exceptTypeNames>(\w+,?\s*)*)\]\.@\*FieldName-\[\s*(?<exceptFieldNames>(\w+,?\s*)*)\];
+
+'@*TypeName-[Droid,Starship].@*FieldName-[id,name,friends];'
+
+'@*TypeName-[
+  Droid,
+  Starship
+].@*FieldName-[
   id,
-  friends,
-  ]'
-'Droid.[id,friends], Starship.[id]'
-'Droid.@*FieldName, Starship.[id], Droid.@*FieldName'
-'Droid.@*FieldName-[name,appearsIn],Droid.@*FieldName-[id]'
-'@*TypeName.@*FieldName'
-'@*TypeName.@*FieldName-[name,appearsIn],     @*TypeName.@*FieldName-[id],'
+  name,
+  friends
+];'
 
-I need to understand how this is handled in CSS.
-Composition, Cascading, and Precedence
-
-'Droid . @ * FieldName'  
-
-const config = Config.extend({
-  camelCasedEnums: false,
-  final: [
-    // edge cases
-    ['Droid.[
-      id
-      edge,
-    id, 
-    name], Starship.[id], Droid.[id]', ['parameter']], // 1
-    
-    // in order of specificity, explicit has a higher precedence than general ones
-    ['Droid.[id,name], Starship.[id]', ['parameter']], // 1
-    ['Droid.[id, name], Starship.[id ]', ['parameter']], // 1
-    'Droid.@*FieldName-[name, appearsIn ],Droid.@*FieldName - [id]'
-    ['Droid.@*FieldName-[name,appearsIn],Droid
-    .
-    @
-    *
-    FieldName
-    -
-    [
-
-      id
-       ]', ['parameter']], // 2
-    ['Droid.@*FieldName,     ', ['parameter']], // 3
-
-    ['@*TypeName.[id, name, edge ]', ['parameter']], // 4
-    ['@*TypeName-[Human,Movie].[id]', ['parameter']], // 5
-    ['@*TypeName-[Human,Movie].@*FieldName-[name,appearsIn], @*TypeName.@*FieldName-[id],', ['parameter']], // 6
-    ['@*TypeName-[Human,Movie].@*FieldName', ['parameter']], // 7
-    ['@*TypeName.@*FieldName-[name,appearsIn], @*TypeName.@*FieldName-[id],', ['parameter']], // 8
-    ['@*TypeName.@*FieldName', ['parameter']], // 9
-  ],
-});
