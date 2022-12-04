@@ -63,66 +63,138 @@ describe("integrity checks: ensures that these values don't change and if they a
 });
 
 describe('TypeFieldName can be created with builder methods', () => {
-  const typeNames = 'Droid, Starship';
   const typeName = 'Droid';
+  const typeNames = 'Droid, Starship';
+  const normalizedTypeNames = 'Droid,Starship';
   const fieldNames = 'id, name, friends';
+  const normalizedFieldNames = 'id,name,friends';
+
+  // `'TypeName; TypeName' or [TypeName; TypeName;];`
+  const typeFieldName = `Droid;Starship`;
+
+  // `'TypeName.[fieldNames]'`
+  const fieldNamesOfTypeName = `Droid.[${normalizedFieldNames}];`;
+
+  // `'TypeName.@*FieldName'`
+  const anyFieldNameOfTypeName = `Droid.${anyFieldName};`;
+
+  // `'TypeName.@*FieldName-[exceptFieldNames]'`
+  const anyFieldNameExceptFieldNamesOfTypeName = `Droid.${anyFieldName}-[${normalizedFieldNames}];`;
+
+  // '@*TypeName.[fieldNames]'
+  const fieldNamesOfAnyTypeName = `${anyTypeName}.[${normalizedFieldNames}];`;
+
+  // `'@*TypeName.@*FieldName'`
+  const anyFieldNameOfAnyTypeName = `${anyTypeName}.${anyFieldName};`;
+
+  // `'@*TypeName.@*FieldName-[exceptFieldNames]'`
+  const anyFieldNameExceptFieldNamesOfAnyTypeName = `${anyTypeName}.${anyFieldName}-[${normalizedFieldNames}];`;
+
+  //  `'@*TypeName-[exceptTypeNames]'`
+  const anyTypeNameExceptTypeNames = `${anyTypeName}-[${normalizedTypeNames}];`;
+
+  //  `'@*TypeName-[exceptTypeNames].[fieldNames]'`
+  const fieldNamesOfAnyTypeNameExceptTypeNames = `${anyTypeName}-[${normalizedTypeNames}].[${normalizedFieldNames}];`;
+
+  // `'@*TypeName-[exceptTypeNames].@*FieldName'`
+  const anyFieldNameOfAnyTypeNameExceptTypeNames = `${anyTypeName}-[${normalizedTypeNames}].${anyFieldName};`;
+
+  // `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'`
+  const anyFieldNameExceptFieldNamesOfAnyTypeNameExceptTypeNames = `${anyTypeName}-[${normalizedTypeNames}].${anyFieldName}-[${normalizedFieldNames}];`;
 
   it('should build and match typeFieldNames with the given args', () => {
+    // `'TypeName; TypeName' or [TypeName; TypeName;];`
+    expect(TypeFieldName.typeNames(typeNames)).toBe(typeFieldName);
+    // TODO: fix this
+    // expect(TypeFieldName.matchesTypeNames(typeFieldName, 'Droid')).toBe(true);
+    // expect(TypeFieldName.matchesTypeNames(typeFieldName, 'Starship')).toBe(true);
+    // expect(TypeFieldName.matchesTypeNames(typeFieldName, 'Human')).toBe(false);
+    // expect(TypeFieldName.matchesTypeNames(typeFieldName, normalizedTypeNames)).toBe(true);
+
     // 'TypeName.[fieldNames]'
-    const typeFieldName1 = `Droid.[id,name,friends];`;
+    expect(TypeFieldName.fieldNamesOfTypeName(typeName, fieldNames)).toBe(fieldNamesOfTypeName);
 
-    expect(TypeFieldName.fieldNamesOfTypeName(typeName, fieldNames)).toBe(typeFieldName1);
-
-    expect(TypeFieldName.matchesFieldNamesOfTypeName(typeFieldName1, typeName, 'id')).toBe(true);
-    expect(TypeFieldName.matchesFieldNamesOfTypeName(typeFieldName1, typeName, 'name')).toBe(true);
-    expect(TypeFieldName.matchesFieldNamesOfTypeName(typeFieldName1, typeName, 'friends')).toBe(true);
+    expect(TypeFieldName.matchesFieldNamesOfTypeName(fieldNamesOfTypeName, typeName, 'id')).toBe(true);
+    expect(TypeFieldName.matchesFieldNamesOfTypeName(fieldNamesOfTypeName, typeName, 'name')).toBe(true);
+    expect(TypeFieldName.matchesFieldNamesOfTypeName(fieldNamesOfTypeName, typeName, 'friends')).toBe(true);
+    expect(TypeFieldName.matchesFieldNamesOfTypeName(fieldNamesOfTypeName, typeName, 'notfriends')).toBe(false);
     // using matchAll: all child elements are in parent
-    expect(TypeFieldName.matchesFieldNamesOfTypeName(typeFieldName1, typeName, 'notfriends')).toBe(false);
-    expect(TypeFieldName.matchesFieldNamesOfTypeName(typeFieldName1, typeName, fieldNames)).toBe(true);
+    expect(TypeFieldName.matchesFieldNamesOfTypeName(fieldNamesOfTypeName, typeName, fieldNames)).toBe(true);
     // using matchAll: not all child elements are in parent
     expect(
-      TypeFieldName.matchesFieldNamesOfTypeName(typeFieldName1, typeName, fieldNames + ', notfriends', false)
+      TypeFieldName.matchesFieldNamesOfTypeName(fieldNamesOfTypeName, typeName, fieldNames + ', notfriends', false)
+    ).toBe(true);
+
+    // `'TypeName.@*FieldName'`
+    expect(TypeFieldName.anyFieldNameOfTypeName(typeName)).toBe(anyFieldNameOfTypeName);
+    expect(TypeFieldName.matchesAnyFieldNameOfTypeName(anyFieldNameOfTypeName, typeName)).toBe(true);
+
+    // `'TypeName.@*FieldName-[exceptFieldNames]'`
+    expect(TypeFieldName.anyFieldNameExceptFieldNamesOfTypeName(typeName, fieldNames)).toBe(
+      anyFieldNameExceptFieldNamesOfTypeName
+    );
+    expect(
+      TypeFieldName.matchesAnyFieldNameExceptFieldNamesOfTypeName(
+        anyFieldNameExceptFieldNamesOfTypeName,
+        typeName,
+        fieldNames
+      )
     ).toBe(true);
 
     // '@*TypeName.[fieldNames]'
-    const typeFieldName2 = `${anyTypeName}.[id,name,friends];`;
-    expect(TypeFieldName.fieldNamesOfAnyTypeName(fieldNames)).toBe(typeFieldName2);
-    expect(TypeFieldName.matchesFieldNamesOfAnyTypeName(typeFieldName2, fieldNames)).toBe(true);
-
-    // `'TypeName.@*FieldName'`
-    const typeFieldName3 = `Droid.${anyFieldName};`;
-    expect(TypeFieldName.anyFieldNameOfTypeName(typeName)).toBe(typeFieldName3);
-    expect(TypeFieldName.matchesAnyFieldNameOfTypeName(typeFieldName3, typeName)).toBe(true);
+    expect(TypeFieldName.fieldNamesOfAnyTypeName(fieldNames)).toBe(fieldNamesOfAnyTypeName);
+    expect(TypeFieldName.matchesFieldNamesOfAnyTypeName(fieldNamesOfAnyTypeName, fieldNames)).toBe(true);
 
     // `'@*TypeName.@*FieldName'`
-    expect(TypeFieldName.anyFieldNameOfAnyTypeName()).toBe(`${anyTypeName}.${anyFieldName};`);
-
-    // `'TypeName.@*FieldName-[exceptFieldNames]'`
-    expect(TypeFieldName.anyFieldNameOfTypeNameExceptFieldNames(typeName, fieldNames)).toBe(
-      `Droid.${anyFieldName}-[id,name,friends];`
-    );
+    expect(TypeFieldName.anyFieldNameOfAnyTypeName()).toBe(anyFieldNameOfAnyTypeName);
+    expect(TypeFieldName.matchesAnyFieldNameOfAnyTypeName(anyFieldNameOfAnyTypeName)).toBe(true);
 
     // `'@*TypeName.@*FieldName-[exceptFieldNames]'`
-    expect(TypeFieldName.anyFieldNameOfAnyTypeNameExceptFieldNames(fieldNames)).toBe(
-      `${anyTypeName}.${anyFieldName}-[id,name,friends];`
+    expect(TypeFieldName.anyFieldNameExceptFieldNamesOfAnyTypeName(fieldNames)).toBe(
+      anyFieldNameExceptFieldNamesOfAnyTypeName
     );
+    expect(
+      TypeFieldName.matchesAnyFieldNameExceptFieldNamesOfAnyTypeName(
+        anyFieldNameExceptFieldNamesOfAnyTypeName,
+        fieldNames
+      )
+    ).toBe(true);
 
     //  `'@*TypeName-[exceptTypeNames]'`
-    expect(TypeFieldName.anyTypeNameExceptTypeNames(typeNames)).toBe(`${anyTypeName}-[Droid,Starship];`);
+    expect(TypeFieldName.anyTypeNameExceptTypeNames(typeNames)).toBe(anyTypeNameExceptTypeNames);
+    expect(TypeFieldName.matchesAnyTypeNameExceptTypeNames(anyTypeNameExceptTypeNames, typeNames)).toBe(true);
 
     //  `'@*TypeName-[exceptTypeNames].[fieldNames]'`
     expect(TypeFieldName.fieldNamesOfAnyTypeNameExceptTypeNames(typeNames, fieldNames)).toBe(
-      `${anyTypeName}-[Droid,Starship].[id,name,friends];`
+      fieldNamesOfAnyTypeNameExceptTypeNames
     );
+    expect(
+      TypeFieldName.matchesFieldNamesOfAnyTypeNameExceptTypeNames(
+        fieldNamesOfAnyTypeNameExceptTypeNames,
+        typeNames,
+        fieldNames
+      )
+    ).toBe(true);
 
     // `'@*TypeName-[exceptTypeNames].@*FieldName'`
     expect(TypeFieldName.anyFieldNameOfAnyTypeNameExceptTypeNames(typeNames)).toBe(
-      `${anyTypeName}-[Droid,Starship].${anyFieldName};`
+      anyFieldNameOfAnyTypeNameExceptTypeNames
     );
+    expect(
+      TypeFieldName.matchesAnyFieldNameOfAnyTypeNameExceptTypeNames(anyFieldNameOfAnyTypeNameExceptTypeNames, typeNames)
+    ).toBe(true);
 
     // `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'`
     expect(TypeFieldName.anyFieldNameExceptFieldNamesOfAnyTypeNameExceptTypeNames(typeNames, fieldNames)).toBe(
-      `${anyTypeName}-[Droid,Starship].${anyFieldName}-[id,name,friends];`
+      anyFieldNameExceptFieldNamesOfAnyTypeNameExceptTypeNames
     );
+
+    expect(
+      TypeFieldName.matchesAnyFieldNameExceptFieldNamesOfAnyTypeNameExceptTypeNames(
+        anyFieldNameExceptFieldNamesOfAnyTypeNameExceptTypeNames,
+        typeNames,
+        fieldNames
+      )
+    ).toBe(true);
   });
 });

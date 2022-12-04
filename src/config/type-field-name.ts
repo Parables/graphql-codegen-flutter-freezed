@@ -198,6 +198,7 @@ export class TypeFieldName extends GraphqlTypeFieldName {
    * @param typeNames
    * @returns boolean
    */
+  // TODO: debug this
   static matchesTypeNames = (typeFieldName: string | TypeFieldName, typeNames: TypeNames, matchAll = false) => {
     const _typeFieldName = this.valueOf(typeFieldName);
     const _typeNames = this.valueOf(typeNames);
@@ -314,7 +315,7 @@ export class TypeFieldName extends GraphqlTypeFieldName {
    * @param exceptFieldNames field names to be excluded
    * @returns `'TypeName.@*FieldName-[exceptFieldNames]'`
    */
-  public static anyFieldNameOfTypeNameExceptFieldNames = (
+  public static anyFieldNameExceptFieldNamesOfTypeName = (
     typeName: string | TypeName,
     exceptFieldNames: FieldNames
   ): string => {
@@ -352,7 +353,7 @@ export class TypeFieldName extends GraphqlTypeFieldName {
 
     while ((result = pattern.exec(_typeFieldName)) !== null) {
       const typeName = result.groups.typeName;
-      const fieldNames = result.groups.fieldNames;
+      const fieldNames = result.groups.exceptFieldNames;
 
       matchFound = typeName === _typeName && this.matchAll(fieldNames, _fieldNames, matchAllFieldNames);
 
@@ -464,7 +465,7 @@ export class TypeFieldName extends GraphqlTypeFieldName {
    * @param exceptFieldNames field names to be excluded
    * @returns `'@*TypeName.@*FieldName-[exceptFieldNames]'`
    */
-  public static anyFieldNameOfAnyTypeNameExceptFieldNames = (exceptFieldName: FieldNames): string => {
+  public static anyFieldNameExceptFieldNamesOfAnyTypeName = (exceptFieldName: FieldNames): string => {
     const _fieldNames = this.valueOf(exceptFieldName);
     return `${this.anyTypeName}.${this.anyFieldName}-[${_fieldNames}];`;
   };
@@ -495,7 +496,7 @@ export class TypeFieldName extends GraphqlTypeFieldName {
     let matchFound: boolean;
 
     while ((result = pattern.exec(_typeFieldName)) !== null) {
-      const fieldNames = result.groups.fieldNames;
+      const fieldNames = result.groups.exceptFieldNames;
 
       matchFound = this.matchAll(fieldNames, _fieldNames, matchAllFieldNames);
 
@@ -546,7 +547,7 @@ export class TypeFieldName extends GraphqlTypeFieldName {
     let matchFound: boolean;
 
     while ((result = pattern.exec(_typeFieldName)) !== null) {
-      const typeNames = result.groups.typeNames;
+      const typeNames = result.groups.exceptTypeNames;
 
       matchFound = this.matchAll(typeNames, _typeNames, matchAllTypeNames);
 
@@ -605,7 +606,7 @@ export class TypeFieldName extends GraphqlTypeFieldName {
     let matchFound: boolean;
 
     while ((result = pattern.exec(_typeFieldName)) !== null) {
-      const typeNames = result.groups.typeNames;
+      const typeNames = result.groups.exceptTypeNames;
       const fieldNames = result.groups.fieldNames;
 
       matchFound =
@@ -659,7 +660,7 @@ export class TypeFieldName extends GraphqlTypeFieldName {
     let matchFound: boolean;
 
     while ((result = pattern.exec(_typeFieldName)) !== null) {
-      const typeNames = result.groups.typeNames;
+      const typeNames = result.groups.exceptTypeNames;
 
       matchFound = this.matchAll(typeNames, _typeNames, matchAllTypeNames);
 
@@ -718,8 +719,8 @@ export class TypeFieldName extends GraphqlTypeFieldName {
     let matchFound: boolean;
 
     while ((result = pattern.exec(_typeFieldName)) !== null) {
-      const typeNames = result.groups.typeNames;
-      const fieldNames = result.groups.fieldNames;
+      const typeNames = result.groups.exceptTypeNames;
+      const fieldNames = result.groups.exceptFieldNames;
 
       matchFound =
         this.matchAll(typeNames, _typeNames, matchAllTypeNames) &&
