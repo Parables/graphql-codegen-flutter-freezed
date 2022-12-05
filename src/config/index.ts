@@ -1,12 +1,12 @@
 import { indent } from '@graphql-codegen/visitor-plugin-common';
 import { appliesOnBlock } from '../utils';
-import { TypeFieldName } from './compact-graphql-type-field-name';
 import {
   FlutterFreezedPluginConfig,
   AppliesOnParameters,
   FreezedOption,
   defaultFreezedPluginConfig,
   DART_SCALARS,
+  TypeFieldNameOption,
 } from './config';
 import { TypeName, FieldName } from './type-field-name';
 
@@ -23,7 +23,7 @@ export class Config {
   };
 
   static copyWith = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
-    return this.freezedOption(config, 'copyWith', typeName);
+    return this.typeNameOptionValue(config, 'copyWith', typeName);
   };
 
   static customScalars = (config: FlutterFreezedPluginConfig, graphqlScalar: string): string => {
@@ -40,7 +40,7 @@ export class Config {
     };
 
   static equal = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
-    return this.freezedOption(config, 'equal', typeName);
+    return this.typeNameOptionValue(config, 'equal', typeName);
   };
 
   static markFinal = (
@@ -102,18 +102,16 @@ export class Config {
   };
 
   static ignoreTypes = (config: FlutterFreezedPluginConfig, typeName: TypeName) => {
-    return (
-      (config.ignoreTypes?.filter(commaSeparatedTypeNames => commaSeparatedTypeNames.includes(typeName.value)).length ??
-        0) > 0
-    );
+    const value = config.ignoreTypes;
+    return TypeName.matchesTypeNames(value, typeName);
   };
 
   static immutable = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
-    return this.freezedOption(config, 'immutable', typeName);
+    return this.typeNameOptionValue(config, 'immutable', typeName);
   };
 
   static makeCollectionsUnmodifiable = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
-    return this.freezedOption(config, 'makeCollectionsUnmodifiable', typeName);
+    return this.typeNameOptionValue(config, 'makeCollectionsUnmodifiable', typeName);
   };
 
   static mergeInputs = (config: FlutterFreezedPluginConfig, typeName: TypeName) => {
@@ -135,11 +133,11 @@ export class Config {
     );
   };
   static mutableInputs = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
-    return this.freezedOption(config, 'mutableInputs', typeName);
+    return this.typeNameOptionValue(config, 'mutableInputs', typeName);
   };
 
   static privateEmptyConstructor = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
-    return this.freezedOption(config, 'privateEmptyConstructor', typeName);
+    return this.typeNameOptionValue(config, 'privateEmptyConstructor', typeName);
   };
 
   static unionKey = (config: FlutterFreezedPluginConfig, unionTypeName?: TypeName): string | undefined => {
@@ -173,24 +171,34 @@ export class Config {
     const v = value.find(
       ([commaSeparatedUnionTypeNames]) =>
         unionTypeName?.value === commaSeparatedUnionTypeNames ||
-        commaSeparatedUnionTypeNames.includes(unionTypeName.value ?? TypeFieldName.anyTypeName)
+        commaSeparatedUnionTypeNames.includes(unionTypeName.value ?? TypeName.anyTypeName)
     );
     return v?.[index];
     // }
   };
 
-  private static freezedOption = (config: FlutterFreezedPluginConfig, option: FreezedOption, typeName?: TypeName) => {
+  static typeNameOptionValue = (config: FlutterFreezedPluginConfig, option: FreezedOption, typeName?: TypeName) => {
+    const value = config[option];
+    if (typeof value === 'boolean' || value === undefined) return value;
+    return TypeName.matchesTypeNames(value, typeName);
+  };
+
+  static typeFieldNameOptionValue = (
+    config: FlutterFreezedPluginConfig,
+    option: TypeFieldNameOption,
+    typeName: TypeName,
+    fieldName: FieldName,
+    dataIndicies: number[]
+  ) => {
     const value = config[option];
 
     if (Array.isArray(value)) {
-      return typeName ? value.filter(v => v.includes(typeName.value)).length > 0 : undefined;
-    } else if (typeof value === 'string') {
-      return typeName ? value.includes(typeName.value) : undefined;
+      const typeFieldNameList = value.forEach(v => {
+        // TODO:
+      });
     }
-    return value;
   };
-
-  public static extend = (...config: Partial<FlutterFreezedPluginConfig>[]): FlutterFreezedPluginConfig => {
+  public static create = (...config: Partial<FlutterFreezedPluginConfig>[]): FlutterFreezedPluginConfig => {
     return Object.assign(defaultFreezedPluginConfig, ...config);
   };
 }

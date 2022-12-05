@@ -6,7 +6,7 @@ import {
   FieldDefinitionNode,
   InputValueDefinitionNode,
 } from 'graphql';
-import { TypeName as _TypeName, TypeFieldName as _TypeFieldName } from './compact-graphql-type-field-name';
+import { TypeName as _TypeName, TypeFieldName as _TypeFieldName } from './type-field-name';
 
 //#region PluginConfig
 /**
@@ -72,7 +72,7 @@ export type FlutterFreezedPluginConfig = {
    *           // ...
    *           copyWith: true,
    *           // OR: a comma-separated string
-   *           copyWith: 'Droid,Starship',
+   *           copyWith: 'Droid,Starship;',
    *           // OR: a list of GRaphQL Type names
    *           copyWith: ['Droid', 'Starship'],
    *         },
@@ -439,10 +439,10 @@ export type FlutterFreezedPluginConfig = {
    * ```
    */
   fromJsonWithMultiConstructors?: [
-    unionTypeName: TypeName,
+    unionTypeName: TypeName | string,
     unionKey?: string,
     unionValueCase?: UnionValueCase,
-    unionValuesNameMap?: Record<string, string>
+    unionValuesNameMap?: Record<TypeName | string, string>
   ][];
 
   /**
@@ -789,6 +789,11 @@ export type ConfigOption = keyof FlutterFreezedPluginConfig;
 export type FreezedOption = Extract<
   ConfigOption,
   'copyWith' | 'equal' | 'immutable' | 'makeCollectionsUnmodifiable' | 'mutableInputs' | 'privateEmptyConstructor'
+>;
+
+export type TypeFieldNameOption = Extract<
+  ConfigOption,
+  'defaultValues' | 'deprecated' | 'escapeDartKeywords' | 'final' | 'fromJsonToJson'
 >;
 
 export type MultiConstructorOption = FlutterFreezedPluginConfig['fromJsonWithMultiConstructors'];
