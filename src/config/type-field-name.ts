@@ -109,9 +109,6 @@ export class TypeName extends GraphqlTypeFieldName {
    */
   public static fromTypeNames = (typeNames: TypeNames): string => {
     return this.valueOf(typeNames);
-    // .split(/\s*;\s*/gim)
-    // .filter(type => type.length > 0)
-    // .join(';');
   };
 
   // public static regexpForTypeNames = /\b(?!TypeName|FieldName\b)\w+;/gim;
@@ -747,6 +744,7 @@ export class TypeFieldName extends GraphqlTypeFieldName {
 
   public static attemptIncludes = (typeFieldName: string | TypeFieldName, typeName: TypeName, fieldName: FieldName) => {
     const _typeFieldName = this.valueOf(typeFieldName);
+
     if (this.regexpForFieldNamesOfTypeName.test(_typeFieldName)) {
       this.resetIndex(this.regexpForFieldNamesOfTypeName);
       return this.matchesFieldNamesOfTypeName(_typeFieldName, typeName, fieldName);

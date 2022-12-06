@@ -79,24 +79,24 @@ describe('given an option in the config, it will matches all patterns and return
     });
   });
 
-  const mockedTypeFieldNameOptionValue = jest.fn(Config.typeFieldNameOptionValue);
+  // const mockedTypeFieldNameOptionValue = jest.fn(Config.typeFieldNameOptionValue);
 
   // "defaultValues" | "deprecated" | "escapeDartKeywords" | "final" | "fromJsonToJson"
 
-  // const config2 = Config.create({
-  //   final: [['@*TypeName.@*FieldName-[id, name, friends]; Droid.[id];', ['parameter']]],
-  // });
+  const config2 = Config.create({
+    final: [['@*TypeName.@*FieldName-[id, name, friends]; Droid.[id];', ['parameter']]],
+  });
 
-  // mockedTypeFieldNameOptionValue(
-  //   config2,
-  //   'final',
-  //   TypeName.fromString('Droid'),
-  //   FieldName.fromString('id'),
-  //   APPLIES_ON_NAMED_FACTORY_PARAMETERS_FOR_UNION_TYPES,
-  //   1
-  // );
-
-  // expect(mockedTypeFieldNameOptionValue).toReturnWith({ data: undefined, include: true });
+  expect(
+    Config.typeFieldNameOptionValue(
+      config2,
+      'final',
+      TypeName.fromString('Droid'),
+      FieldName.fromString('name'),
+      APPLIES_ON_NAMED_FACTORY_PARAMETERS_FOR_UNION_TYPES,
+      1
+    )
+  ).toMatchObject({ data: undefined, include: false });
 
   const allTypeFieldNames = `
 Droid;
@@ -114,23 +114,22 @@ Starship.@*FieldName-[name,id];
 @*TypeName-[Droid,Starship].[id,name,friends];
 @*TypeName-[Droid,Starship].@*FieldName;
 @*TypeName-[Droid,Starship].@*FieldName-[id,name,friends];
-Droid.[id];
 `;
 
   const config3 = Config.create({
     defaultValues: [[allTypeFieldNames, 'NanoId.nanoId()', ['parameter']]],
   });
 
-  mockedTypeFieldNameOptionValue(
-    config3,
-    'defaultValues',
-    TypeName.fromString('Droid'),
-    FieldName.fromString('id'),
-    APPLIES_ON_NAMED_FACTORY_PARAMETERS_FOR_UNION_TYPES,
-    2,
-    [1]
-  );
-
   // TODO: Debug this
-  expect(mockedTypeFieldNameOptionValue).toReturnWith({ data: undefined, include: true });
+  expect(
+    Config.typeFieldNameOptionValue(
+      config3,
+      'defaultValues',
+      TypeName.fromString('Droid'),
+      FieldName.fromString('id'),
+      APPLIES_ON_NAMED_FACTORY_PARAMETERS_FOR_UNION_TYPES,
+      2,
+      [1]
+    )
+  ).toMatchObject({ data: ['NanoId.nanoId()'], include: false });
 });

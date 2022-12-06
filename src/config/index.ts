@@ -224,11 +224,14 @@ export class Config {
         const appliesOn = v[appliesOnIndex] ?? [];
         const canApply = appliesOnBlock(appliesOn, expectedAppliesOn, true);
         if (typeof typeFieldNames === 'string') {
-          typeFieldNames.split(';').forEach(typeFieldName => {
-            if (canApply && typeFieldName.length > 0) {
-              include = TypeFieldName.attemptTypeFieldNameMatches(`${typeFieldName};`, typeName, fieldName);
-            }
-          });
+          typeFieldNames
+            .split(/\s*;\s*/)
+            .filter(t => t.length > 0)
+            .forEach(typeFieldName => {
+              if (canApply) {
+                include = TypeFieldName.attemptTypeFieldNameMatches(`${typeFieldName};`, typeName, fieldName);
+              }
+            });
         }
       });
     }
