@@ -1,6 +1,6 @@
 import { Config } from '../src/config/index';
-import { defaultFreezedPluginConfig } from '../src/config/config';
-import { TypeName } from '../src/config/type-field-name';
+import { APPLIES_ON_NAMED_FACTORY_PARAMETERS_FOR_UNION_TYPES, defaultFreezedPluginConfig } from '../src/config/config';
+import { FieldName, TypeName } from '../src/config/type-field-name';
 
 describe("integrity checks: ensures that these values don't change and if they are updated accordingly", () => {
   it('matches the default plugin config', () => {
@@ -78,4 +78,59 @@ describe('given an option in the config, it will matches all patterns and return
       expect(Config[option](config, TypeName.fromString('Human'))).toBe(false);
     });
   });
+
+  const mockedTypeFieldNameOptionValue = jest.fn(Config.typeFieldNameOptionValue);
+
+  // "defaultValues" | "deprecated" | "escapeDartKeywords" | "final" | "fromJsonToJson"
+
+  // const config2 = Config.create({
+  //   final: [['@*TypeName.@*FieldName-[id, name, friends]; Droid.[id];', ['parameter']]],
+  // });
+
+  // mockedTypeFieldNameOptionValue(
+  //   config2,
+  //   'final',
+  //   TypeName.fromString('Droid'),
+  //   FieldName.fromString('id'),
+  //   APPLIES_ON_NAMED_FACTORY_PARAMETERS_FOR_UNION_TYPES,
+  //   1
+  // );
+
+  // expect(mockedTypeFieldNameOptionValue).toReturnWith({ data: undefined, include: true });
+
+  const allTypeFieldNames = `
+Droid;
+Droid.[id,name,friends];
+Droid.@*FieldName;
+Droid.@*FieldName-[name,id];
+Starship;
+Starship.[name,id];
+Starship.@*FieldName-[name,id];
+@*TypeName;
+@*TypeName.[id,name,friends];
+@*TypeName.@*FieldName;
+@*TypeName.@*FieldName-[id,name,friends];
+@*TypeName-[Droid,Starship];
+@*TypeName-[Droid,Starship].[id,name,friends];
+@*TypeName-[Droid,Starship].@*FieldName;
+@*TypeName-[Droid,Starship].@*FieldName-[id,name,friends];
+Droid.[id];
+`;
+
+  const config3 = Config.create({
+    defaultValues: [[allTypeFieldNames, 'NanoId.nanoId()', ['parameter']]],
+  });
+
+  mockedTypeFieldNameOptionValue(
+    config3,
+    'defaultValues',
+    TypeName.fromString('Droid'),
+    FieldName.fromString('id'),
+    APPLIES_ON_NAMED_FACTORY_PARAMETERS_FOR_UNION_TYPES,
+    2,
+    [1]
+  );
+
+  // TODO: Debug this
+  expect(mockedTypeFieldNameOptionValue).toReturnWith({ data: undefined, include: true });
 });

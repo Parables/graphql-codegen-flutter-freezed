@@ -7,8 +7,10 @@ import {
   defaultFreezedPluginConfig,
   DART_SCALARS,
   TypeFieldNameOption,
+  AppliesOn,
+  AppliesOnFactory,
 } from './config';
-import { TypeName, FieldName } from './type-field-name';
+import { TypeName, FieldName, TypeFieldName } from './type-field-name';
 
 export class Config {
   static camelCasedEnums = (config: FlutterFreezedPluginConfig) => {
@@ -30,14 +32,33 @@ export class Config {
     return config?.customScalars?.[graphqlScalar] ?? DART_SCALARS[graphqlScalar] ?? graphqlScalar;
   };
 
-  static defaultValueDecorator = () =>
-    // config: FlutterFreezedPluginConfig,
-    // typeName: TypeName,
-    // fieldName: FieldName,
-    // appliesOn: AppliesOnParameters
-    {
-      // const decorator = (value: string) => `@Default(${value})`;
-    };
+  static defaultValueDecorator = (
+    config: FlutterFreezedPluginConfig,
+    typeName: TypeName,
+    fieldName: FieldName,
+    appliesOn: AppliesOnParameters[]
+  ) => {
+    const decorator = (value: string) => `@Default(${value})`;
+    const result = this.typeFieldNameOptionValue(config, 'defaultValues', typeName, fieldName, appliesOn, 2, [1]);
+    if (result.include) {
+      return decorator(result.data[0]);
+    }
+    return undefined;
+  };
+
+  static deprecated = (
+    config: FlutterFreezedPluginConfig,
+    typeName: TypeName,
+    appliesOn: (AppliesOnFactory | AppliesOnParameters)[],
+    fieldName: FieldName | undefined
+  ) => {
+    const decorator = (value: string) => `@Default(${value})`;
+    const result = this.typeFieldNameOptionValue(config, 'defaultValues', typeName, fieldName, appliesOn, 2, [1]);
+    if (result.include) {
+      return decorator(result.data[0]);
+    }
+    return undefined;
+  };
 
   static equal = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
     return this.typeNameOptionValue(config, 'equal', typeName);
@@ -183,22 +204,39 @@ export class Config {
     return TypeName.matchesTypeNames(value, typeName);
   };
 
-  static typeFieldNameOptionValue = (
+  public static typeFieldNameOptionValue = (
     config: FlutterFreezedPluginConfig,
     option: TypeFieldNameOption,
     typeName: TypeName,
     fieldName: FieldName,
-    dataIndicies: number[]
+    expectedAppliesOn: readonly AppliesOn[],
+    appliesOnIndex: number,
+    dataIndexes?: number[]
   ) => {
     const value = config[option];
+    let include: boolean | undefined = undefined;
+    let data: any[] | undefined = undefined;
 
     if (Array.isArray(value)) {
-      const typeFieldNameList = value.forEach(v => {
-        // TODO:
+      value.forEach((v: any[]) => {
+        const typeFieldNames = v[0];
+        data = dataIndexes?.map(i => v[i]);
+        const appliesOn = v[appliesOnIndex] ?? [];
+        const canApply = appliesOnBlock(appliesOn, expectedAppliesOn, true);
+        if (typeof typeFieldNames === 'string') {
+          typeFieldNames.split(';').forEach(typeFieldName => {
+            if (canApply && typeFieldName.length > 0) {
+              include = TypeFieldName.attemptTypeFieldNameMatches(`${typeFieldName};`, typeName, fieldName);
+            }
+          });
+        }
       });
     }
+
+    return { include, data };
   };
+
   public static create = (...config: Partial<FlutterFreezedPluginConfig>[]): FlutterFreezedPluginConfig => {
-    return Object.assign(defaultFreezedPluginConfig, ...config);
+    return Object.assign({}, defaultFreezedPluginConfig, ...config);
   };
 }

@@ -8,15 +8,6 @@ type TypeNames = string | string[] | TypeName | TypeName[];
  */
 type FieldNames = string | string[] | FieldName | FieldName[];
 
-type Builder = (typeNames: TypeNames, fieldNames: FieldNames) => string;
-
-type Matcher = (
-  typeFieldName: string | TypeFieldName,
-  typeName: string | TypeName,
-  fieldNames: FieldNames,
-  matchAllFieldNames?: boolean
-) => boolean;
-
 class GraphqlTypeFieldName {
   private _value: string;
 
@@ -73,11 +64,11 @@ class GraphqlTypeFieldName {
    * @returns boolean
    */
   public static matchAll = (parent: string, child: string, matchAll = false) => {
-    const parentList = parent.split(/\s*,\s*/gim);
-    const childList = child.split(/\s*,\s*/gim);
+    const parentList = parent.split(/\s*,\s*/gim).filter(p => p.length > 0);
+    const childList = child.split(/\s*,\s*/gim).filter(p => p.length > 0);
     return matchAll
       ? childList.every(c => parentList.find(p => p === c))
-      : childList.some(c => parentList.find(f => f === c));
+      : childList.some(c => parentList.find(p => p === c));
   };
 }
 
@@ -277,7 +268,7 @@ export class TypeFieldName extends GraphqlTypeFieldName {
 
       if (matchFound) break;
     }
-    pattern.lastIndex = 0;
+    this.resetIndex(pattern);
     return matchFound;
   };
 
@@ -322,7 +313,7 @@ export class TypeFieldName extends GraphqlTypeFieldName {
 
       if (matchFound) break;
     }
-    pattern.lastIndex = 0;
+    this.resetIndex(pattern);
     return matchFound;
   };
 
@@ -379,7 +370,7 @@ export class TypeFieldName extends GraphqlTypeFieldName {
 
       if (matchFound) break;
     }
-    pattern.lastIndex = 0;
+    this.resetIndex(pattern);
     return matchFound;
   };
 
@@ -428,7 +419,7 @@ export class TypeFieldName extends GraphqlTypeFieldName {
 
       if (matchFound) break;
     }
-    pattern.lastIndex = 0;
+    this.resetIndex(pattern);
     return matchFound;
   };
 
@@ -510,7 +501,7 @@ export class TypeFieldName extends GraphqlTypeFieldName {
 
       if (matchFound) break;
     }
-    pattern.lastIndex = 0;
+    this.resetIndex(pattern);
     return matchFound;
   };
 
@@ -561,7 +552,7 @@ export class TypeFieldName extends GraphqlTypeFieldName {
 
       if (matchFound) break;
     }
-    pattern.lastIndex = 0;
+    this.resetIndex(pattern);
     return matchFound;
   };
 
@@ -623,7 +614,7 @@ export class TypeFieldName extends GraphqlTypeFieldName {
 
       if (matchFound) break;
     }
-    pattern.lastIndex = 0;
+    this.resetIndex(pattern);
     return matchFound;
   };
 
@@ -674,7 +665,7 @@ export class TypeFieldName extends GraphqlTypeFieldName {
 
       if (matchFound) break;
     }
-    pattern.lastIndex = 0;
+    this.resetIndex(pattern);
     return matchFound;
   };
 
@@ -736,31 +727,64 @@ export class TypeFieldName extends GraphqlTypeFieldName {
 
       if (matchFound) break;
     }
-    pattern.lastIndex = 0;
+    this.resetIndex(pattern);
     return matchFound;
   };
 
   //#endregion
 
-  //#region patternNames
-  static patternNames: string[] = [
-    'FieldNamesOfTypeName',
-    'AnyFieldNameOfTypeName',
-    'AnyFieldNameExceptFieldNamesOfTypeName',
-    'FieldNamesOfAnyTypeName',
-    'AnyFieldNameOfAnyTypeName',
-    'AnyFieldNameExceptFieldNamesOfAnyTypeName',
-    'AnyTypeNameExceptTypeNames',
-    'FieldNamesOfAnyTypeNameExceptTypeNames',
-    'AnyFieldNameOfAnyTypeNameExceptTypeNames',
-    'AnyFieldNameExceptFieldNamesOfAnyTypeNameExceptTypeNames',
-  ];
+  static resetIndex = (regexp: RegExp) => {
+    regexp.lastIndex = 0;
+  };
 
-  static patternBuilderRegExpMatcherList: [builder: Builder, regexp: RegExp, matcher: Matcher][] =
-    this.patternNames.map(pattern => [
-      this[`build${pattern}`] as Builder,
-      this[`regexpFor${pattern}`] as RegExp,
-      this[`matches${pattern}`] as Matcher,
-    ]);
-  //#endregion
+  public static attemptTypeFieldNameMatches = (
+    typeFieldName: string | TypeFieldName,
+    typeName: TypeName,
+    fieldName: FieldName
+  ) => {
+    return this.attemptIncludes(typeFieldName, typeName, fieldName);
+  };
+
+  public static attemptIncludes = (typeFieldName: string | TypeFieldName, typeName: TypeName, fieldName: FieldName) => {
+    const _typeFieldName = this.valueOf(typeFieldName);
+    if (this.regexpForFieldNamesOfTypeName.test(_typeFieldName)) {
+      this.resetIndex(this.regexpForFieldNamesOfTypeName);
+      return this.matchesFieldNamesOfTypeName(_typeFieldName, typeName, fieldName);
+    } else if (this.regexpForAnyFieldNameOfTypeName.test(_typeFieldName)) {
+      this.resetIndex(this.regexpForAnyFieldNameOfTypeName);
+      return this.matchesAnyFieldNameOfTypeName(_typeFieldName, typeName);
+    } else if (this.regexpForFieldNamesOfAnyTypeName.test(_typeFieldName)) {
+      this.resetIndex(this.regexpForFieldNamesOfAnyTypeName);
+      return this.matchesFieldNamesOfAnyTypeName(_typeFieldName, fieldName);
+    } else if (this.regexpForAnyFieldNameOfAnyTypeName.test(_typeFieldName)) {
+      this.resetIndex(this.regexpForAnyFieldNameOfAnyTypeName);
+      return this.matchesAnyFieldNameOfAnyTypeName(_typeFieldName);
+    }
+    return this.attemptExcludes(_typeFieldName, typeName, fieldName);
+  };
+
+  public static attemptExcludes = (typeFieldName: string | TypeFieldName, typeName: TypeName, fieldName: FieldName) => {
+    const _typeFieldName = this.valueOf(typeFieldName);
+
+    if (this.regexpForAnyFieldNameExceptFieldNamesOfTypeName.test(_typeFieldName)) {
+      this.resetIndex(this.regexpForAnyFieldNameExceptFieldNamesOfTypeName);
+      return !this.matchesAnyFieldNameExceptFieldNamesOfTypeName(_typeFieldName, typeName, fieldName);
+    } else if (this.regexpForAnyFieldNameExceptFieldNamesOfAnyTypeName.test(_typeFieldName)) {
+      this.resetIndex(this.regexpForAnyFieldNameExceptFieldNamesOfAnyTypeName);
+      return !this.matchesAnyFieldNameExceptFieldNamesOfAnyTypeName(_typeFieldName, fieldName);
+    } else if (this.regexpForAnyTypeNameExceptTypeNames.test(_typeFieldName)) {
+      this.resetIndex(this.regexpForAnyTypeNameExceptTypeNames);
+      return !this.matchesAnyTypeNameExceptTypeNames(_typeFieldName, typeName);
+    } else if (this.regexpForFieldNamesOfAnyTypeNameExceptTypeNames.test(_typeFieldName)) {
+      this.resetIndex(this.regexpForFieldNamesOfAnyTypeNameExceptTypeNames);
+      return !this.matchesFieldNamesOfAnyTypeNameExceptTypeNames(_typeFieldName, typeName, fieldName);
+    } else if (this.regexpForAnyFieldNameOfAnyTypeNameExceptTypeNames.test(_typeFieldName)) {
+      this.resetIndex(this.regexpForAnyFieldNameOfAnyTypeNameExceptTypeNames);
+      return !this.matchesAnyFieldNameOfAnyTypeNameExceptTypeNames(_typeFieldName, typeName);
+    } else if (this.regexpForAnyFieldNameExceptFieldNamesOfAnyTypeNameExceptTypeNames.test(_typeFieldName)) {
+      this.resetIndex(this.regexpForAnyFieldNameExceptFieldNamesOfAnyTypeNameExceptTypeNames);
+      return !this.matchesAnyFieldNameExceptFieldNamesOfAnyTypeNameExceptTypeNames(_typeFieldName, typeName, fieldName);
+    }
+    return false;
+  };
 }

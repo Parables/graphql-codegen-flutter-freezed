@@ -60,25 +60,6 @@ describe("integrity checks: ensures that these values don't change and if they a
       );
     });
   });
-
-  describe('patternNames are used to loop through all the possible patterns. Builder, RegExp and Matcher are retrieved using the patternNames', () => {
-    it('has expected names', () => {
-      test('patternNames are not renamed', () => {
-        expect(TypeFieldName.patternNames).toMatchObject([
-          'FieldNamesOfTypeName',
-          'AnyFieldNameOfTypeName',
-          'AnyFieldNameExceptFieldNamesOfTypeName',
-          'FieldNamesOfAnyTypeName',
-          'AnyFieldNameOfAnyTypeName',
-          'AnyFieldNameExceptFieldNamesOfAnyTypeName',
-          'AnyTypeNameExceptTypeNames',
-          'FieldNamesOfAnyTypeNameExceptTypeNames',
-          'AnyFieldNameOfAnyTypeNameExceptTypeNames',
-          'AnyFieldNameExceptFieldNamesOfAnyTypeNameExceptTypeNames',
-        ]);
-      });
-    });
-  });
 });
 
 describe('TypeName, FieldName and TypeFieldName all inherit from the base class GraphqlTypeFieldName', () => {
@@ -154,12 +135,12 @@ describe('TypeFieldName can be created with builder methods', () => {
       expect(TypeFieldName.matchesFieldNamesOfTypeName(fieldNamesOfTypeName, typeName, 'id')).toBe(true);
       expect(TypeFieldName.matchesFieldNamesOfTypeName(fieldNamesOfTypeName, typeName, 'name')).toBe(true);
       expect(TypeFieldName.matchesFieldNamesOfTypeName(fieldNamesOfTypeName, typeName, 'friends')).toBe(true);
-      expect(TypeFieldName.matchesFieldNamesOfTypeName(fieldNamesOfTypeName, typeName, 'notfriends')).toBe(false);
+      expect(TypeFieldName.matchesFieldNamesOfTypeName(fieldNamesOfTypeName, typeName, 'friend')).toBe(false);
       // using matchAll: all child elements are in parent
       expect(TypeFieldName.matchesFieldNamesOfTypeName(fieldNamesOfTypeName, typeName, fieldNames)).toBe(true);
       // using matchAll: not all child elements are in parent
       expect(
-        TypeFieldName.matchesFieldNamesOfTypeName(fieldNamesOfTypeName, typeName, fieldNames + ', notfriends', false)
+        TypeFieldName.matchesFieldNamesOfTypeName(fieldNamesOfTypeName, typeName, fieldNames + ', friend', false)
       ).toBe(true);
       //#endregion
 
