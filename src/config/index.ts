@@ -25,20 +25,20 @@ export class Config {
   };
 
   static copyWith = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
-    return this.typeNameOptionValue(config, 'copyWith', typeName);
+    return this.freezedOptionValue(config, 'copyWith', typeName);
   };
 
   static customScalars = (config: FlutterFreezedPluginConfig, graphqlScalar: string): string => {
     return config?.customScalars?.[graphqlScalar] ?? DART_SCALARS[graphqlScalar] ?? graphqlScalar;
   };
 
-  static defaultValueDecorator = (
+  static defaultValues = (
     config: FlutterFreezedPluginConfig,
     typeName: TypeName,
     fieldName: FieldName,
     appliesOn: AppliesOnParameters[]
   ) => {
-    const decorator = (value: string) => `@Default(${value})`;
+    const decorator = (value: string) => `@Default(${value})\n`;
     const result = this.typeFieldNameOptionValue(config, 'defaultValues', typeName, fieldName, appliesOn, 2, [1]);
     if (result.include) {
       return decorator(result.data[0]);
@@ -50,66 +50,59 @@ export class Config {
     config: FlutterFreezedPluginConfig,
     typeName: TypeName,
     appliesOn: (AppliesOnFactory | AppliesOnParameters)[],
-    fieldName: FieldName | undefined
+    fieldName?: FieldName
   ) => {
-    const decorator = (value: string) => `@Default(${value})`;
-    const result = this.typeFieldNameOptionValue(config, 'defaultValues', typeName, fieldName, appliesOn, 2, [1]);
+    // TODO: handle for multiple TypeNames
+    const result = this.typeFieldNameOptionValue(config, 'deprecated', typeName, fieldName, appliesOn, 1);
     if (result.include) {
-      return decorator(result.data[0]);
+      return '@deprecated\n';
     }
     return undefined;
   };
 
-  static equal = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
-    return this.typeNameOptionValue(config, 'equal', typeName);
-  };
-
-  static markFinal = (
+  static escapeDartKeywords = (
     config: FlutterFreezedPluginConfig,
     typeName: TypeName,
     fieldName: FieldName,
     appliesOn: AppliesOnParameters[]
   ) => {
-    const expectedAppliesOn = appliesOn;
-    let final = false;
-    const regexp3 = /@\*TypeName\.@\*FieldName-\[((\w+,?)+)\],?/gim;
-    const regexp1 = /\w+\.@\*FieldName-\[((\w+,?)+)\]/gim;
+    const result = this.typeFieldNameOptionValue(
+      config,
+      'escapeDartKeywords',
+      typeName,
+      fieldName,
+      appliesOn,
+      4,
+      [1, 2, 3]
+    );
+    if (result.include) {
+      return result.data;
+    }
+    return undefined;
+  };
 
-    config.final?.forEach(([typeFieldName, appliesOn]) => {
-      const fieldNames = typeFieldName
-        .replace(regexp3, '$1,')
-        .split(',')
-        .filter(v => v.length > 0);
+  static equal = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
+    return this.freezedOptionValue(config, 'equal', typeName);
+  };
 
-      if (regexp3.test(typeFieldName) && appliesOnBlock(appliesOn, expectedAppliesOn, true)) {
-        if (fieldNames.includes(fieldName.value)) {
-          final = false;
-        } else {
-          final = true;
-        }
-      }
-
-      if (
-        (regexp3.test(typeFieldName) || regexp1.test(typeFieldName)) &&
-        fieldNames.includes(fieldName.value) &&
-        appliesOnBlock(appliesOn, expectedAppliesOn, true)
-      ) {
-        final = false;
-      }
-
-      if (regexp3.test(typeFieldName)) {
-        final = true;
-      }
-    });
-
-    return final;
+  static final = (
+    config: FlutterFreezedPluginConfig,
+    typeName: TypeName,
+    fieldName: FieldName,
+    appliesOn: AppliesOnParameters[]
+  ) => {
+    const result = this.typeFieldNameOptionValue(config, 'final', typeName, fieldName, appliesOn, 1);
+    if (result.include) {
+      return true;
+    }
+    return undefined;
   };
 
   static fromJsonToJson = (
-    config: FlutterFreezedPluginConfig
-    // typeName?: TypeName,
-    // fieldName?: FieldName,
-    // appliesOn?: AppliesOnParameters[]
+    config: FlutterFreezedPluginConfig,
+    typeName?: TypeName,
+    fieldName?: FieldName,
+    appliesOn?: AppliesOnParameters[]
   ) => {
     const value = config['fromJsonToJson'];
     // const expectedAppliesOn = appliesOn ?? [];
@@ -117,9 +110,12 @@ export class Config {
     if (typeof value === 'boolean') {
       return value;
     } else if (value !== undefined) {
-      // TODO: Like CSS find the most explicit value, or fallback to the most general value
+      const result = this.typeFieldNameOptionValue(config, 'fromJsonToJson', typeName, fieldName, appliesOn, 3, [1, 2]);
+      if (result.include) {
+        return result.data;
+      }
     }
-    return true;
+    return undefined;
   };
 
   static ignoreTypes = (config: FlutterFreezedPluginConfig, typeName: TypeName) => {
@@ -128,11 +124,11 @@ export class Config {
   };
 
   static immutable = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
-    return this.typeNameOptionValue(config, 'immutable', typeName);
+    return this.freezedOptionValue(config, 'immutable', typeName);
   };
 
   static makeCollectionsUnmodifiable = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
-    return this.typeNameOptionValue(config, 'makeCollectionsUnmodifiable', typeName);
+    return this.freezedOptionValue(config, 'makeCollectionsUnmodifiable', typeName);
   };
 
   static mergeInputs = (config: FlutterFreezedPluginConfig, typeName: TypeName) => {
@@ -154,11 +150,11 @@ export class Config {
     );
   };
   static mutableInputs = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
-    return this.typeNameOptionValue(config, 'mutableInputs', typeName);
+    return this.freezedOptionValue(config, 'mutableInputs', typeName);
   };
 
   static privateEmptyConstructor = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
-    return this.typeNameOptionValue(config, 'privateEmptyConstructor', typeName);
+    return this.freezedOptionValue(config, 'privateEmptyConstructor', typeName);
   };
 
   static unionKey = (config: FlutterFreezedPluginConfig, unionTypeName?: TypeName): string | undefined => {
@@ -198,7 +194,7 @@ export class Config {
     // }
   };
 
-  static typeNameOptionValue = (config: FlutterFreezedPluginConfig, option: FreezedOption, typeName?: TypeName) => {
+  static freezedOptionValue = (config: FlutterFreezedPluginConfig, option: FreezedOption, typeName?: TypeName) => {
     const value = config[option];
     if (typeof value === 'boolean' || value === undefined) return value;
     return TypeName.matchesTypeNames(value, typeName);

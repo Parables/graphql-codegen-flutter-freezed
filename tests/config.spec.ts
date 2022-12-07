@@ -55,7 +55,7 @@ describe('given an option in the config, it will matches all patterns and return
     expect(Config.ignoreTypes(config, TypeName.fromString('Human'))).toBe(true);
   });
 
-  describe('freezedOptions', () => {
+  describe('typeNameOptionValue', () => {
     test.each([
       'copyWith',
       'equal',
@@ -78,8 +78,6 @@ describe('given an option in the config, it will matches all patterns and return
       expect(Config[option](config, TypeName.fromString('Human'))).toBe(false);
     });
   });
-
-  // const mockedTypeFieldNameOptionValue = jest.fn(Config.typeFieldNameOptionValue);
 
   // "defaultValues" | "deprecated" | "escapeDartKeywords" | "final" | "fromJsonToJson"
 
@@ -114,22 +112,35 @@ Starship.@*FieldName-[name,id];
 @*TypeName-[Droid,Starship].[id,name,friends];
 @*TypeName-[Droid,Starship].@*FieldName;
 @*TypeName-[Droid,Starship].@*FieldName-[id,name,friends];
+Droid.[id];
 `;
 
   const config3 = Config.create({
     defaultValues: [[allTypeFieldNames, 'NanoId.nanoId()', ['parameter']]],
+    deprecated: [[allTypeFieldNames, ['parameter']]],
+    escapeDartKeywords: [[allTypeFieldNames, 'k_', '_k', 'snake_case', ['parameter']]],
+    final: [[allTypeFieldNames, ['parameter']]],
+    fromJsonToJson: [[allTypeFieldNames, 'ID', true, ['parameter']]],
   });
 
-  // TODO: Debug this
-  expect(
-    Config.typeFieldNameOptionValue(
-      config3,
-      'defaultValues',
-      TypeName.fromString('Droid'),
-      FieldName.fromString('id'),
-      APPLIES_ON_NAMED_FACTORY_PARAMETERS_FOR_UNION_TYPES,
-      2,
-      [1]
-    )
-  ).toMatchObject({ data: ['NanoId.nanoId()'], include: false });
+  const typeName = TypeName.fromString('Droid');
+  const idFieldName = FieldName.fromString('id');
+  const unknownFieldName = FieldName.fromString('unknown');
+  const appliesOn = APPLIES_ON_NAMED_FACTORY_PARAMETERS_FOR_UNION_TYPES;
+
+  expect(Config.defaultValues(config3, typeName, idFieldName, [...appliesOn])).toBe('@Default(NanoId.nanoId())\n');
+
+  expect(Config.deprecated(config3, typeName, [...appliesOn], idFieldName)).toBe('@deprecated\n');
+
+  expect(Config.escapeDartKeywords(config3, typeName, idFieldName, [...appliesOn])).toMatchObject([
+    'k_',
+    '_k',
+    'snake_case',
+  ]);
+
+  expect(Config.final(config3, typeName, idFieldName, [...appliesOn])).toBe(true);
+  expect(Config.final(config3, typeName, unknownFieldName, [...appliesOn])).toBeUndefined();
+
+  expect(Config.fromJsonToJson(config3, typeName, idFieldName, [...appliesOn])).toMatchObject(['ID', true]);
+  expect(Config.fromJsonToJson(config3, typeName, unknownFieldName, [...appliesOn])).toBeUndefined();
 });

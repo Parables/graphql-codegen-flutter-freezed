@@ -27,6 +27,7 @@ regexr.com/73nir
 
 \b(?!TypeName|FieldName\b)\w+;
 'Droid; Starship;'
+'Droid, Starship'
 
 /((?<typeName>\s*\w+\s*)\.\s*\[\s*(?<fieldNames>(\w+,?\s*)*)\];)(?<!\s*@\s*\*\s*.*\s*)/gim
 'Droid.[id,name,friends]; Starship.[name,id];'
