@@ -16,7 +16,7 @@ import { TypeName as _TypeName, TypeFieldName as _TypeFieldName } from './type-f
 export type FlutterFreezedPluginConfig = {
   /**
    * @name camelCasedEnums
-   * @type boolean // TODO: do the same for all config options
+   * @type {(boolean | DartIdentifierCasing)}
    * @summary Specify how Enum values should be cased.
    * @description Dart's recommended lint uses camelCase for enum values.
    *
@@ -51,6 +51,7 @@ export type FlutterFreezedPluginConfig = {
 
   /**
    * @name copyWith
+   * @type {(boolean | TypeName | TypeName[])}
    * @summary enables Freezed copyWith helper method
    * @description The plugin by default generates immutable Freezed models using the `@freezed` decorator.
    *
@@ -88,6 +89,7 @@ export type FlutterFreezedPluginConfig = {
 
   /**
    * @name customScalars
+   * @type {Record<string, string>}
    * @summary Maps GraphQL Scalar Types to Dart built-in types
    * @description The `key` is the GraphQL Scalar Type and the `value` is the equivalent Dart Type
    *
@@ -122,6 +124,7 @@ export type FlutterFreezedPluginConfig = {
 
   /**
    * @name defaultValues
+   * @type
    * @summary annotate a field with a @Default(value: defaultValue) decorator
    * @description Requires an array of tuples with the type signature below:
    *
@@ -402,50 +405,6 @@ export type FlutterFreezedPluginConfig = {
       ][];
 
   /**
-   * @name fromJsonWithMultiConstructors
-   * @description customize the key to be used for fromJson with multiple constructors
-   * @see {@link https://pub.dev/packages/freezed#fromjson---classes-with-multiple-constructors fromJSON - classes with multiple constructors}
-   * @default undefined
-   * @exampleMarkdown
-   * ## Usage:
-   * ```ts filename='codegen.ts'
-   * import type { CodegenConfig } from '@graphql-codegen/cli';
-   *
-   * const config: CodegenConfig = {
-   *   // ...
-   *   generates: {
-   *     'lib/data/models/app_models.dart': {
-   *       plugins: {
-   *         'flutter-freezed': {
-   *           // ...
-   *           fromJsonWithMultiConstructors: [
-   *             [
-   *               'SearchResult', // <-- unionTypeName
-   *               'namedConstructor', // <-- unionKey
-   *               'FreezedUnionCase.pascal', // <-- unionValueCase
-   *               { // <-- unionValuesNameMap
-   *                 Droid: 'special droid',
-   *                 Human: 'astronaut',
-   *                 Starship: 'space_Shuttle',
-   *               },
-   *             ],
-   *           ],
-   *         },
-   *       },
-   *     },
-   *   },
-   * };
-   * export default config;
-   * ```
-   */
-  fromJsonWithMultiConstructors?: [
-    unionTypeName: TypeName | string,
-    unionKey?: string,
-    unionValueCase?: UnionValueCase,
-    unionValuesNameMap?: Record<TypeName | string, string>
-  ][];
-
-  /**
    * @name ignoreTypes
    * @description names of GraphQL types to ignore when generating Freezed classes
    * @default []
@@ -617,7 +576,67 @@ export type FlutterFreezedPluginConfig = {
    * ```
    */
   privateEmptyConstructor?: boolean | TypeName | TypeName[];
+
+  /**
+   * @name unionClass
+   * @description customize the key to be used for fromJson with multiple constructors
+   * @see {@link https://pub.dev/packages/freezed#fromjson---classes-with-multiple-constructors fromJSON - classes with multiple constructors}
+   * @default undefined
+   * @exampleMarkdown
+   * ## Usage:
+   * ```ts filename='codegen.ts'
+   * import type { CodegenConfig } from '@graphql-codegen/cli';
+   *
+   * const config: CodegenConfig = {
+   *   // ...
+   *   generates: {
+   *     'lib/data/models/app_models.dart': {
+   *       plugins: {
+   *         'flutter-freezed': {
+   *           // ...
+   *           unionClass: [
+   *             [
+   *               'SearchResult', // <-- unionTypeName
+   *               'namedConstructor', // <-- unionKey
+   *               'FreezedUnionCase.pascal', // <-- unionValueCase
+   *               { // <-- unionValuesNameMap
+   *                 Droid: 'special droid',
+   *                 Human: 'astronaut',
+   *                 Starship: 'space_Shuttle',
+   *               },
+   *             ],
+   *           ],
+   *         },
+   *       },
+   *     },
+   *   },
+   * };
+   * export default config;
+   * ```
+   */
+  unionClass?: [
+    /**
+     * The name of the Graphql Union Type (or in the case of merged types, the base type on which other types are merged with)
+     */
+    unionTypeName: TypeName | string,
+
+    /**
+     * in a fromJSON/toJson encoding a response/object({key:value}), you can specify what name should be used as the key ?
+     */
+    unionKey?: string,
+
+    /**
+     * normally in camelCase but you can change that to PascalCase
+     */
+    unionValueCase?: UnionValueCase,
+
+    /**
+     * just as the unionKey changes the key used, this changes the value for each union/sealed factories
+     */
+    unionValuesNameMap?: Record<TypeName | string, string>
+  ][];
 };
+
 //#endregion
 
 //#region type alias
@@ -796,7 +815,7 @@ export type TypeFieldNameOption = Extract<
   'defaultValues' | 'deprecated' | 'escapeDartKeywords' | 'final' | 'fromJsonToJson'
 >;
 
-export type MultiConstructorOption = FlutterFreezedPluginConfig['fromJsonWithMultiConstructors'];
+export type MultiConstructorOption = FlutterFreezedPluginConfig['unionClass'];
 
 export type UnionValueCase = 'FreezedUnionCase.camel' | 'FreezedUnionCase.pascal';
 
@@ -905,13 +924,13 @@ export const defaultFreezedPluginConfig: FlutterFreezedPluginConfig = {
   escapeDartKeywords: true,
   final: undefined,
   fromJsonToJson: true,
-  fromJsonWithMultiConstructors: undefined,
   ignoreTypes: [],
   immutable: true,
   makeCollectionsUnmodifiable: undefined,
   mergeInputs: undefined,
   mutableInputs: true,
   privateEmptyConstructor: true,
+  unionClass: undefined,
 };
 
 //#endregion

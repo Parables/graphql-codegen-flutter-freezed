@@ -1,10 +1,5 @@
 import { snakeCase } from 'change-case-all';
 import { Kind, EnumValueDefinitionNode } from 'graphql';
-import { FlutterFreezedPluginConfig, NodeType } from '../config/config';
-import { NodeRepository } from '../config/node-repository';
-import { nodeIsObjectType } from '../utils';
-import { ClassBlock } from './class-block';
-import { EnumBlock } from './enum-block';
 
 //#region Step 01. Start Here
 /**
@@ -54,7 +49,3 @@ export const buildComment = (node?: NodeType | EnumValueDefinitionNode): string 
   return comment && comment?.length > 0 ? `${comment.replace(/^\s*#/gm, '///')} \n` : '';
 };
 //#endregion
-
-export * from './parameter-block';
-export * from './factory-block';
-export * from './class-block';

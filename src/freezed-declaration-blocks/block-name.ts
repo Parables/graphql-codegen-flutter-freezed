@@ -1,12 +1,7 @@
 import { camelCase } from 'change-case-all';
-import {
-  DART_KEYWORDS,
-  FlutterFreezedPluginConfig,
-  TypeName,
-  FieldName,
-  DartIdentifierCasing,
-  Config,
-} from '../config';
+import { Config } from '../config';
+import { DART_KEYWORDS, FlutterFreezedPluginConfig, DartIdentifierCasing } from '../config/config';
+import { TypeName, FieldName } from '../config/type-field-name';
 import { dartCasing } from '../utils';
 
 export type BlockNameValue = string;

@@ -1,15 +1,4 @@
-import { BlockName } from './block-name';
-import { buildComment } from '.';
 import { indent } from '@graphql-codegen/visitor-plugin-common';
-import {
-  AppliesOnParameters,
-  Config,
-  DART_SCALARS,
-  FieldType,
-  FlutterFreezedPluginConfig,
-  NodeType,
-  TypeName,
-} from '../config';
 import { ListTypeNode, NamedTypeNode, NonNullTypeNode, TypeNode } from 'graphql';
 
 export class ParameterBlock {

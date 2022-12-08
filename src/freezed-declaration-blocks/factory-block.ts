@@ -1,18 +1,4 @@
 import { indent } from '@graphql-codegen/visitor-plugin-common';
-import { buildComment } from '.';
-import {
-  TypeName,
-  AppliesOnDefaultFactory,
-  AppliesOnNamedFactory,
-  FlutterFreezedPluginConfig,
-  NodeRepository,
-  AppliesOnFactory,
-  Config,
-  ObjectType,
-  AppliesOnParameters,
-} from '../config';
-import { BlockName } from './block-name';
-import { ParameterBlock } from './parameter-block';
 
 export class FactoryBlock {
   public static build(

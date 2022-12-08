@@ -1,10 +1,6 @@
 import { indent } from '@graphql-codegen/visitor-plugin-common';
 import { camelCase } from 'change-case-all';
 import { Kind } from 'graphql';
-import { FlutterFreezedPluginConfig, NodeType, TypeName, Config } from '../config';
-import { buildComment } from '.';
-import { BlockName } from './block-name';
-import { FactoryBlock } from './factory-block';
 
 export class ClassBlock {
   public static build(config: FlutterFreezedPluginConfig, node: NodeType): string {
