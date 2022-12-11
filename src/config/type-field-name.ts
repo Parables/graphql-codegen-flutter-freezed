@@ -19,11 +19,11 @@ class GraphqlTypeFieldName {
     return this._value;
   }
   public static get anyTypeName(): string {
-    return '@*TypeName';
+    return '@*TypeNames';
   }
 
   public static get anyFieldName(): string {
-    return '@*FieldName';
+    return '@*FieldNames';
   }
 
   public static valueOf = (value: string | string[] | GraphqlTypeFieldName | GraphqlTypeFieldName[]) => {
@@ -55,14 +55,6 @@ class GraphqlTypeFieldName {
       .join();
   };
 
-  /**
-   * checks whether the child contains every element in parent
-   * @param parent contains all the elements
-   * @param child contains some or all elements in parent but may not be in any order as parent
-   * @param matchAll if true, will return true if every child element is found in parent, otherwise false.
-   * Defaults to false for the scope of this project since the schema visitor would have only one element at a time so we can't do a full match
-   * @returns boolean
-   */
   public static matchAll = (parent: string, child: string, matchAll = false) => {
     const parentList = parent.split(/\s*,\s*/gim).filter(p => p.length > 0);
     const childList = child.split(/\s*,\s*/gim).filter(p => p.length > 0);
@@ -74,10 +66,10 @@ class GraphqlTypeFieldName {
 
 /**
  * @name TypeName
- * @description represents a valid GraphQL Type Name used in the GraphQL Schema provided
+ * @description represents a single valid GraphQL Type Name used in the GraphQL Schema provided
  * @exampleMarkdown
  * ```ts filename:"config.ts"
- * // set the value
+ * // returns a TypeName
  * let typeName: TypeName = TypeName.fromString('Droid');
  *
  * // the following will throw an error
@@ -99,54 +91,14 @@ export class TypeName extends GraphqlTypeFieldName {
     }
     return new TypeName(value.trim());
   };
-
-  //#region `'TypeName; TypeName' or [TypeName; TypeName;];`
-
-  /**
-   * Use this in the config to specify an option that applies on **any** field of **any** type **excluding** some of its fields
-   * @param exceptFieldNames field names to be excluded
-   * @returns `'TypeName.[fieldNames]'`
-   */
-  public static fromTypeNames = (typeNames: TypeNames): string => {
-    return this.valueOf(typeNames);
-  };
-
-  // public static regexpForTypeNames = /\b(?!TypeName|FieldName\b)\w+;/gim;
-
-  /**
-   * returns true or false if typeFieldName matches `'@*TypeName.@*FieldName-[exceptFieldNames]'` and the typeFieldName includes the `exceptFieldNames`.
-   * @param parentTypeNames
-   * @param childTypeNames
-   * @returns boolean
-   */
-  static matchesTypeNames = (parentTypeNames: TypeNames, childTypeNames: TypeNames, matchAll = false) => {
-    const parent = this.fromTypeNames(parentTypeNames);
-    const child = this.fromTypeNames(childTypeNames);
-
-    return this.matchAll(parent, child, matchAll);
-  };
-
-  //#endregion
-
-  //#region `'@*TypeName;'`
-  /**
-   * returns true or false if typeFieldName matches `'@*TypeName.@*FieldName-[exceptFieldNames]'` and the typeFieldName includes the `exceptFieldNames`.
-   * @param typeFieldName
-   * @returns boolean
-   */
-  static matchesAnyTypeName = (typeFieldName: string | TypeFieldName) => {
-    return typeFieldName === `${this.anyTypeName};`;
-  };
-
-  //#endregion
 }
 
 /**
  * @name FieldName
- * @description Just like TypeName but instead used for the field name of a GraphQL Type.
+ * @description Represents a single valid name of a field belong to a Graphql Type.
  * @exampleMarkdown
  * ```ts filename:"config.ts"
- * // set the value
+ * // returns a FieldName
  * let fieldName: FieldName = FieldName.fromString('id');
  *
  * // the following will throw an error
@@ -172,76 +124,242 @@ export class FieldName extends GraphqlTypeFieldName {
 
 /**
  * @name TypeFieldName
- * @description A compact string of GraphQL Type and Field Names used in the config for specifying options for a list of Graphql Types and Fields
- * The string can contain more than one pattern, each pattern ends with a semi-colon(`;`).
- * Each pattern consists of TypeName and FieldNames separated by a dot(`.`)
- * Both TypeName and FieldName can specify a list of values to be included(`[]`) or excluded(`-[]`)
- * To apply an option to any TypeName or FieldName, use the anyTypeName(`@*TypeName`) and anyFieldName(`@*FieldName`) tokens respectively
- * @exampleMarkdown
- * ### Configuring GraphQL Types
+ * @description A compact string of patterns used in the config for granular configuration for each Graphql Type and/or its fieldNames
+ *
+ * The string can contain more than one pattern, each pattern ends with a semi-colon`;`.
+ *
+ * A dot `.` separates the TypeName from the FieldNames in each pattern
+ *
+ * To apply an option to any TypeName or FieldName, use the anyTypeName(`@*TypeNames`) and anyFieldName(`@*FieldNames`) tokens respectively
+ *
+ * To specify more than one TypeName or FieldName, use `[]` to specify what should be included and `-[]` for what should be excluded
+ *
+ * Manually typing out a pattern may be prone to typos and invalid patterns therefore this class exposes some builder methods
+ *
+ * Wherever a builder method accepts parameter with a type signature of [`TypeNames`]() or [`FieldNames`](), you can use any of the following:
+ * 1. a single string. E.g: 'Droid'
  * ```ts
- *  let typeName3:TypeFieldName = '@*TypeName' //  This example applies for all GraphQL Types
- *
- *  let typeName4:TypeFieldName = '@*TypeName-[Human,Movie]' // if there are many types to be specified, use this to specify those to be **excluded**. This example applies on all types in the GraphQL Schema except the `Human` and `Movie` types
- *
- * let typeName1:TypeFieldName = 'Droid' // This example applies on the Droid GraphQL Type
- *
- * let typeName2:TypeFieldName = 'Droid; Starship' // a comma-separated string of GraphQL Type names. This example applies on the Droid and Starship GraphQL Types
- *
+ * // using a string
+ * const typeFieldName = TypeFieldName.buildTypeName('Droid');
+ * console.log(typeFieldName) // "Droid;"
  * ```
+ * 2. a comma-separated string for multiple types/fields. E.g: 'Droid, Starship, Human'
+ * The rest of this guide uses this approach wherever a builder method accepts a parameter with a type signature of [`TypeNames`]() or [`FieldNames`]()
+ * ```ts
+ * // using a comma-separated string
+ * const typeFieldName = TypeFieldName.buildTypeName('Droid, Starship, Human');
+ * console.log(typeFieldName) // "Droid;Starship;Human;"
+ * ```
+ * 3. an array of strings. E.g: `['Droid', 'Starship']`
+ * ```ts
+ * // using an array of strings
+ * const typeFieldName = TypeFieldName.buildTypeName(['Droid', 'Starship', 'Human']);
+ * console.log(typeFieldName) // "Droid;Starship;Human;"
+ * ```
+ * 4. a single TypeName or FieldName. E.g: `TypeName.fromString('Droid')`
+ * ```ts
+ * // using a TypeFieldName/FieldName
+ * let typeName = TypeName.fromString('Droid');
+ * const typeFieldName = TypeFieldName.buildTypeName(typeName)
+ * console.log(typeFieldName) // "Droid;" 
+ * ```
+ 5. an array of TypeName or FieldName. E.g:  `[TypeName.fromString('Droid'), [TypeName.fromString('Starship')]]`
+ * ```ts
+ * // using an array of TypeFieldName
+ * let Droid = TypeName.fromString('Droid');
+ * let Starship = TypeName.fromString('Starship');
+ * let Human = TypeName.fromString('Human');
+ * const typeFieldName = TypeFieldName.buildTypeName([Droid, Starship, Human])
+ * console.log(typeFieldName) // "Droid;Starship;Human;"
+ * ```
+
+ * > The first usage example below demonstrates a builder that accepts a parameter with a type signature of `TypeNames`.
+ * >
+ * > For brevity, this guide uses a comma-separated string wherever `TypeNames` or `FieldNames` is required
+ *
+ * @exampleMarkdown
+ * ## Usage for Graphql Types
+ * ### Configuration for Type Name(s)
+ * You can explicity list out the names of the Graphql Types that you want to configure.
+ * ```ts
+ * const typeFieldName = TypeFieldName.buildTypeName('Droid, Starship, Human');
+ * console.log(typeFieldName) // "Droid;Starship;Human;"
+ * ```
+ *
+ * ### Configuration for Any/All TypeName
+ * Instead of manually listing out **all** the types in the Graphql Schema, use this to configure any/all the Graphql Types in the Schema
+ * ```ts
+ * let typeFieldName = TypeFieldName.buildAnyTypeName() // TODO: Create this builder
+ * console.log(typeFieldName) // "@*TypeNames;"
+ * ```
+ *
+ * ### Configuration for Any/All TypeName Except Some TypeNames
+ * This would apply the configuration to any/all GraphQL Types except those specified.
+ *
+ * In the example below, the configuration will be applied to any/all the Graphql Types in the Schema except the `Droid` and `Starship` types
+ * ```ts
+ * let typeFieldName = TypeFieldName.buildAnyTypeNameExceptTypeNames('Droid, Starship');
+ * console.log(typeFieldName) // "@*TypeNames-['Droid,Starship]';"
+ * ```
+ * ## Usage for fields of Graphql Types
+ * For each of the 3 builder methods available for configuring Graphql Types, there is also similar builder methods for configuring fields belong to that Graphql Type
+ * 
+ * ### Configuration for fields of Type Name(s)
+ * You can explicity list out the names of the fields of the Graphql Types that you want to configure.
+ * ```ts
+ * const typeFieldName = TypeFieldName.buildFieldNamesOfTypeName('Droid', 'id, name, friends');
+ * console.log(typeFieldName) // "Droid.[id,name,friends];"
+ * ```
+ * 
+ * ### Configuration for any fields of Type Name(s)
+ * Instead of manually listing out **all** the fields of the Graphql Type, use this to configure any/all the fields of the Graphql Type.
+ * ```ts
+ * const typeFieldName = TypeFieldName.buildAnyFieldNameOfTypeName('Droid');
+ * console.log(typeFieldName) // "Droid.@*FieldNames;"
+ * ```
+ * 
+ * ### Configuration for fields Any/All TypeName
+ * You can explicity list out the names of the fields of any Graphql Types that you want to configure. 
+ * 
+ * If field name that doesn't exists, it would be ignored.
+ * ```ts
+ * let typeFieldName = TypeFieldName.buildFieldNamesOfAnyTypeName('id, name, friends') // TODO: Create this builder
+ * console.log(typeFieldName) // "@*TypeNames.[id,name,friends];"
+ * ```
+ *
+ * ### Configuration for Any/All TypeName Except Some TypeNames
+ * This would apply the configuration to any/all GraphQL Types except those specified.
+ *
+ * In the example below, the configuration will be applied to any/all the Graphql Types in the Schema except the `Droid` and `Starship` types
+ * ```ts
+ * let typeFieldName = TypeFieldName.buildAnyTypeNameExceptTypeNames('Droid, Starship');
+ * console.log(typeFieldName) // "@*TypeNames-['Droid,Starship]';"
+ * ```
+ * TODO: Update the following documentation
+ 
  *
  * ### Configuring the fields of GraphQL Types
  * ```ts
- * let typeFieldName1:TypeFieldName = 'Droid.[id,friends]' // in an array, specify one or more fields for that GraphQL Type. This example applies on the `id` and `friends` fields of the Droid GraphQL Type
+ * let typeFieldName1 = 'Droid.[id,friends]' // in an array, specify one or more fields for that GraphQL Type. This example applies on the `id` and `friends` fields of the Droid GraphQL Type
  *
- * let typeFieldName2:TypeFieldName = 'Droid.[id,friends]; Starship.[id]; @*TypeName.[id]' // same as `typeFieldName1` but for multiple patterns
+ * let typeFieldName2 = 'Droid.[id,friends]; Starship.[id]; @*TypeNames.[id];' // same as `typeFieldName1` but for multiple patterns
  *
- * let typeFieldName3:TypeFieldName = 'Droid.@*FieldName' // applies on all fields of the Droid GraphQL Type
+ * let typeFieldName3 = 'Droid.@*FieldNames' // applies on all fields of the Droid GraphQL Type
  *
- * let typeFieldName4:TypeFieldName = 'Droid.@*FieldName-[name,appearsIn]' // if there are many fields to be specified, use this to specify those to be **excluded**. This example applies on all of the fields of the Droid GraphQL Type except the `name` and `appearsIn` fields
- *
- *
- * let typeFieldName5:TypeFieldName = '@*TypeName.[id]' // applies on the `id` field of any GraphQL Types
+ * let typeFieldName4 = 'Droid.@*FieldNames-[name,appearsIn]' // if there are many fields to be specified, use this to specify those to be **excluded**. This example applies on all of the fields of the Droid GraphQL Type except the `name` and `appearsIn` fields
  *
  *
- * let typeFieldName6:TypeFieldName = '@*TypeName-[Human,Starship].[id]' // applies on the `id` field of any GraphQL Types except the `Human` and `Starship` types
+ * let typeFieldName5 = '@*TypeNames.[id]' // applies on the `id` field of any GraphQL Types
  *
- * let typeFieldName7:TypeFieldName = '@*TypeName.@*FieldName' // applies on all of the fields of the GraphQL Types
  *
- * let typeFieldName8:TypeFieldName = '@*TypeName-[Human,Starship].@*FieldName' // applies on all of the fields of the GraphQL Types except the `Human` and `Starship` types
+ * let typeFieldName6 = '@*TypeNames-[Human,Starship].[id]' // applies on the `id` field of any GraphQL Types except the `Human` and `Starship` types
  *
- * let typeFieldName9:TypeFieldName = '@*TypeName.@*FieldName-[id,name]' // applies on all of the fields of the GraphQL Types except the `id` and `name` fields
+ * let typeFieldName7 = '@*TypeNames.@*FieldNames' // applies on all of the fields of the GraphQL Types
  *
- * let typeFieldName10:TypeFieldName = '@*TypeName-[Human,Movie].@*FieldName-[id,name]' // applies on all of the fields of the GraphQL Types except the `Human` and `Starship` types and the `id` and `name` fields
+ * let typeFieldName8 = '@*TypeNames-[Human,Starship].@*FieldNames' // applies on all of the fields of the GraphQL Types except the `Human` and `Starship` types
+ *
+ * let typeFieldName9 = '@*TypeNames.@*FieldNames-[id,name]' // applies on all of the fields of the GraphQL Types except the `id` and `name` fields
+ *
+ * let typeFieldName10 = '@*TypeNames-[Human,Movie].@*FieldNames-[id,name]' // applies on all of the fields of the GraphQL Types except the `Human` and `Starship` types and the `id` and `name` fields
  * ```
  * */
 export class TypeFieldName extends GraphqlTypeFieldName {
+  //#region `'TypeName; AnotherTypeName;'`
+
+  public static buildTypeName = (typeNames: TypeNames): string => {
+    return this.valueOf(typeNames).replace(/\s*,|;\s*/, ';');
+  };
+
+  public static regexpForTypeName = /\b(?!TypeName|FieldName\b)(?<typeName>\w+;)/gim;
+
+  static matchesTypeName = (typeFieldName: string | TypeFieldName, typeName: TypeName) => {
+    const pattern = this.regexpForTypeName;
+
+    const _typeFieldName = this.valueOf(typeFieldName);
+    const _typeName = this.valueOf(typeName);
+
+    let result: RegExpExecArray | null;
+    let matchFound: boolean;
+
+    while ((result = pattern.exec(_typeFieldName)) !== null) {
+      const typeName = result.groups.typeName;
+
+      matchFound = typeName === _typeName;
+
+      if (matchFound) break;
+    }
+    this.resetIndex(pattern);
+    return matchFound;
+  };
+  //#endregion
+
+  //#region `'@*TypeNames'`
+
+  public static buildAnyTypeName = (typeNames: TypeNames): string => {
+    return `${this.anyTypeName};`;
+  };
+
+  public static regexpForAnyTypeName = /(?<anyTypeName>@\*TypeName;)/gm;
+
+  static matchesAnyTypeName = (typeFieldName: string | TypeFieldName) => {
+    const pattern = this.regexpForTypeName;
+
+    const _typeFieldName = this.valueOf(typeFieldName);
+
+    if (pattern.test(_typeFieldName)) {
+      this.resetIndex(pattern);
+      return true;
+    }
+    return false;
+  };
+  //#endregion
+
+  //#region `'@*TypeNames-[exceptTypeNames];'`
+
+  public static buildAnyTypeNameExceptTypeNames = (exceptTypeNames: TypeNames): string => {
+    const _typeNames = this.valueOf(exceptTypeNames);
+    return `${this.anyTypeName}-[${_typeNames}];`;
+  };
+
+  public static regexpForAnyTypeNameExceptTypeNames = /@\*TypeName-\[\s*(?<exceptTypeNames>(\w+,?\s*)*)\];/gim;
+
+  static matchesAnyTypeNameExceptTypeNames = (
+    typeFieldName: string | TypeFieldName,
+    exceptTypeNames: TypeNames,
+    matchAllTypeNames = false
+  ) => {
+    const pattern = this.regexpForAnyTypeNameExceptTypeNames;
+
+    const _typeFieldName = this.valueOf(typeFieldName);
+    const _typeNames = this.valueOf(exceptTypeNames);
+
+    let result: RegExpExecArray | null;
+    let matchFound: boolean;
+
+    while ((result = pattern.exec(_typeFieldName)) !== null) {
+      const typeNames = result.groups.exceptTypeNames;
+
+      matchFound = this.matchAll(typeNames, _typeNames, matchAllTypeNames);
+
+      if (matchFound) break;
+    }
+    this.resetIndex(pattern);
+    return matchFound;
+  };
+
+  //#endregion
+
   //#region `'TypeName.[fieldNames];'`
 
-  /**
-   * Use this in the config to specify an option that applies on **any** field of **any** type **excluding** some of its fields
-   * @param exceptFieldNames field names to be excluded
-   * @returns `'TypeName.[fieldNames]'`
-   */
   public static buildFieldNamesOfTypeName = (typeName: string | TypeName, fieldNames: FieldNames): string => {
     const _typeName = TypeName.fromString(this.valueOf(typeName)).value; // ensures that there is no comma-separated TypeNames in there
     const _fieldNames = this.valueOf(fieldNames);
     return `${_typeName}.[${_fieldNames}];`;
   };
 
-  /**
-   * returns a RegExp that you can use to test if a string matches `'@*TypeName.@*FieldName-[exceptFieldNames]'`
-   */
   public static regexpForFieldNamesOfTypeName =
     /(?<typeName>\w+\s*)(?<!\s*@\s*\*\s*TypeName\s*)\.\[\s*(?<fieldNames>(\w+,?\s*)*)\];/gim;
 
-  /**
-   * returns true or false if typeFieldName matches `'@*TypeName.@*FieldName-[exceptFieldNames]'` and the typeFieldName includes the `exceptFieldNames`.
-   * @param typeFieldName
-   * @param typeName
-   * @param fieldNames
-   * @returns boolean
-   */
   static matchesFieldNamesOfTypeName = (
     typeFieldName: string | TypeFieldName,
     typeName: string | TypeName,
@@ -271,29 +389,15 @@ export class TypeFieldName extends GraphqlTypeFieldName {
 
   //#endregion
 
-  //#region `'TypeName.@*FieldName;'`
+  //#region `'TypeName.@*FieldNames;'`
 
-  /**
-   * Use this in the config to specify an option that applies on **any** field of **any** type **excluding** some of its fields
-   * @param exceptFieldNames field names to be excluded
-   * @returns `'TypeName.@*FieldName'`
-   */
   public static buildAnyFieldNameOfTypeName = (typeName: string | TypeName): string => {
     const _typeName = TypeName.fromString(this.valueOf(typeName)).value; // ensures that there is no comma-separated TypeNames in there
     return `${_typeName}.${this.anyFieldName};`;
   };
 
-  /**
-   * returns a RegExp that you can use to test if a string matches `'@*TypeName.@*FieldName-[exceptFieldNames]'`
-   */
   public static regexpForAnyFieldNameOfTypeName = /(?<typeName>\w+\s*)(?<!\s*@\s*\*\s*TypeName\s*)\.@\*FieldName;/gim;
 
-  /**
-   * returns true or false if typeFieldName matches `'@*TypeName.@*FieldName-[exceptFieldNames]'` and the typeFieldName includes the `exceptFieldNames`.
-   * @param typeFieldName
-   * @param exceptFieldNames
-   * @returns boolean
-   */
   static matchesAnyFieldNameOfTypeName = (typeFieldName: string | TypeFieldName, typeName: string | TypeName) => {
     const pattern = this.regexpForAnyFieldNameOfTypeName;
 
@@ -316,13 +420,8 @@ export class TypeFieldName extends GraphqlTypeFieldName {
 
   //#endregion
 
-  //#region `'TypeName.@*FieldName-[exceptFieldNames];'`
+  //#region `'TypeName.@*FieldNames-[exceptFieldNames];'`
 
-  /**
-   * Use this in the config to specify an option that applies on **any** field of **any** type **excluding** some of its fields
-   * @param exceptFieldNames field names to be excluded
-   * @returns `'TypeName.@*FieldName-[exceptFieldNames]'`
-   */
   public static buildAnyFieldNameExceptFieldNamesOfTypeName = (
     typeName: string | TypeName,
     exceptFieldNames: FieldNames
@@ -332,18 +431,9 @@ export class TypeFieldName extends GraphqlTypeFieldName {
     return `${_typeName}.${this.anyFieldName}-[${_fieldNames}];`;
   };
 
-  /**
-   * returns a RegExp that you can use to test if a string matches `'@*TypeName.@*FieldName-[exceptFieldNames]'`
-   */
   public static regexpForAnyFieldNameExceptFieldNamesOfTypeName =
     /(?<typeName>\w+\s*)(?<!\s*@\s*\*\s*TypeName\s*)\.@\*FieldName-\[\s*(?<exceptFieldNames>(\w+,?\s*)*)\];/gim;
 
-  /**
-   * returns true or false if typeFieldName matches `'@*TypeName.@*FieldName-[exceptFieldNames]'` and the typeFieldName includes the `exceptFieldNames`.
-   * @param typeFieldName
-   * @param exceptFieldNames
-   * @returns boolean
-   */
   static matchesAnyFieldNameExceptFieldNamesOfTypeName = (
     typeFieldName: string | TypeFieldName,
     typeName: string | TypeName,
@@ -373,29 +463,15 @@ export class TypeFieldName extends GraphqlTypeFieldName {
 
   //#endregion
 
-  //#region `'@*TypeName.[fieldNames];'`
+  //#region `'@*TypeNames.[fieldNames];'`
 
-  /**
-   * Use this in the config to specify an option that applies on **any** field of **any** type **excluding** some of its fields
-   * @param exceptFieldNames field names to be excluded
-   * @returns `'@*TypeName.@*FieldName-[exceptFieldNames]'`
-   */
   public static buildFieldNamesOfAnyTypeName = (fieldNames: FieldNames): string => {
     const _fieldNames = this.valueOf(fieldNames);
     return `${this.anyTypeName}.[${_fieldNames}];`;
   };
 
-  /**
-   * returns a RegExp that you can use to test if a string matches `'@*TypeName.@*FieldName-[exceptFieldNames]'`
-   */
   public static regexpForFieldNamesOfAnyTypeName = /@\*TypeName\.\[\s*(?<fieldNames>(\w+,?\s*)*)\];/gim;
 
-  /**
-   * returns true or false if typeFieldName matches `'@*TypeName.@*FieldName-[exceptFieldNames]'` and the typeFieldName includes the `exceptFieldNames`.
-   * @param typeFieldName
-   * @param fieldNames
-   * @returns boolean
-   */
   static matchesFieldNamesOfAnyTypeName = (
     typeFieldName: string | TypeFieldName,
     fieldNames: FieldNames,
@@ -422,24 +498,16 @@ export class TypeFieldName extends GraphqlTypeFieldName {
 
   //#endregion
 
-  //#region `'@*TypeName.@*FieldName;'`
+  //#region `'@*TypeNames.@*FieldNames;'`
 
-  /**
-   * Use this in the config to specify an option that applies on **any** field of **any** type **excluding** some of its fields
-   * @param exceptFieldNames field names to be excluded
-   * @returns `'@*TypeName.@*FieldName-[exceptFieldNames]'`
-   */
   public static buildAnyFieldNameOfAnyTypeName = (): string => {
     return `${this.anyTypeName}.${this.anyFieldName};`;
   };
 
-  /**
-   * returns a RegExp that you can use to test if a string matches `'@*TypeName.@*FieldName-[exceptFieldNames]'`
-   */
   public static regexpForAnyFieldNameOfAnyTypeName = /@\*TypeName\.@\*FieldName;/gim;
 
   /**
-   * returns true or false if typeFieldName matches `'@*TypeName.@*FieldName-[exceptFieldNames]'` and the typeFieldName includes the `exceptFieldNames`.
+   * returns true or false if typeFieldName matches `'@*TypeNames.@*FieldNames-[exceptFieldNames]'` and the typeFieldName includes the `exceptFieldNames`.
    * @param typeFieldName
    * @param exceptFieldNames
    * @returns boolean
@@ -454,30 +522,16 @@ export class TypeFieldName extends GraphqlTypeFieldName {
 
   //#endregion
 
-  //#region `'@*TypeName.@*FieldName-[exceptFieldNames];'`
+  //#region `'@*TypeNames.@*FieldNames-[exceptFieldNames];'`
 
-  /**
-   * Use this in the config to specify an option that applies on **any** field of **any** type **excluding** some of its fields
-   * @param exceptFieldNames field names to be excluded
-   * @returns `'@*TypeName.@*FieldName-[exceptFieldNames]'`
-   */
   public static buildAnyFieldNameExceptFieldNamesOfAnyTypeName = (exceptFieldName: FieldNames): string => {
     const _fieldNames = this.valueOf(exceptFieldName);
     return `${this.anyTypeName}.${this.anyFieldName}-[${_fieldNames}];`;
   };
 
-  /**
-   * returns a RegExp that you can use to test if a string matches `'@*TypeName.@*FieldName-[exceptFieldNames]'`
-   */
   public static regexpForAnyFieldNameExceptFieldNamesOfAnyTypeName =
     /@\*TypeName\.@\*FieldName-\[\s*(?<exceptFieldNames>(\w+,?\s*)*)\];/gim;
 
-  /**
-   * returns true or false if typeFieldName matches `'@*TypeName.@*FieldName-[exceptFieldNames]'` and the typeFieldName includes the `exceptFieldNames`.
-   * @param typeFieldName
-   * @param exceptFieldNames
-   * @returns boolean
-   */
   static matchesAnyFieldNameExceptFieldNamesOfAnyTypeName = (
     typeFieldName: string | TypeFieldName,
     exceptFieldNames: FieldNames,
@@ -504,65 +558,8 @@ export class TypeFieldName extends GraphqlTypeFieldName {
 
   //#endregion
 
-  //#region `'@*TypeName-[exceptTypeNames];'`
+  //#region `'@*TypeNames-[exceptTypeNames].[fieldNames];'`
 
-  /**
-   * Use this in the config to specify an option that applies on **any** field of **any** type **excluding** some types and its fields
-   * @param exceptTypeNames type names to be excluded
-   * @param fieldNames field names to be excluded
-   * @returns `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'`
-   */
-  public static buildAnyTypeNameExceptTypeNames = (exceptTypeNames: TypeNames): string => {
-    const _typeNames = this.valueOf(exceptTypeNames);
-    return `${this.anyTypeName}-[${_typeNames}];`;
-  };
-
-  /**
-   * returns a RegExp that you can use to test if a string matches `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'`
-   */
-  public static regexpForAnyTypeNameExceptTypeNames = /@\*TypeName-\[\s*(?<exceptTypeNames>(\w+,?\s*)*)\];/gim;
-
-  /**
-   * returns true or false if typeFieldName matches `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'` and the typeFieldName includes the `exceptTypeNames` and `exceptFieldNames`.
-   * @param typeFieldName
-   * @param exceptTypeNames
-   * @param fieldNames
-   * @returns boolean
-   */
-  static matchesAnyTypeNameExceptTypeNames = (
-    typeFieldName: string | TypeFieldName,
-    exceptTypeNames: TypeNames,
-    matchAllTypeNames = false
-  ) => {
-    const pattern = this.regexpForAnyTypeNameExceptTypeNames;
-
-    const _typeFieldName = this.valueOf(typeFieldName);
-    const _typeNames = this.valueOf(exceptTypeNames);
-
-    let result: RegExpExecArray | null;
-    let matchFound: boolean;
-
-    while ((result = pattern.exec(_typeFieldName)) !== null) {
-      const typeNames = result.groups.exceptTypeNames;
-
-      matchFound = this.matchAll(typeNames, _typeNames, matchAllTypeNames);
-
-      if (matchFound) break;
-    }
-    this.resetIndex(pattern);
-    return matchFound;
-  };
-
-  //#endregion
-
-  //#region `'@*TypeName-[exceptTypeNames].[fieldNames];'`
-
-  /**
-   * Use this in the config to specify an option that applies on **any** field of **any** type **excluding** some types and its fields
-   * @param exceptTypeNames type names to be excluded
-   * @param fieldNames field names to be excluded
-   * @returns `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'`
-   */
   public static buildFieldNamesOfAnyTypeNameExceptTypeNames = (
     exceptTypeNames: TypeNames,
     fieldNames: FieldNames
@@ -572,19 +569,9 @@ export class TypeFieldName extends GraphqlTypeFieldName {
     return `${this.anyTypeName}-[${_typeNames}].[${_fieldNames}];`;
   };
 
-  /**
-   * returns a RegExp that you can use to test if a string matches `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'`
-   */
   public static regexpForFieldNamesOfAnyTypeNameExceptTypeNames =
     /@\*TypeName-\[\s*(?<exceptTypeNames>(\w+,?\s*)*)\]\.\[\s*(?<fieldNames>(\w+,?\s*)*)\];/gim;
 
-  /**
-   * returns true or false if typeFieldName matches `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'` and the typeFieldName includes the `exceptTypeNames` and `exceptFieldNames`.
-   * @param typeFieldName
-   * @param exceptTypeNames
-   * @param fieldNames
-   * @returns boolean
-   */
   static matchesFieldNamesOfAnyTypeNameExceptTypeNames = (
     typeFieldName: string | TypeFieldName,
     exceptTypeNames: TypeNames,
@@ -617,31 +604,16 @@ export class TypeFieldName extends GraphqlTypeFieldName {
 
   //#endregion
 
-  //#region `'@*TypeName-[exceptTypeNames].@*FieldName;'`
+  //#region `'@*TypeNames-[exceptTypeNames].@*FieldNames;'`
 
-  /**
-   * Use this in the config to specify an option that applies on **any** field of **any** type **excluding** some types
-   * @param exceptTypeNames type names to be excluded
-   * @returns `'@*TypeName-[exceptTypeNames].@*FieldName'`
-   */
   public static buildAnyFieldNameOfAnyTypeNameExceptTypeNames = (exceptTypeNames: TypeNames): string => {
     const _typeNames = this.valueOf(exceptTypeNames);
     return `${this.anyTypeName}-[${_typeNames}].${this.anyFieldName};`;
   };
 
-  /**
-   * returns a RegExp that you can use to test if a string matches `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'`
-   */
   public static regexpForAnyFieldNameOfAnyTypeNameExceptTypeNames =
     /@\*TypeName-\[\s*(?<exceptTypeNames>(\w+,?\s*)*)\]\.@\*FieldName;/gim;
 
-  /**
-   * returns true or false if typeFieldName matches `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'` and the typeFieldName includes the `exceptTypeNames` and `exceptFieldNames`.
-   * @param typeFieldName
-   * @param exceptTypeNames
-   * @param exceptFieldNames
-   * @returns boolean
-   */
   static matchesAnyFieldNameOfAnyTypeNameExceptTypeNames = (
     typeFieldName: string | TypeFieldName,
     exceptTypeNames: TypeNames,
@@ -668,14 +640,8 @@ export class TypeFieldName extends GraphqlTypeFieldName {
 
   //#endregion
 
-  //#region `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames];'`
+  //#region `'@*TypeNames-[exceptTypeNames].@*FieldNames-[exceptFieldNames];'`
 
-  /**
-   * Use this in the config to specify an option that applies on **any** field of **any** type **excluding** some types and its fields
-   * @param exceptTypeNames type names to be excluded
-   * @param exceptFieldNames field names to be excluded
-   * @returns `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'`
-   */
   public static buildAnyFieldNameExceptFieldNamesOfAnyTypeNameExceptTypeNames = (
     exceptTypeNames: TypeNames,
     exceptFieldNames: FieldNames
@@ -685,19 +651,9 @@ export class TypeFieldName extends GraphqlTypeFieldName {
     return `${this.anyTypeName}-[${_typeNames}].${this.anyFieldName}-[${_fieldNames}];`;
   };
 
-  /**
-   * returns a RegExp that you can use to test if a string matches `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'`
-   */
   public static regexpForAnyFieldNameExceptFieldNamesOfAnyTypeNameExceptTypeNames =
     /@\*TypeName-\[\s*(?<exceptTypeNames>(\w+,?\s*)*)\]\.@\*FieldName-\[\s*(?<exceptFieldNames>(\w+,?\s*)*)\];/gim;
 
-  /**
-   * returns true or false if typeFieldName matches `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'` and the typeFieldName includes the `exceptTypeNames` and `exceptFieldNames`.
-   * @param typeFieldName
-   * @param exceptTypeNames
-   * @param exceptFieldNames
-   * @returns boolean
-   */
   static matchesAnyFieldNameExceptFieldNamesOfAnyTypeNameExceptTypeNames = (
     typeFieldName: string | TypeFieldName,
     exceptTypeNames: TypeNames,

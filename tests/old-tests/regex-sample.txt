@@ -1,6 +1,6 @@
-regexr.com/73nir
+regexr.com/74nir
 
-'Droid; Droid.[id,name,friends]; Droid.@*FieldName; Droid; Droid.@*FieldName-[name,id];  Droid.[id,name,friends]; Starship; Starship.[name,id]; Droid.@*FieldName-[name,id];Droid.@*FieldName-[name,id]; Starship.@*FieldName-[name,id]; @*TypeName; '@*TypeName.[id,name,friends]; @*TypeName.@*FieldName; @*TypeName-[Droid,Starship].@*FieldName-[id,name,friends]; @*TypeName.@*FieldName-[id,name,friends]; @*TypeName-[Droid,Starship]; @*TypeName-[Droid,Starship].[id,name,friends]; @*TypeName-[Droid,Starship].@*FieldName;  @*TypeName-[Droid,Starship].@*FieldName-[id,name,friends];'
+'Droid; Droid.[id,name,friends]; Droid.@*FieldNames; Droid; Droid.@*FieldNames-[name,id];  Droid.[id,name,friends]; Starship; Starship.[name,id]; Droid.@*FieldNames-[name,id];Droid.@*FieldNames-[name,id]; Starship.@*FieldNames-[name,id]; @*TypeNames; '@*TypeNames.[id,name,friends]; @*TypeNames.@*FieldNames; @*TypeNames-[Droid,Starship].@*FieldNames-[id,name,friends]; @*TypeNames.@*FieldNames-[id,name,friends]; @*TypeNames-[Droid,Starship]; @*TypeNames-[Droid,Starship].[id,name,friends]; @*TypeNames-[Droid,Starship].@*FieldNames;  @*TypeNames-[Droid,Starship].@*FieldNames-[id,name,friends];'
 
 ################################################
 # Single Type Declarations                     #
@@ -13,11 +13,11 @@ regexr.com/73nir
 'Droid.[id,name,friends];'
 
 (?<typeName>\w+\s*)(?<!\s*@\s*\*\s*TypeName\s*)\.@\*FieldName;
-'Droid.@*FieldName;'
+'Droid.@*FieldNames;'
 
 
 (?<typeName>\w+\s*)(?<!\s*@\s*\*\s*TypeName\s*)\.@\*FieldName-\[\s*(?<exceptFieldNames>(\w+,?\s*)*)\];
-'Droid.@*FieldName-[name,id];'
+'Droid.@*FieldNames-[name,id];'
 
 
 
@@ -33,10 +33,10 @@ regexr.com/73nir
 'Droid.[id,name,friends]; Starship.[name,id];'
 
 (?<typeName>\w+\s*)(?<!\s*@\s*\*\s*TypeName\s*)\.@\*FieldName;
-'Droid.@*FieldName; Starship.@*FieldName;'
+'Droid.@*FieldNames; Starship.@*FieldNames;'
 
 (?<typeName>\w+\s*)(?<!\s*@\s*\*\s*TypeName\s*)\.@\*FieldName-\[\s*(?<exceptFieldNames>(\w+,?\s*)*)\];
-'Droid.@*FieldName-[name,id];Droid.@*FieldName-[name,id]; Starship.@*FieldName-[name,id];'
+'Droid.@*FieldNames-[name,id];Droid.@*FieldNames-[name,id]; Starship.@*FieldNames-[name,id];'
 
 
 
@@ -46,22 +46,22 @@ regexr.com/73nir
 *************************************************************************************************************************
 @\*TypeName;
 
-'@*TypeName;'
+'@*TypeNames;'
 
 *************************************************************************************************************************
 @\*TypeName\.\[\s*(?<fieldNames>(\w+,?\s*)*)\];
 
-'@*TypeName.[id,name,friends];'
+'@*TypeNames.[id,name,friends];'
 
 *************************************************************************************************************************
 @\*TypeName\.@\*FieldName;
 
-'@*TypeName.@*FieldName;'
+'@*TypeNames.@*FieldNames;'
 
 *************************************************************************************************************************
 @\*TypeName\.@\*FieldName-\[\s*(?<exceptFieldNames>(\w+,?\s*)*)\];
 
-'@*TypeName.@*FieldName-[id,name,friends];'
+'@*TypeNames.@*FieldNames-[id,name,friends];'
 
 
 
@@ -72,36 +72,37 @@ regexr.com/73nir
 *************************************************************************************************************************
 @\*TypeName-\[\s*(?<exceptTypeNames>(\w+,?\s*)*)\];
 
-'@*TypeName-[Droid,Starship];'
+'@*TypeNames-[Droid,Starship];'
 
 
 *************************************************************************************************************************
 @\*TypeName-\[\s*(?<exceptTypeNames>(\w+,?\s*)*)\]\.\[\s*(?<fieldNames>(\w+,?\s*)*)\];
 
-'@*TypeName-[Droid, Starship].[id,name,friends];'
+'@*TypeNames-[Droid, Starship].[id,name,friends];'
 
 *************************************************************************************************************************
 @\*TypeName-\[\s*(?<exceptTypeNames>(\w+,?\s*)*)\]\.@\*FieldName;
 
-'@*TypeName-[
+'@*TypeNames-[
   Droid,
   Starship
-].@*FieldName; 
+].@*FieldNames; 
 
-@*TypeName-[Droid,Starship].@*FieldName;'
+@*TypeNames-[Droid,Starship].@*FieldNames;'
 
 
 *************************************************************************************************************************
 @\*TypeName-\[\s*(?<exceptTypeNames>(\w+,?\s*)*)\]\.@\*FieldName-\[\s*(?<exceptFieldNames>(\w+,?\s*)*)\];
 
-'@*TypeName-[Droid,Starship].@*FieldName-[id,name,friends];'
+'@*TypeNames-[Droid,Starship].@*FieldNames-[id,name,friends];'
 
-'@*TypeName-[
+'@*TypeNames-[
   Droid,
   Starship
-].@*FieldName-[
+].@*FieldNames-[
   id,
   name,
   friends
 ];'
 
+'@*TypeNames;'

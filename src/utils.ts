@@ -2,7 +2,7 @@
 
 import { camelCase, pascalCase, snakeCase } from 'change-case-all';
 import { DefinitionNode, ObjectTypeDefinitionNode, InputObjectTypeDefinitionNode, Kind } from 'graphql';
-import { AppliesOn, DartIdentifierCasing, ObjectType } from './config/config';
+import { AppliesOn, DartIdentifierCasing, ObjectType } from './config/plugin-config';
 
 export const nodeIsObjectType = (
   node: DefinitionNode

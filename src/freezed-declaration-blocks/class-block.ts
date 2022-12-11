@@ -1,6 +1,12 @@
 import { indent } from '@graphql-codegen/visitor-plugin-common';
 import { camelCase } from 'change-case-all';
 import { Kind } from 'graphql';
+import { Config } from '../config/config-value';
+import { FlutterFreezedPluginConfig, NodeType } from '../config/plugin-config';
+import { TypeName } from '../config/type-field-name';
+import { buildComment } from '.';
+import { BlockName } from './block-name';
+import { FactoryBlock } from './factory-block';
 
 export class ClassBlock {
   public static build(config: FlutterFreezedPluginConfig, node: NodeType): string {
@@ -87,7 +93,7 @@ export class ClassBlock {
 
   public static buildFooter = (config: FlutterFreezedPluginConfig, typeName: TypeName): string => {
     const blockName = BlockName.asClassName(config, typeName);
-    const fromJsonToJson = true; // TODO: GEt this from config
+    const fromJsonToJson = Config.fromJsonToJson
 
     if (fromJsonToJson) {
       return indent(`factory ${blockName}.fromJson(Map<String, dynamic> json) => _$${blockName}FromJson(json);\n}\n\n`);

@@ -51,7 +51,7 @@ export type FlutterFreezedPluginConfig = {
 
   /**
    * @name copyWith
-   * @type {(boolean | TypeName | TypeName[])}
+   * @type {(boolean | TypeNameValue | TypeNameValue[])}
    * @summary enables Freezed copyWith helper method
    * @description The plugin by default generates immutable Freezed models using the `@freezed` decorator.
    *
@@ -85,7 +85,7 @@ export type FlutterFreezedPluginConfig = {
    * ```
    */
 
-  copyWith?: boolean | TypeName | TypeName[];
+  copyWith?: boolean | TypeNameValue | TypeNameValue[];
 
   /**
    * @name customScalars
@@ -146,7 +146,7 @@ export type FlutterFreezedPluginConfig = {
    *           // ...
    *           defaultValues: [
    *             ['MovieCharacter.[appearsIn]', `Episode.jedi`, ['default_factory_parameter']],
-   *             ['@*TypeName.[id]', `UUID.new()`, ['parameter']],
+   *             ['@*TypeNames.[id]', `UUID.new()`, ['parameter']],
    *           ],
    *         },
    *       },
@@ -157,7 +157,7 @@ export type FlutterFreezedPluginConfig = {
    * ```
    */
   defaultValues?: [
-    typeFieldName: TypeFieldName,
+    typeFieldName: TypeFieldNameValue,
     value: string, // use backticks for string values
     appliesOn: AppliesOnParameters[]
   ][];
@@ -191,7 +191,7 @@ export type FlutterFreezedPluginConfig = {
    * export default config;
    * ```
    */
-  deprecated?: [typeFieldName: TypeFieldName, appliesOn: (AppliesOnFactory | AppliesOnParameters)[]][];
+  deprecated?: [typeFieldName: TypeFieldNameValue, appliesOn: (AppliesOnFactory | AppliesOnParameters)[]][];
 
   /**
    * @name equal
@@ -224,7 +224,7 @@ export type FlutterFreezedPluginConfig = {
    * export default config;
    * ```
    */
-  equal?: boolean | TypeName | TypeName[];
+  equal?: boolean | TypeNameValue | TypeNameValue[];
 
   /**
    * @name escapeDartKeywords
@@ -256,7 +256,7 @@ export type FlutterFreezedPluginConfig = {
    *           // OR configure how Dart keywords are handled for each type
    *           escapeDartKeywords: [
    *             [
-   *               'Episode.@*FieldName',
+   *               'Episode.@*FieldNames',
    *               // `prefix`: defaults to an empty string `''` if undefined.
    *               // Using a underscore `_` as a prefix will make the field as private
    *               undefined,
@@ -280,7 +280,7 @@ export type FlutterFreezedPluginConfig = {
   escapeDartKeywords?:
     | boolean
     | [
-        typeFieldName: TypeFieldName,
+        typeFieldName: TypeFieldNameValue,
         prefix?: string,
         suffix?: string,
         casing?: DartIdentifierCasing,
@@ -320,7 +320,7 @@ export type FlutterFreezedPluginConfig = {
    * export default config;
    * ```
    */
-  final?: [typeFieldName: TypeFieldName, appliesOn: AppliesOnParameters[]][];
+  final?: [typeFieldName: TypeFieldNameValue, appliesOn: AppliesOnParameters[]][];
 
   /**
    *
@@ -398,7 +398,7 @@ export type FlutterFreezedPluginConfig = {
   fromJsonToJson?:
     | boolean
     | [
-        typeFieldName: TypeFieldName,
+        typeFieldName: TypeFieldNameValue,
         classOrFunctionName: string,
         useClassConverter?: boolean,
         appliesOn?: AppliesOnParameters[]
@@ -430,7 +430,7 @@ export type FlutterFreezedPluginConfig = {
    * export default config;
    * ```
    */
-  ignoreTypes?: TypeName[];
+  ignoreTypes?: TypeNameValue[];
 
   /**
    * @name immutable
@@ -462,7 +462,7 @@ export type FlutterFreezedPluginConfig = {
    * export default config;
    * ```
    */
-  immutable?: boolean | TypeName | TypeName[];
+  immutable?: boolean | TypeNameValue | TypeNameValue[];
 
   /**
    * @name makeCollectionsUnmodifiable
@@ -494,7 +494,7 @@ export type FlutterFreezedPluginConfig = {
    * export default config;
    * ```
    */
-  makeCollectionsUnmodifiable?: boolean | TypeName | TypeName[];
+  makeCollectionsUnmodifiable?: boolean | TypeNameValue | TypeNameValue[];
 
   /**
    * @name mergeInputs
@@ -511,7 +511,7 @@ export type FlutterFreezedPluginConfig = {
    *      mergeInputs: ["Create$Input", "Update$Input", "Delete$Input"]
    * ```
    */
-  mergeInputs?: [typeName: TypeName, mergeWithTypeNames: TypeName[]][];
+  mergeInputs?: [typeName: TypeNameValue, mergeWithTypeNames: TypeNameValue[]][];
 
   /**
    * @name mutableInputs
@@ -543,7 +543,7 @@ export type FlutterFreezedPluginConfig = {
    * export default config;
    * ```
    */
-  mutableInputs?: boolean | TypeName | TypeName[];
+  mutableInputs?: boolean | TypeNameValue | TypeNameValue[];
 
   /**
    * @name privateEmptyConstructor
@@ -575,7 +575,7 @@ export type FlutterFreezedPluginConfig = {
    * export default config;
    * ```
    */
-  privateEmptyConstructor?: boolean | TypeName | TypeName[];
+  privateEmptyConstructor?: boolean | TypeNameValue | TypeNameValue[];
 
   /**
    * @name unionClass
@@ -618,7 +618,7 @@ export type FlutterFreezedPluginConfig = {
     /**
      * The name of the Graphql Union Type (or in the case of merged types, the base type on which other types are merged with)
      */
-    unionTypeName: TypeName | string,
+    unionTypeName: TypeNameValue | string,
 
     /**
      * in a fromJSON/toJson encoding a response/object({key:value}), you can specify what name should be used as the key ?
@@ -633,7 +633,7 @@ export type FlutterFreezedPluginConfig = {
     /**
      * just as the unionKey changes the key used, this changes the value for each union/sealed factories
      */
-    unionValuesNameMap?: Record<TypeName | string, string>
+    unionValuesNameMap?: Record<TypeNameValue | string, string>
   ][];
 };
 
@@ -642,58 +642,58 @@ export type FlutterFreezedPluginConfig = {
 //#region type alias
 
 /**
- * @name TypeName
+ * @name TypeNameValue
  * @see [TypeName]()
  * @description A comma-separated string of GraphQL Type Names. Use the `globalTypeFieldName` to apply the same config options to all GraphQL Types.
  * @exampleMarkdown
 
  *
  */
-export type TypeName = _TypeName['value'];
+export type TypeNameValue = _TypeName['value'];
 
 /**
- * @name TypeFieldName
+ * @name TypeFieldNameValue
  * @see [TypeFieldName]()
  * @description A compact string of GraphQL Type and Field Names separated with a  dot(`.`) used in the config for specifying options for a list of Graphql Types and Fields
  * @exampleMarkdown
  * ### Configuring GraphQL Types
  * ```ts
- *  let typeName3:TypeFieldName = '@*TypeName' //  This example applies for all GraphQL Types
+ *  let typeName3 = '@*TypeNames' //  This example applies for all GraphQL Types
  *
- *  let typeName4:TypeFieldName = '@*TypeName-[Human,Movie]' // if there are many types to be specified, use this to specify those to be **excluded**. This example applies on all types in the GraphQL Schema except the `Human` and `Movie` types
+ *  let typeName4 = '@*TypeNames-[Human,Movie]' // if there are many types to be specified, use this to specify those to be **excluded**. This example applies on all types in the GraphQL Schema except the `Human` and `Movie` types
  *
- * let typeName1:TypeFieldName = 'Droid' // This example applies on the Droid GraphQL Type
+ * let typeName1 = 'Droid' // This example applies on the Droid GraphQL Type
  *
- * let typeName2:TypeFieldName = 'Droid, Starship' // a comma-separated string of GraphQL Type names. This example applies on the Droid and Starship GraphQL Types
+ * let typeName2 = 'Droid, Starship' // a comma-separated string of GraphQL Type names. This example applies on the Droid and Starship GraphQL Types
  *
  * ```
  *
  * ### Configuring the fields of GraphQL Types
  * ```ts
- * let typeFieldName1:TypeFieldName = 'Droid.[id,friends]' // in an array, specify one or more fields for that GraphQL Type. This example applies on the `id` and `friends` fields of the Droid GraphQL Type
+ * let typeFieldName1 = 'Droid.[id,friends]' // in an array, specify one or more fields for that GraphQL Type. This example applies on the `id` and `friends` fields of the Droid GraphQL Type
  *
- * let typeFieldName2:TypeFieldName = 'Droid.[id,friends], Starship.[id], @*TypeName.[id,name]' // same as `typeFieldName1` but for more than one GraphQL Type
+ * let typeFieldName2 = 'Droid.[id,friends], Starship.[id], @*TypeNames.[id,name]' // same as `typeFieldName1` but for more than one GraphQL Type
  *
- * let typeFieldName3:TypeFieldName = 'Droid.@*FieldName' // applies on all fields of the Droid GraphQL Type
+ * let typeFieldName3 = 'Droid.@*FieldNames' // applies on all fields of the Droid GraphQL Type
  *
- * let typeFieldName4:TypeFieldName = 'Droid.@*FieldName-[name,appearsIn]' // if there are many fields to be specified, use this to specify those to be **excluded**. This example applies on all of the fields of the Droid GraphQL Type except the `name` and `appearsIn` fields
- *
- *
- * let typeFieldName5:TypeFieldName = '@*TypeName.[id]' // applies on the `id` field of any GraphQL Types
+ * let typeFieldName4 = 'Droid.@*FieldNames-[name,appearsIn]' // if there are many fields to be specified, use this to specify those to be **excluded**. This example applies on all of the fields of the Droid GraphQL Type except the `name` and `appearsIn` fields
  *
  *
- * let typeFieldName6:TypeFieldName = '@*TypeName-[Human,Starship].[id]' // applies on the `id` field of any GraphQL Types except the `Human` and `Starship` types
+ * let typeFieldName5 = '@*TypeNames.[id]' // applies on the `id` field of any GraphQL Types
  *
- * let typeFieldName7:TypeFieldName = '@*TypeName.@*FieldName' // applies on all of the fields of the GraphQL Types
  *
- * let typeFieldName8:TypeFieldName = '@*TypeName-[Human,Starship].@*FieldName' // applies on all of the fields of the GraphQL Types except the `Human` and `Starship` types
+ * let typeFieldName6 = '@*TypeNames-[Human,Starship].[id]' // applies on the `id` field of any GraphQL Types except the `Human` and `Starship` types
  *
- * let typeFieldName9:TypeFieldName = '@*TypeName.@*FieldName-[id,name]' // applies on all of the fields of the GraphQL Types except the `id` and `name` fields
+ * let typeFieldName7 = '@*TypeNames.@*FieldNames' // applies on all of the fields of the GraphQL Types
  *
- * let typeFieldName10:TypeFieldName = '@*TypeName-[Human,Movie].@*FieldName-[id,name]' // applies on all of the fields of the GraphQL Types except the `Human` and `Starship` types and the `id` and `name` fields
+ * let typeFieldName8 = '@*TypeNames-[Human,Starship].@*FieldNames' // applies on all of the fields of the GraphQL Types except the `Human` and `Starship` types
+ *
+ * let typeFieldName9 = '@*TypeNames.@*FieldNames-[id,name]' // applies on all of the fields of the GraphQL Types except the `id` and `name` fields
+ *
+ * let typeFieldName10 = '@*TypeNames-[Human,Movie].@*FieldNames-[id,name]' // applies on all of the fields of the GraphQL Types except the `Human` and `Starship` types and the `id` and `name` fields
  * ```
  * */
-export type TypeFieldName = _TypeFieldName['value'];
+export type TypeFieldNameValue = _TypeFieldName['value'];
 
 /**
  * @name ApplyDecoratorOn

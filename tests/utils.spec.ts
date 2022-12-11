@@ -1,7 +1,7 @@
 import { transformSchemaAST } from '@graphql-codegen/schema-ast';
 import { starWarsSchema } from './schema';
 import { appliesOnBlock, dartCasing, nodeIsObjectType, NodeRepository } from '../src/utils';
-import { defaultFreezedPluginConfig, APPLIES_ON_PARAMETERS, ObjectType } from '../src/config/config';
+import { defaultFreezedPluginConfig, APPLIES_ON_PARAMETERS, ObjectType } from '../src/config/plugin-config';
 
 const {
   ast: { definitions: nodes },

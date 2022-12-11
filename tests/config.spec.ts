@@ -1,12 +1,13 @@
-import { Config } from '../src/config/index';
+import { indent } from '@graphql-codegen/visitor-plugin-common';
+
 import {
   APPLIES_ON_NAMED_FACTORY_PARAMETERS_FOR_UNION_TYPES,
   DART_KEYWORDS,
   DART_SCALARS,
   defaultFreezedPluginConfig,
-} from '../src/config/config';
+} from '../src/config/plugin-config';
 import { FieldName, TypeName } from '../src/config/type-field-name';
-import { indent } from '@graphql-codegen/visitor-plugin-common';
+import { Config } from '../src/config/config-value';
 
 test("integrity checks: ensures that these values don't change and if they are updated accordingly", () => {
   expect(DART_SCALARS).toMatchObject({
@@ -205,7 +206,7 @@ describe('given an option in the config, it will matches all patterns and return
       //TODO: Discuss on whether this name-convention pattern approach is preferred over explicity mapping them
       // TODO: Find out if TypeFieldName can be used here to specify merging globally
       // [
-      //   '@*TypeName-[list all Object/Input Types to be excluded here]',
+      //   '@*TypeNames-[list all Object/Input Types to be excluded here]',
       //   [
       //     // `$` will be replaced with a Type name if the replacement produces a full valid Type name
       //     // you can list each type in a string
@@ -254,7 +255,7 @@ describe('given an option in the config, it will matches all patterns and return
     ];
 
     expect(Config.unionClassConfig(config, 1, TypeName.fromString('Movie'))).toBe('instance');
-    // without a `unionTypeName`, it will fallback to use `@*TypeName`, which in this case, was not specified in the config
+    // without a `unionTypeName`, it will fallback to use `@*TypeNames`, which in this case, was not specified in the config
     expect(Config.unionClassConfig(config, 1)).toBeUndefined();
 
     expect(Config.unionKey(config, TypeName.fromString('SearchResult'))).toBe('constructor');
@@ -305,7 +306,7 @@ describe('given an option in the config, it will matches all patterns and return
 
   describe('typeFieldNameOptionValue', () => {
     const config2 = Config.create({
-      final: [['@*TypeName.@*FieldName-[id, name, friends]; Droid.[id];', ['parameter']]],
+      final: [['@*TypeNames.@*FieldNames-[id, name, friends]; Droid.[id];', ['parameter']]],
     });
 
     expect(
@@ -334,19 +335,19 @@ describe('given an option in the config, it will matches all patterns and return
     const allTypeFieldNames = `
       Droid;
       Droid.[id,name,friends];
-      Droid.@*FieldName;
-      Droid.@*FieldName-[name,id];
+      Droid.@*FieldNames;
+      Droid.@*FieldNames-[name,id];
       Starship;
       Starship.[name,id];
-      Starship.@*FieldName-[name,id];
-      @*TypeName;
-      @*TypeName.[id,name,friends];
-      @*TypeName.@*FieldName;
-      @*TypeName.@*FieldName-[id,name,friends];
-      @*TypeName-[Droid,Starship];
-      @*TypeName-[Droid,Starship].[id,name,friends];
-      @*TypeName-[Droid,Starship].@*FieldName;
-      @*TypeName-[Droid,Starship].@*FieldName-[id,name,friends];
+      Starship.@*FieldNames-[name,id];
+      @*TypeNames;
+      @*TypeNames.[id,name,friends];
+      @*TypeNames.@*FieldNames;
+      @*TypeNames.@*FieldNames-[id,name,friends];
+      @*TypeNames-[Droid,Starship];
+      @*TypeNames-[Droid,Starship].[id,name,friends];
+      @*TypeNames-[Droid,Starship].@*FieldNames;
+      @*TypeNames-[Droid,Starship].@*FieldNames-[id,name,friends];
       Droid.[id];
     `;
 

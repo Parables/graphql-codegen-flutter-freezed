@@ -1,16 +1,16 @@
 import { FieldName, TypeFieldName, TypeName } from '../src/config/type-field-name';
-const anyTypeName = '@*TypeName';
-const anyFieldName = '@*FieldName';
+const anyTypeName = '@*TypeNames';
+const anyFieldName = '@*FieldNames';
 
 describe("integrity checks: ensures that these values don't change and if they are updated accordingly", () => {
   describe('anyTypeName and anyFieldName', () => {
-    it('is set to @*TypeName', () => {
+    it('is set to @*TypeNames', () => {
       expect(TypeName.anyTypeName).toBe(anyTypeName);
       expect(FieldName.anyTypeName).toBe(anyTypeName);
       expect(TypeFieldName.anyTypeName).toBe(anyTypeName);
     });
 
-    it('is set to @*FieldName ', () => {
+    it('is set to @*FieldNames ', () => {
       expect(TypeName.anyFieldName).toBe(anyFieldName);
       expect(FieldName.anyFieldName).toBe(anyFieldName);
       expect(TypeFieldName.anyFieldName).toBe(anyFieldName);
@@ -144,14 +144,14 @@ describe('TypeFieldName can be created with builder methods', () => {
       ).toBe(true);
       //#endregion
 
-      //#region `'TypeName.@*FieldName'`
+      //#region `'TypeName.@*FieldNames'`
       const anyFieldNameOfTypeName = `Droid.${anyFieldName};`;
 
       expect(TypeFieldName.buildAnyFieldNameOfTypeName(typeName)).toBe(anyFieldNameOfTypeName);
       expect(TypeFieldName.matchesAnyFieldNameOfTypeName(anyFieldNameOfTypeName, typeName)).toBe(true);
       //#endregion
 
-      //#region `'TypeName.@*FieldName-[exceptFieldNames]'`
+      //#region `'TypeName.@*FieldNames-[exceptFieldNames]'`
       const anyFieldNameExceptFieldNamesOfTypeName = `Droid.${anyFieldName}-[${trimmedFieldNames}];`;
 
       expect(TypeFieldName.buildAnyFieldNameExceptFieldNamesOfTypeName(typeName, fieldNames)).toBe(
@@ -166,21 +166,21 @@ describe('TypeFieldName can be created with builder methods', () => {
       ).toBe(true);
       //#endregion
 
-      //#region `'@*TypeName.[fieldNames];'`
+      //#region `'@*TypeNames.[fieldNames];'`
       const fieldNamesOfAnyTypeName = `${anyTypeName}.[${trimmedFieldNames}];`;
 
       expect(TypeFieldName.buildFieldNamesOfAnyTypeName(fieldNames)).toBe(fieldNamesOfAnyTypeName);
       expect(TypeFieldName.matchesFieldNamesOfAnyTypeName(fieldNamesOfAnyTypeName, fieldNames)).toBe(true);
       //#endregion
 
-      //#region `'@*TypeName.@*FieldName'`
+      //#region `'@*TypeNames.@*FieldNames'`
       const anyFieldNameOfAnyTypeName = `${anyTypeName}.${anyFieldName};`;
 
       expect(TypeFieldName.buildAnyFieldNameOfAnyTypeName()).toBe(anyFieldNameOfAnyTypeName);
       expect(TypeFieldName.matchesAnyFieldNameOfAnyTypeName(anyFieldNameOfAnyTypeName)).toBe(true);
       //#endregion
 
-      //#region `'@*TypeName.@*FieldName-[exceptFieldNames]'`
+      //#region `'@*TypeNames.@*FieldNames-[exceptFieldNames]'`
       const anyFieldNameExceptFieldNamesOfAnyTypeName = `${anyTypeName}.${anyFieldName}-[${trimmedFieldNames}];`;
 
       expect(TypeFieldName.buildAnyFieldNameExceptFieldNamesOfAnyTypeName(fieldNames)).toBe(
@@ -194,14 +194,14 @@ describe('TypeFieldName can be created with builder methods', () => {
       ).toBe(true);
       //#endregion
 
-      //#region  `'@*TypeName-[exceptTypeNames]'`
+      //#region  `'@*TypeNames-[exceptTypeNames]'`
       const anyTypeNameExceptTypeNames = `${anyTypeName}-[${trimmedTypeNames}];`;
 
       expect(TypeFieldName.buildAnyTypeNameExceptTypeNames(typeNames)).toBe(anyTypeNameExceptTypeNames);
       expect(TypeFieldName.matchesAnyTypeNameExceptTypeNames(anyTypeNameExceptTypeNames, typeNames)).toBe(true);
       //#endregion
 
-      //#region  `'@*TypeName-[exceptTypeNames].[fieldNames]'`
+      //#region  `'@*TypeNames-[exceptTypeNames].[fieldNames]'`
       const fieldNamesOfAnyTypeNameExceptTypeNames = `${anyTypeName}-[${trimmedTypeNames}].[${trimmedFieldNames}];`;
 
       expect(TypeFieldName.buildFieldNamesOfAnyTypeNameExceptTypeNames(typeNames, fieldNames)).toBe(
@@ -216,7 +216,7 @@ describe('TypeFieldName can be created with builder methods', () => {
       ).toBe(true);
       //#endregion
 
-      //#region `'@*TypeName-[exceptTypeNames].@*FieldName'`
+      //#region `'@*TypeNames-[exceptTypeNames].@*FieldNames'`
       const anyFieldNameOfAnyTypeNameExceptTypeNames = `${anyTypeName}-[${trimmedTypeNames}].${anyFieldName};`;
 
       expect(TypeFieldName.buildAnyFieldNameOfAnyTypeNameExceptTypeNames(typeNames)).toBe(
@@ -230,7 +230,7 @@ describe('TypeFieldName can be created with builder methods', () => {
       ).toBe(true);
       //#endregion
 
-      //#region  `'@*TypeName-[exceptTypeNames].@*FieldName-[exceptFieldNames]'`
+      //#region  `'@*TypeNames-[exceptTypeNames].@*FieldNames-[exceptFieldNames]'`
       const anyFieldNameExceptFieldNamesOfAnyTypeNameExceptTypeNames = `${anyTypeName}-[${trimmedTypeNames}].${anyFieldName}-[${trimmedFieldNames}];`;
       expect(TypeFieldName.buildAnyFieldNameExceptFieldNamesOfAnyTypeNameExceptTypeNames(typeNames, fieldNames)).toBe(
         anyFieldNameExceptFieldNamesOfAnyTypeNameExceptTypeNames

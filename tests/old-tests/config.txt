@@ -11,8 +11,8 @@ export const customScalarConfig = mergeConfig({
 export const alwaysUseJsonKeyNameConfig = mergeConfig({
   typeConfig: {
     alwaysUseJsonKeyName: [
-      ['Droid.id, Starship.@*FieldName', ['default_factory_parameter', 'named_factory_parameter']],
-      ['@*TypeName.@*FieldName', ['parameter']],
+      ['Droid.id, Starship.@*FieldNames', ['default_factory_parameter', 'named_factory_parameter']],
+      ['@*TypeNames.@*FieldNames', ['parameter']],
     ],
   },
 });

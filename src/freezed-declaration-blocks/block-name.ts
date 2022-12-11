@@ -1,6 +1,6 @@
 import { camelCase } from 'change-case-all';
-import { Config } from '../config';
-import { DART_KEYWORDS, FlutterFreezedPluginConfig, DartIdentifierCasing } from '../config/config';
+import { Config } from '../config/config-value';
+import { DART_KEYWORDS, FlutterFreezedPluginConfig, DartIdentifierCasing } from '../config/plugin-config';
 import { TypeName, FieldName } from '../config/type-field-name';
 import { dartCasing } from '../utils';
 
@@ -41,16 +41,11 @@ export class BlockName {
    */
   public static escapeDartKeyword = (
     config: FlutterFreezedPluginConfig,
-    name: TypeName | FieldName,
-    typeName: TypeName = TypeName.fromString(name.value)
+    typeName: TypeName,
+    fieldName?: FieldName
   ): string => {
     if (typeName && this.isDartKeyword(name.value)) {
-      const escapeDartKeywords = getTypeConfigOption<EscapeDartKeywords>(
-        config,
-        typeName,
-        'escapeDartKeywords',
-        defaultTypeConfig.escapeDartKeywords
-      );
+      const escapeDartKeywords = Config.escapeDartKeywords(config);
       if (typeof escapeDartKeywords === 'boolean') {
         const escapedBlockName = `${name}_`;
         return dartCasing(escapedBlockName);
@@ -90,24 +85,22 @@ export class BlockName {
 
   private static fromString = (
     config: FlutterFreezedPluginConfig,
-    name: TypeName | FieldName,
-    typeName: TypeName = TypeName.fromString(name.value),
+    typeName: TypeName,
+    fieldName?: FieldName,
     casing?: DartIdentifierCasing,
     decorateWithAtJsonKey?: boolean
   ) => {
-    if (name.value.length < 1) {
-      throw new Error('The name of the block must not be an empty string');
-    }
-
-    const escapedBlockName = BlockName.escapeDartKeyword(config, name, typeName);
+    const escapedBlockName = BlockName.escapeDartKeyword(config, fieldName, typeName);
 
     const casedBlockName = dartCasing(escapedBlockName, casing);
 
     if (this.isDartKeyword(casedBlockName)) {
       const escapedBlockName = BlockName.escapeDartKeyword(config, TypeName.fromString(casedBlockName), typeName);
-      return new BlockName(decorateWithAtJsonKey ? `@JsonKey(name: '${name}') ${escapedBlockName}` : escapedBlockName);
+      return new BlockName(
+        decorateWithAtJsonKey ? `@JsonKey(name: '${fieldName}') ${escapedBlockName}` : escapedBlockName
+      );
     }
-    return new BlockName(decorateWithAtJsonKey ? `@JsonKey(name: '${name}') ${casedBlockName}` : casedBlockName);
+    return new BlockName(decorateWithAtJsonKey ? `@JsonKey(name: '${fieldName}') ${casedBlockName}` : casedBlockName);
   };
 
   public static asEnumTypeName = (config: FlutterFreezedPluginConfig, typeName: TypeName): string =>

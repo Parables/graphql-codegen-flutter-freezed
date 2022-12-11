@@ -80,7 +80,8 @@
     "@graphql-codegen/visitor-plugin-common": "^2.5.2",
     "@graphql-tools/utils": "^8.6.1",
     "change-case-all": "1.0.14",
-    "graphql": "^16.6.0"
+    "graphql": "^16.6.0",
+    "tslib": "^2.4.1"
   },
   "bugs": {
     "url": "https://github.com/Parables/graphql-codegen-flutter-freezed/issues"

@@ -16,15 +16,15 @@ const config = Config.extend({
     // ], // 1
     ['Droid.[id,name], Starship.[id]', ['parameter']], // 1
     ['Droid.[id, name], Starship.[id]', ['parameter']], // 1
-    // ['Droid.@*FieldName-[name,appearsIn],Droid.@*FieldName-[id]', ['parameter']], // 2
-    // ['Droid.@*FieldName', ['parameter']], // 3
+    // ['Droid.@*FieldNames-[name,appearsIn],Droid.@*FieldNames-[id]', ['parameter']], // 2
+    // ['Droid.@*FieldNames', ['parameter']], // 3
 
-    // ['@*TypeName.[id]', ['parameter']], // 4
-    // ['@*TypeName-[Human,Movie].[id]', ['parameter']], // 5
-    // ['@*TypeName-[Human,Movie].@*FieldName-[name,appearsIn], @*TypeName.@*FieldName-[id],', ['parameter']], // 6
-    // ['@*TypeName-[Human,Movie].@*FieldName', ['parameter']], // 7
-    // ['@*TypeName.@*FieldName-[name,appearsIn], @*TypeName.@*FieldName-[id],', ['parameter']], // 8
-    // ['@*TypeName.@*FieldName', ['parameter']], // 9
+    // ['@*TypeNames.[id]', ['parameter']], // 4
+    // ['@*TypeNames-[Human,Movie].[id]', ['parameter']], // 5
+    // ['@*TypeNames-[Human,Movie].@*FieldNames-[name,appearsIn], @*TypeNames.@*FieldNames-[id],', ['parameter']], // 6
+    // ['@*TypeNames-[Human,Movie].@*FieldNames', ['parameter']], // 7
+    // ['@*TypeNames.@*FieldNames-[name,appearsIn], @*TypeNames.@*FieldNames-[id],', ['parameter']], // 8
+    // ['@*TypeNames.@*FieldNames', ['parameter']], // 9
   ],
 });
 
@@ -34,8 +34,8 @@ const fieldName = 'id';
 // const regexp1 = /Droid\s*\.\s*\[(\s*(\w+)*,*)*\]/gim;
 const regexp1 = /@\s*\*\s*TypeName\s*-\s*\[\s*((\w+?,?\s*)*)\]\s*\.\s*\[\s*((\w+?,?\s*)*)\]/gim;
 
-const sample1 = '@*TypeName-[Human,Movie].[id]';
-const sample2 = '@ * TypeName -[ Human, Movie, ].[id, name,   more,], @*TypeName-[Human,Movie].[age]';
+const sample1 = '@*TypeNames-[Human,Movie].[id]';
+const sample2 = '@ * TypeName -[ Human, Movie, ].[id, name,   more,], @*TypeNames-[Human,Movie].[age]';
 // const res = regexp1.test(sample1);
 const res2 = regexp1.test(sample2);
 console.log('🚀 ~ file: z.ts ~ line 39 ~ res', res2);
