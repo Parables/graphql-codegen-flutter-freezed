@@ -1,19 +1,19 @@
 import { FieldName, TypeFieldName, TypeName } from '../src/config/type-field-name';
-const anyTypeName = '@*TypeNames';
-const anyFieldName = '@*FieldNames';
+const allTypeNames = '@*TypeNames';
+const allFieldNames = '@*FieldNames';
 
 describe("integrity checks: ensures that these values don't change and if they are updated accordingly", () => {
-  describe('anyTypeName and anyFieldName', () => {
+  describe('allTypeNames and allFieldNames', () => {
     it('is set to @*TypeNames', () => {
-      expect(TypeName.anyTypeName).toBe(anyTypeName);
-      expect(FieldName.anyTypeName).toBe(anyTypeName);
-      expect(TypeFieldName.anyTypeName).toBe(anyTypeName);
+      expect(TypeName.allTypeNames).toBe(allTypeNames);
+      expect(FieldName.allTypeNames).toBe(allTypeNames);
+      expect(TypeFieldName.allTypeNames).toBe(allTypeNames);
     });
 
     it('is set to @*FieldNames ', () => {
-      expect(TypeName.anyFieldName).toBe(anyFieldName);
-      expect(FieldName.anyFieldName).toBe(anyFieldName);
-      expect(TypeFieldName.anyFieldName).toBe(anyFieldName);
+      expect(TypeName.allFieldNames).toBe(allFieldNames);
+      expect(FieldName.allFieldNames).toBe(allFieldNames);
+      expect(TypeFieldName.allFieldNames).toBe(allFieldNames);
     });
   });
 
@@ -23,38 +23,38 @@ describe("integrity checks: ensures that these values don't change and if they a
         /(?<typeName>\w+\s*)(?<!\s*@\s*\*\s*TypeName\s*)\.\[\s*(?<fieldNames>(\w+,?\s*)*)\];/gim.source
       );
 
-      expect(TypeFieldName.regexpForFieldNamesOfAnyTypeName.source).toBe(
+      expect(TypeFieldName.regexpForFieldNamesOfAllTypeNames.source).toBe(
         /@\*TypeName\.\[\s*(?<fieldNames>(\w+,?\s*)*)\];/gim.source
       );
 
-      expect(TypeFieldName.regexpForAnyFieldNameOfTypeName.source).toBe(
+      expect(TypeFieldName.regexpForAllFieldNamesOfTypeName.source).toBe(
         /(?<typeName>\w+\s*)(?<!\s*@\s*\*\s*TypeName\s*)\.@\*FieldName;/gim.source
       );
 
-      expect(TypeFieldName.regexpForAnyFieldNameOfAnyTypeName.source).toBe(/@\*TypeName\.@\*FieldName;/gim.source);
+      expect(TypeFieldName.regexpForAllFieldNamesOfAllTypeNames.source).toBe(/@\*TypeName\.@\*FieldName;/gim.source);
 
-      expect(TypeFieldName.regexpForAnyFieldNameExceptFieldNamesOfTypeName.source).toBe(
+      expect(TypeFieldName.regexpForAllFieldNamesExceptFieldNamesOfTypeName.source).toBe(
         /(?<typeName>\w+\s*)(?<!\s*@\s*\*\s*TypeName\s*)\.@\*FieldName-\[\s*(?<exceptFieldNames>(\w+,?\s*)*)\];/gim
           .source
       );
 
-      expect(TypeFieldName.regexpForAnyFieldNameExceptFieldNamesOfAnyTypeName.source).toBe(
+      expect(TypeFieldName.regexpForAllFieldNamesExceptFieldNamesOfAllTypeNames.source).toBe(
         /@\*TypeName\.@\*FieldName-\[\s*(?<exceptFieldNames>(\w+,?\s*)*)\];/gim.source
       );
 
-      expect(TypeFieldName.regexpForAnyTypeNameExceptTypeNames.source).toBe(
+      expect(TypeFieldName.regexpForAllTypeNamesExceptTypeNames.source).toBe(
         /@\*TypeName-\[\s*(?<exceptTypeNames>(\w+,?\s*)*)\];/gim.source
       );
 
-      expect(TypeFieldName.regexpForFieldNamesOfAnyTypeNameExceptTypeNames.source).toBe(
+      expect(TypeFieldName.regexpForFieldNamesOfAllTypeNamesExceptTypeNames.source).toBe(
         /@\*TypeName-\[\s*(?<exceptTypeNames>(\w+,?\s*)*)\]\.\[\s*(?<fieldNames>(\w+,?\s*)*)\];/gim.source
       );
 
-      expect(TypeFieldName.regexpForAnyFieldNameOfAnyTypeNameExceptTypeNames.source).toBe(
+      expect(TypeFieldName.regexpForAllFieldNamesOfAllTypeNamesExceptTypeNames.source).toBe(
         /@\*TypeName-\[\s*(?<exceptTypeNames>(\w+,?\s*)*)\]\.@\*FieldName;/gim.source
       );
 
-      expect(TypeFieldName.regexpForAnyFieldNameExceptFieldNamesOfAnyTypeNameExceptTypeNames.source).toBe(
+      expect(TypeFieldName.regexpForAllFieldNamesExceptFieldNamesOfAllTypeNamesExceptTypeNames.source).toBe(
         /@\*TypeName-\[\s*(?<exceptTypeNames>(\w+,?\s*)*)\]\.@\*FieldName-\[\s*(?<exceptFieldNames>(\w+,?\s*)*)\];/gim
           .source
       );
@@ -120,8 +120,8 @@ describe('TypeFieldName can be created with builder methods', () => {
       expect(TypeName.matchesTypeNames(typeNames, 'Human')).toBe(false);
       expect(TypeName.matchesTypeNames(typeNames, trimmedTypeNames)).toBe(true);
 
-      expect(TypeName.matchesAnyTypeName(`${anyTypeName};`)).toBe(true);
-      expect(TypeName.matchesAnyTypeName(`${anyTypeName}`)).toBe(false); // missing semi-colon
+      expect(TypeName.matchesAllTypeNames(`${allTypeNames};`)).toBe(true);
+      expect(TypeName.matchesAllTypeNames(`${allTypeNames}`)).toBe(false); // missing semi-colon
     });
   });
 
@@ -145,21 +145,21 @@ describe('TypeFieldName can be created with builder methods', () => {
       //#endregion
 
       //#region `'TypeName.@*FieldNames'`
-      const anyFieldNameOfTypeName = `Droid.${anyFieldName};`;
+      const allFieldNamesOfTypeName = `Droid.${allFieldNames};`;
 
-      expect(TypeFieldName.buildAnyFieldNameOfTypeName(typeName)).toBe(anyFieldNameOfTypeName);
-      expect(TypeFieldName.matchesAnyFieldNameOfTypeName(anyFieldNameOfTypeName, typeName)).toBe(true);
+      expect(TypeFieldName.buildAllFieldNamesOfTypeName(typeName)).toBe(allFieldNamesOfTypeName);
+      expect(TypeFieldName.matchesAllFieldNamesOfTypeName(allFieldNamesOfTypeName, typeName)).toBe(true);
       //#endregion
 
       //#region `'TypeName.@*FieldNames-[exceptFieldNames]'`
-      const anyFieldNameExceptFieldNamesOfTypeName = `Droid.${anyFieldName}-[${trimmedFieldNames}];`;
+      const allFieldNamesExceptFieldNamesOfTypeName = `Droid.${allFieldNames}-[${trimmedFieldNames}];`;
 
-      expect(TypeFieldName.buildAnyFieldNameExceptFieldNamesOfTypeName(typeName, fieldNames)).toBe(
-        anyFieldNameExceptFieldNamesOfTypeName
+      expect(TypeFieldName.buildAllFieldNamesExceptFieldNamesOfTypeName(typeName, fieldNames)).toBe(
+        allFieldNamesExceptFieldNamesOfTypeName
       );
       expect(
-        TypeFieldName.matchesAnyFieldNameExceptFieldNamesOfTypeName(
-          anyFieldNameExceptFieldNamesOfTypeName,
+        TypeFieldName.matchesAllFieldNamesExceptFieldNamesOfTypeName(
+          allFieldNamesExceptFieldNamesOfTypeName,
           typeName,
           fieldNames
         )
@@ -167,49 +167,49 @@ describe('TypeFieldName can be created with builder methods', () => {
       //#endregion
 
       //#region `'@*TypeNames.[fieldNames];'`
-      const fieldNamesOfAnyTypeName = `${anyTypeName}.[${trimmedFieldNames}];`;
+      const fieldNamesOfAllTypeNames = `${allTypeNames}.[${trimmedFieldNames}];`;
 
-      expect(TypeFieldName.buildFieldNamesOfAnyTypeName(fieldNames)).toBe(fieldNamesOfAnyTypeName);
-      expect(TypeFieldName.matchesFieldNamesOfAnyTypeName(fieldNamesOfAnyTypeName, fieldNames)).toBe(true);
+      expect(TypeFieldName.buildFieldNamesOfAllTypeNames(fieldNames)).toBe(fieldNamesOfAllTypeNames);
+      expect(TypeFieldName.matchesFieldNamesOfAllTypeNames(fieldNamesOfAllTypeNames, fieldNames)).toBe(true);
       //#endregion
 
       //#region `'@*TypeNames.@*FieldNames'`
-      const anyFieldNameOfAnyTypeName = `${anyTypeName}.${anyFieldName};`;
+      const allFieldNamesOfAllTypeNames = `${allTypeNames}.${allFieldNames};`;
 
-      expect(TypeFieldName.buildAnyFieldNameOfAnyTypeName()).toBe(anyFieldNameOfAnyTypeName);
-      expect(TypeFieldName.matchesAnyFieldNameOfAnyTypeName(anyFieldNameOfAnyTypeName)).toBe(true);
+      expect(TypeFieldName.buildAllFieldNamesOfAllTypeNames()).toBe(allFieldNamesOfAllTypeNames);
+      expect(TypeFieldName.matchesAllFieldNamesOfAllTypeNames(allFieldNamesOfAllTypeNames)).toBe(true);
       //#endregion
 
       //#region `'@*TypeNames.@*FieldNames-[exceptFieldNames]'`
-      const anyFieldNameExceptFieldNamesOfAnyTypeName = `${anyTypeName}.${anyFieldName}-[${trimmedFieldNames}];`;
+      const allFieldNamesExceptFieldNamesOfAllTypeNames = `${allTypeNames}.${allFieldNames}-[${trimmedFieldNames}];`;
 
-      expect(TypeFieldName.buildAnyFieldNameExceptFieldNamesOfAnyTypeName(fieldNames)).toBe(
-        anyFieldNameExceptFieldNamesOfAnyTypeName
+      expect(TypeFieldName.buildAllFieldNamesExceptFieldNamesOfAllTypeNames(fieldNames)).toBe(
+        allFieldNamesExceptFieldNamesOfAllTypeNames
       );
       expect(
-        TypeFieldName.matchesAnyFieldNameExceptFieldNamesOfAnyTypeName(
-          anyFieldNameExceptFieldNamesOfAnyTypeName,
+        TypeFieldName.matchesAllFieldNamesExceptFieldNamesOfAllTypeNames(
+          allFieldNamesExceptFieldNamesOfAllTypeNames,
           fieldNames
         )
       ).toBe(true);
       //#endregion
 
       //#region  `'@*TypeNames-[exceptTypeNames]'`
-      const anyTypeNameExceptTypeNames = `${anyTypeName}-[${trimmedTypeNames}];`;
+      const allTypeNamesExceptTypeNames = `${allTypeNames}-[${trimmedTypeNames}];`;
 
-      expect(TypeFieldName.buildAnyTypeNameExceptTypeNames(typeNames)).toBe(anyTypeNameExceptTypeNames);
-      expect(TypeFieldName.matchesAnyTypeNameExceptTypeNames(anyTypeNameExceptTypeNames, typeNames)).toBe(true);
+      expect(TypeFieldName.buildAllTypeNamesExceptTypeNames(typeNames)).toBe(allTypeNamesExceptTypeNames);
+      expect(TypeFieldName.matchesAllTypeNamesExceptTypeNames(allTypeNamesExceptTypeNames, typeNames)).toBe(true);
       //#endregion
 
       //#region  `'@*TypeNames-[exceptTypeNames].[fieldNames]'`
-      const fieldNamesOfAnyTypeNameExceptTypeNames = `${anyTypeName}-[${trimmedTypeNames}].[${trimmedFieldNames}];`;
+      const fieldNamesOfAllTypeNamesExceptTypeNames = `${allTypeNames}-[${trimmedTypeNames}].[${trimmedFieldNames}];`;
 
-      expect(TypeFieldName.buildFieldNamesOfAnyTypeNameExceptTypeNames(typeNames, fieldNames)).toBe(
-        fieldNamesOfAnyTypeNameExceptTypeNames
+      expect(TypeFieldName.buildFieldNamesOfAllTypeNamesExceptTypeNames(typeNames, fieldNames)).toBe(
+        fieldNamesOfAllTypeNamesExceptTypeNames
       );
       expect(
-        TypeFieldName.matchesFieldNamesOfAnyTypeNameExceptTypeNames(
-          fieldNamesOfAnyTypeNameExceptTypeNames,
+        TypeFieldName.matchesFieldNamesOfAllTypeNamesExceptTypeNames(
+          fieldNamesOfAllTypeNamesExceptTypeNames,
           typeNames,
           fieldNames
         )
@@ -217,28 +217,28 @@ describe('TypeFieldName can be created with builder methods', () => {
       //#endregion
 
       //#region `'@*TypeNames-[exceptTypeNames].@*FieldNames'`
-      const anyFieldNameOfAnyTypeNameExceptTypeNames = `${anyTypeName}-[${trimmedTypeNames}].${anyFieldName};`;
+      const allFieldNamesOfAllTypeNamesExceptTypeNames = `${allTypeNames}-[${trimmedTypeNames}].${allFieldNames};`;
 
-      expect(TypeFieldName.buildAnyFieldNameOfAnyTypeNameExceptTypeNames(typeNames)).toBe(
-        anyFieldNameOfAnyTypeNameExceptTypeNames
+      expect(TypeFieldName.buildAllFieldNamesOfAllTypeNamesExceptTypeNames(typeNames)).toBe(
+        allFieldNamesOfAllTypeNamesExceptTypeNames
       );
       expect(
-        TypeFieldName.matchesAnyFieldNameOfAnyTypeNameExceptTypeNames(
-          anyFieldNameOfAnyTypeNameExceptTypeNames,
+        TypeFieldName.matchesAllFieldNamesOfAllTypeNamesExceptTypeNames(
+          allFieldNamesOfAllTypeNamesExceptTypeNames,
           typeNames
         )
       ).toBe(true);
       //#endregion
 
       //#region  `'@*TypeNames-[exceptTypeNames].@*FieldNames-[exceptFieldNames]'`
-      const anyFieldNameExceptFieldNamesOfAnyTypeNameExceptTypeNames = `${anyTypeName}-[${trimmedTypeNames}].${anyFieldName}-[${trimmedFieldNames}];`;
-      expect(TypeFieldName.buildAnyFieldNameExceptFieldNamesOfAnyTypeNameExceptTypeNames(typeNames, fieldNames)).toBe(
-        anyFieldNameExceptFieldNamesOfAnyTypeNameExceptTypeNames
+      const allFieldNamesExceptFieldNamesOfAllTypeNamesExceptTypeNames = `${allTypeNames}-[${trimmedTypeNames}].${allFieldNames}-[${trimmedFieldNames}];`;
+      expect(TypeFieldName.buildAllFieldNamesExceptFieldNamesOfAllTypeNamesExceptTypeNames(typeNames, fieldNames)).toBe(
+        allFieldNamesExceptFieldNamesOfAllTypeNamesExceptTypeNames
       );
 
       expect(
-        TypeFieldName.matchesAnyFieldNameExceptFieldNamesOfAnyTypeNameExceptTypeNames(
-          anyFieldNameExceptFieldNamesOfAnyTypeNameExceptTypeNames,
+        TypeFieldName.matchesAllFieldNamesExceptFieldNamesOfAllTypeNamesExceptTypeNames(
+          allFieldNamesExceptFieldNamesOfAllTypeNamesExceptTypeNames,
           typeNames,
           fieldNames
         )

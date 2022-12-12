@@ -191,7 +191,7 @@ export class Config {
     const v = value.find(
       ([commaSeparatedUnionTypeNames]) =>
         unionTypeName?.value === commaSeparatedUnionTypeNames ||
-        commaSeparatedUnionTypeNames.includes(unionTypeName?.value ?? TypeName.anyTypeName)
+        commaSeparatedUnionTypeNames.includes(unionTypeName?.value ?? TypeName.allTypeNames)
     );
     return v?.[index];
     // }
