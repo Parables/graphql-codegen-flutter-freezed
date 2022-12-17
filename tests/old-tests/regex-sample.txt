@@ -16,7 +16,7 @@ regexr.com/74nir
 'Droid.@*FieldNames;'
 
 
-(?<typeName>\w+\s*)(?<!\s*@\s*\*\s*TypeName\s*)\.@\*FieldName-\[\s*(?<exceptFieldNames>(\w+,?\s*)*)\];
+(?<typeName>\w+\s*)(?<!\s*@\s*\*\s*TypeName\s*)\.@\*FieldName-\[\s*(?<excludeFieldNames>(\w+,?\s*)*)\];
 'Droid.@*FieldNames-[name,id];'
 
 
@@ -35,7 +35,7 @@ regexr.com/74nir
 (?<typeName>\w+\s*)(?<!\s*@\s*\*\s*TypeName\s*)\.@\*FieldName;
 'Droid.@*FieldNames; Starship.@*FieldNames;'
 
-(?<typeName>\w+\s*)(?<!\s*@\s*\*\s*TypeName\s*)\.@\*FieldName-\[\s*(?<exceptFieldNames>(\w+,?\s*)*)\];
+(?<typeName>\w+\s*)(?<!\s*@\s*\*\s*TypeName\s*)\.@\*FieldName-\[\s*(?<excludeFieldNames>(\w+,?\s*)*)\];
 'Droid.@*FieldNames-[name,id];Droid.@*FieldNames-[name,id]; Starship.@*FieldNames-[name,id];'
 
 
@@ -59,29 +59,29 @@ regexr.com/74nir
 '@*TypeNames.@*FieldNames;'
 
 *************************************************************************************************************************
-@\*TypeName\.@\*FieldName-\[\s*(?<exceptFieldNames>(\w+,?\s*)*)\];
+@\*TypeName\.@\*FieldName-\[\s*(?<excludeFieldNames>(\w+,?\s*)*)\];
 
 '@*TypeNames.@*FieldNames-[id,name,friends];'
 
 
 
 ################################################
-# Global Type Declarations With Exceptions     #
+# Global Type Declarations With Excludeions     #
 ################################################
 
 *************************************************************************************************************************
-@\*TypeName-\[\s*(?<exceptTypeNames>(\w+,?\s*)*)\];
+@\*TypeName-\[\s*(?<excludeTypeNames>(\w+,?\s*)*)\];
 
 '@*TypeNames-[Droid,Starship];'
 
 
 *************************************************************************************************************************
-@\*TypeName-\[\s*(?<exceptTypeNames>(\w+,?\s*)*)\]\.\[\s*(?<fieldNames>(\w+,?\s*)*)\];
+@\*TypeName-\[\s*(?<excludeTypeNames>(\w+,?\s*)*)\]\.\[\s*(?<fieldNames>(\w+,?\s*)*)\];
 
 '@*TypeNames-[Droid, Starship].[id,name,friends];'
 
 *************************************************************************************************************************
-@\*TypeName-\[\s*(?<exceptTypeNames>(\w+,?\s*)*)\]\.@\*FieldName;
+@\*TypeName-\[\s*(?<excludeTypeNames>(\w+,?\s*)*)\]\.@\*FieldName;
 
 '@*TypeNames-[
   Droid,
@@ -92,7 +92,7 @@ regexr.com/74nir
 
 
 *************************************************************************************************************************
-@\*TypeName-\[\s*(?<exceptTypeNames>(\w+,?\s*)*)\]\.@\*FieldName-\[\s*(?<exceptFieldNames>(\w+,?\s*)*)\];
+@\*TypeName-\[\s*(?<excludeTypeNames>(\w+,?\s*)*)\]\.@\*FieldName-\[\s*(?<excludeFieldNames>(\w+,?\s*)*)\];
 
 '@*TypeNames-[Droid,Starship].@*FieldNames-[id,name,friends];'
 

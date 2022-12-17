@@ -5,25 +5,24 @@ import {
   AppliesOn,
   AppliesOnFactory,
   AppliesOnParameters,
-  DartIdentifierCasing,
   DART_SCALARS,
   defaultFreezedPluginConfig,
   FlutterFreezedPluginConfig,
-  FreezedOption,
-  TypeFieldNameOption,
 } from './plugin-config';
 import { FieldName, TypeFieldName, TypeName } from './type-field-name';
+import { FreezedOption, DartIdentifierCasing } from './plugin-config';
+import { UnionValueCase } from '../../.history/src/config/plugin-config_20221214004237';
 
 export class Config {
   static camelCasedEnums = (config: FlutterFreezedPluginConfig) => {
-    const value = config['camelCasedEnums'];
+    const _camelCasedEnums = config.camelCasedEnums;
 
-    if (typeof value === 'boolean') {
-      return value ? 'camelCase' : undefined;
-    } else if (value !== undefined) {
-      return value;
+    if (_camelCasedEnums === true) {
+      return 'camelCase';
+    } else if (_camelCasedEnums === false) {
+      return undefined;
     }
-    return undefined;
+    return _camelCasedEnums;
   };
 
   static copyWith = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
@@ -38,12 +37,20 @@ export class Config {
     config: FlutterFreezedPluginConfig,
     typeName: TypeName,
     fieldName: FieldName,
-    appliesOn: AppliesOnParameters[]
+    blockAppliesOn: ReadonlyArray<AppliesOnParameters> = []
   ) => {
-    const decorator = (value: string) => `@Default(${value})\n`;
-    const result = this.typeFieldNameOptionValue(config, 'defaultValues', typeName, fieldName, appliesOn, 2, [1]);
-    if (result.include) {
-      return decorator(result.data[0]);
+    // TODO: Use this decorator function in the blocks instead
+    // const decorator = (defaultValue: string) => `@Default(${defaultValue})\n`;
+
+    const _defaultValues = config.defaultValues;
+
+    const typeFieldNames = _defaultValues.map(([_typeFieldName]) => _typeFieldName);
+    const lastPatternIndex = this.findLastMatchedPattern(typeFieldNames, typeName, fieldName);
+    if (lastPatternIndex !== undefined && _defaultValues[lastPatternIndex]) {
+      const [, defaultValue, configAppliesOn, directiveName, directiveArgName] = _defaultValues[lastPatternIndex];
+      if (appliesOnBlock(configAppliesOn, blockAppliesOn)) {
+        return [defaultValue, directiveName, directiveArgName];
+      }
     }
     return undefined;
   };
@@ -51,13 +58,18 @@ export class Config {
   static deprecated = (
     config: FlutterFreezedPluginConfig,
     typeName: TypeName,
-    appliesOn: (AppliesOnFactory | AppliesOnParameters)[],
-    fieldName?: FieldName
+    fieldName?: FieldName,
+    blockAppliesOn: ReadonlyArray<AppliesOnFactory | AppliesOnParameters> = []
   ) => {
-    // TODO: handle for multiple TypeNames
-    const result = this.typeFieldNameOptionValue(config, 'deprecated', typeName, fieldName, appliesOn, 1);
-    if (result.include) {
-      return '@deprecated\n';
+    const _deprecated = config.deprecated;
+
+    const typeFieldNames = _deprecated.map(([_typeFieldName]) => _typeFieldName);
+    const lastPatternIndex = this.findLastMatchedPattern(typeFieldNames, typeName, fieldName);
+    if (lastPatternIndex !== undefined && _deprecated[lastPatternIndex]) {
+      const [, configAppliesOn] = _deprecated[lastPatternIndex];
+      if (appliesOnBlock(configAppliesOn, blockAppliesOn)) {
+        return '@deprecated\n';
+      }
     }
     return undefined;
   };
@@ -66,25 +78,22 @@ export class Config {
     config: FlutterFreezedPluginConfig,
     typeName: TypeName,
     fieldName?: FieldName,
-    appliesOn?: AppliesOnParameters[]
-  ) => {
-    const value = config.escapeDartKeywords;
-    if (value === true) {
-      const d = /\/\*[^*]*\*+(?:[^/*][^*]*\*+)*\//gim;
-      const r = /(?<typeName>\w+)(?<!@\s*\*\s*TypeName)\s*\.\s*\[\s*(?<fieldNames>(\w+?,?\s*)*)\]/gim;
-      return ['', '_', undefined];
+    blockAppliesOn: ReadonlyArray<AppliesOn> = []
+  ): [prefix?: string, suffix?: string, casing?: DartIdentifierCasing] => {
+    const _escapeDartKeywords = config.escapeDartKeywords;
+    if (_escapeDartKeywords === true) {
+      return ['', '_', undefined]; // use a suffix `_`
+    } else if (_escapeDartKeywords === false) {
+      return ['', '', undefined]; // no suffix
     }
-    const result = this.typeFieldNameOptionValue(
-      config,
-      'escapeDartKeywords',
-      typeName,
-      fieldName,
-      appliesOn,
-      4,
-      [1, 2, 3]
-    );
-    if (result.include) {
-      return result.data as [prefix?: string, suffix?: string, casing?: DartIdentifierCasing];
+
+    const typeFieldNames = _escapeDartKeywords.map(([_typeFieldName]) => _typeFieldName);
+    const lastPatternIndex = this.findLastMatchedPattern(typeFieldNames, typeName, fieldName);
+    if (lastPatternIndex !== undefined && _escapeDartKeywords[lastPatternIndex]) {
+      const [, prefix, suffix, casing, configAppliesOn] = _escapeDartKeywords[lastPatternIndex];
+      if (appliesOnBlock(configAppliesOn, blockAppliesOn)) {
+        return [prefix, suffix, casing];
+      }
     }
     return undefined;
   };
@@ -97,11 +106,17 @@ export class Config {
     config: FlutterFreezedPluginConfig,
     typeName: TypeName,
     fieldName: FieldName,
-    appliesOn: AppliesOnParameters[]
+    blockAppliesOn: ReadonlyArray<AppliesOnParameters> = []
   ) => {
-    const result = this.typeFieldNameOptionValue(config, 'final', typeName, fieldName, appliesOn, 1);
-    if (result.include) {
-      return true;
+    const _final = config.final;
+
+    const typeFieldNames = _final.map(([_typeFieldName]) => _typeFieldName);
+    const lastPatternIndex = this.findLastMatchedPattern(typeFieldNames, typeName, fieldName);
+    if (lastPatternIndex !== undefined && _final[lastPatternIndex]) {
+      const [, configAppliesOn] = _final[lastPatternIndex];
+      if (appliesOnBlock(configAppliesOn, blockAppliesOn)) {
+        return true;
+      }
     }
     return undefined;
   };
@@ -110,25 +125,26 @@ export class Config {
     config: FlutterFreezedPluginConfig,
     typeName?: TypeName,
     fieldName?: FieldName,
-    appliesOn?: AppliesOnParameters[]
+    blockAppliesOn: ReadonlyArray<AppliesOnParameters> = []
   ) => {
-    const value = config['fromJsonToJson'];
-    // const expectedAppliesOn = appliesOn ?? [];
+    const _fromJsonToJson = config.fromJsonToJson;
 
-    if (typeof value === 'boolean') {
-      return value;
-    } else if (value !== undefined) {
-      const result = this.typeFieldNameOptionValue(config, 'fromJsonToJson', typeName, fieldName, appliesOn, 3, [1, 2]);
-      if (result.include) {
-        return result.data;
+    if (Array.isArray(_fromJsonToJson)) {
+      const typeFieldNames = _fromJsonToJson.map(([_typeFieldName]) => _typeFieldName);
+      const lastPatternIndex = this.findLastMatchedPattern(typeFieldNames, typeName, fieldName);
+      if (lastPatternIndex !== undefined && _fromJsonToJson[lastPatternIndex]) {
+        const [, classOrFunctionName, useClassConverter, configAppliesOn] = _fromJsonToJson[lastPatternIndex];
+        if (appliesOnBlock(configAppliesOn, blockAppliesOn)) {
+          return [classOrFunctionName, useClassConverter];
+        }
       }
     }
-    return undefined;
+    return _fromJsonToJson;
   };
 
   static ignoreTypes = (config: FlutterFreezedPluginConfig, typeName: TypeName) => {
-    const value = config.ignoreTypes;
-    return TypeName.matchesTypeNames(value, typeName);
+    const _ignoreTypes = config.ignoreTypes;
+    return TypeFieldName.matchesTypeNames(_ignoreTypes, typeName);
   };
 
   static immutable = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
@@ -164,12 +180,12 @@ export class Config {
     return this.freezedOptionValue(config, 'privateEmptyConstructor', typeName);
   };
 
-  static unionKey = (config: FlutterFreezedPluginConfig, unionTypeName?: TypeName): string | undefined => {
-    return this.unionClassConfig(config, 1, unionTypeName) as string | undefined;
+  static unionKey = (config: FlutterFreezedPluginConfig, unionTypeName: TypeName): string | undefined => {
+    return this.unionClass(config, 1, unionTypeName) as string | undefined;
   };
 
-  static unionValueCase = (config: FlutterFreezedPluginConfig, unionTypeName?: TypeName): string | undefined => {
-    return this.unionClassConfig(config, 2, unionTypeName) as string | undefined;
+  static unionValueCase = (config: FlutterFreezedPluginConfig, unionTypeName: TypeName): string | undefined => {
+    return this.unionClass(config, 2, unionTypeName) as UnionValueCase | undefined;
   };
 
   static unionValueDecorator = (
@@ -177,65 +193,64 @@ export class Config {
     unionTypeName: TypeName,
     unionValueTypeName: TypeName
   ) => {
-    const unionValuesNameMap = this.unionClassConfig(config, 3, unionTypeName);
+    const unionValuesNameMap = this.unionClass(config, 3, unionTypeName);
     if (unionValuesNameMap && typeof unionValuesNameMap !== 'string') {
       const unionValueName = unionValuesNameMap[unionValueTypeName.value];
-      return indent(`@FreezedUnionValue('${unionValueName}')`); // TODO: add this to the factory block decorators
+      if (unionValueName) {
+        return indent(`@FreezedUnionValue('${unionValueName}')`); // TODO: add this to the factory block decorators
+      }
     }
     return undefined;
   };
 
-  static unionClassConfig = (config: FlutterFreezedPluginConfig, index: number, unionTypeName?: TypeName) => {
-    const value = config['unionClass'];
-    // if (Array.isArray(value)) {
-    const v = value.find(
-      ([commaSeparatedUnionTypeNames]) =>
-        unionTypeName?.value === commaSeparatedUnionTypeNames ||
-        commaSeparatedUnionTypeNames.includes(unionTypeName?.value ?? TypeName.allTypeNames)
-    );
-    return v?.[index];
-    // }
+  static unionClass = (config: FlutterFreezedPluginConfig, index: number, unionTypeName: TypeName) => {
+    const _unionClass = config['unionClass'];
+    const typeFieldNames = _unionClass.map(([_unionTypeName]) => _unionTypeName);
+    const lastPatternIndex = this.findLastMatchedPattern(typeFieldNames, unionTypeName);
+    if (lastPatternIndex !== undefined && _unionClass[lastPatternIndex]) {
+      return _unionClass[lastPatternIndex][index];
+    }
+    return undefined;
   };
 
   static freezedOptionValue = (config: FlutterFreezedPluginConfig, option: FreezedOption, typeName?: TypeName) => {
     const value = config[option];
-    if (typeof value === 'boolean' || value === undefined) return value;
-    return TypeName.matchesTypeNames(value, typeName);
+    if (typeof value === 'string' || Array.isArray(value)) {
+      const typeFieldNames = typeof value === 'string' ? [value] : value;
+      const lastPatternIndex = this.findLastMatchedPattern(typeFieldNames, typeName);
+      if (lastPatternIndex !== undefined && typeFieldNames[lastPatternIndex]) {
+        return true;
+      }
+      return undefined;
+    }
+    return value;
   };
 
-  public static typeFieldNameOptionValue = (
-    config: FlutterFreezedPluginConfig,
-    option: TypeFieldNameOption,
-    typeName: TypeName,
-    fieldName: FieldName,
-    expectedAppliesOn: readonly AppliesOn[],
-    appliesOnIndex: number,
-    dataIndexes?: number[]
-  ) => {
-    const value = config[option];
-    let include: boolean | undefined = undefined;
-    let data: any[] | undefined = undefined;
+  public static findLastMatchedPattern = (typeFieldNames: string[], typeName: TypeName, fieldName?: FieldName) => {
+    let lastPatternIndex: number;
+    // let lastPatternType: PatternType;
 
-    if (Array.isArray(value)) {
-      value.forEach((v: any[]) => {
-        const typeFieldNames = v[0];
-        data = dataIndexes?.map(i => v[i]);
-        const appliesOn = v[appliesOnIndex] ?? [];
-        const canApply = appliesOnBlock(appliesOn, expectedAppliesOn, true);
-        if (typeof typeFieldNames === 'string') {
-          typeFieldNames
-            .split(/\s*;\s*/)
-            .filter(t => t.length > 0)
-            .forEach(typeFieldName => {
-              if (canApply) {
-                include = TypeFieldName.attemptTypeFieldNameMatches(`${typeFieldName};`, typeName, fieldName);
-              }
-            });
-        }
-      });
-    }
+    typeFieldNames.forEach((stringOfPatterns, index) => {
+      stringOfPatterns
+        .split(/\s*;\s*/)
+        .filter(pattern => pattern.length > 0)
+        .forEach(typeFieldName => {
+          const { patternMatches, patternType } = TypeFieldName.attemptTypeFieldNameMatches(
+            `${typeFieldName};`,
+            typeName,
+            fieldName
+          );
+          if (
+            (patternType === 'include' && patternMatches === true) ||
+            (patternType === 'exclude' && patternMatches === false)
+          ) {
+            // lastPatternType = patternType;
+            lastPatternIndex = index;
+          }
+        });
+    });
 
-    return { include, data };
+    return lastPatternIndex; //{ lastPatternIndex, lastPatternType };
   };
 
   public static create = (...config: Partial<FlutterFreezedPluginConfig>[]): FlutterFreezedPluginConfig => {

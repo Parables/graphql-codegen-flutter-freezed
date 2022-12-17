@@ -1,3 +1,5 @@
+import { PatternType } from './plugin-config';
+
 /**
  * A list of GraphQL Type Names
  */
@@ -91,6 +93,10 @@ export class TypeName extends GraphqlTypeFieldName {
     }
     return new TypeName(value.trim());
   };
+
+  public static toPattern = (value: string | TypeName) => {
+    return new TypeName(this.valueOf(value)).value + ';';
+  };
 }
 
 /**
@@ -123,186 +129,104 @@ export class FieldName extends GraphqlTypeFieldName {
 }
 
 /**
- * @name TypeFieldName
+ *  @name TypeFieldName
+ *
  * @description A compact string of patterns used in the config for granular configuration for each Graphql Type and/or its fieldNames
  *
- * The string can contain more than one pattern, each pattern ends with a semi-colon`;`.
+ * The string can contain one or more patterns, each pattern ends with a semi-colon (`;`).
  *
- * A dot `.` separates the TypeName from the FieldNames in each pattern
+ * A dot (`.`) is used to separate the TypeName from the FieldNames in each pattern.
  *
- * To apply an option to any TypeName or FieldName, use the allTypeNames(`@*TypeNames`) and allFieldNames(`@*FieldNames`) tokens respectively
+ * To apply an option to all Graphql Types or all fields, use the allTypeNames (`@*TypeNames`) and allFieldNames (`@*FieldNames`) tokens respectively.
  *
- * To specify more than one TypeName or FieldName, use `[]` to specify what should be included and `-[]` for what should be excluded
+ * Wherever you use the allTypeNames and the allFieldNames, know very well that you can make some exceptions. After all, to every rule, there is an exception.
  *
- * Manually typing out a pattern may be prone to typos and invalid patterns therefore this class exposes some builder methods
+ * A **square bracket** (`[]`) is used to specify what should be included and a **negated square bracket** (`-[]`) is used to specify what should be excluded.
  *
- * Wherever a builder method accepts parameter with a type signature of [`TypeNames`]() or [`FieldNames`](), you can use any of the following:
- * 1. a single string. E.g: 'Droid'
- * ```ts
- * // using a string
- * const typeFieldName = TypeFieldName.buildTypeNames('Droid');
- * console.log(typeFieldName) // "Droid;"
- * ```
- * 2. a comma-separated string for multiple types/fields. E.g: 'Droid, Starship, Human'
- * The rest of this guide uses this approach wherever a builder method accepts a parameter with a type signature of [`TypeNames`]() or [`FieldNames`]()
- * ```ts
- * // using a comma-separated string
- * const typeFieldName = TypeFieldName.buildTypeNames('Droid, Starship, Human');
- * console.log(typeFieldName) // "Droid;Starship;Human;"
- * ```
- * 3. an array of strings. E.g: `['Droid', 'Starship']`
- * ```ts
- * // using an array of strings
- * const typeFieldName = TypeFieldName.buildTypeNames(['Droid', 'Starship', 'Human']);
- * console.log(typeFieldName) // "Droid;Starship;Human;"
- * ```
- * 4. a single TypeName or FieldName. E.g: `TypeName.fromString('Droid')`
- * ```ts
- * // using a TypeFieldName/FieldName
- * let typeName = TypeName.fromString('Droid');
- * const typeFieldName = TypeFieldName.buildTypeNames(typeName)
- * console.log(typeFieldName) // "Droid;" 
- * ```
- 5. an array of TypeName or FieldName. E.g:  `[TypeName.fromString('Droid'), [TypeName.fromString('Starship')]]`
- * ```ts
- * // using an array of TypeFieldName
- * let Droid = TypeName.fromString('Droid');
- * let Starship = TypeName.fromString('Starship');
- * let Human = TypeName.fromString('Human');
- * const typeFieldName = TypeFieldName.buildTypeNames([Droid, Starship, Human])
- * console.log(typeFieldName) // "Droid;Starship;Human;"
- * ```
-
- * > The first usage example below demonstrates a builder that accepts a parameter with a type signature of `TypeNames`.
- * >
- * > For brevity, this guide uses a comma-separated string wherever `TypeNames` or `FieldNames` is required
+ * Manually typing out a pattern may be prone to typos resulting in invalid patterns therefore the [`TypeFieldName`]() class exposes some builder methods which you can use in your plugin config file.
  *
- * @exampleMarkdown
- * ## Usage for Graphql Types
- * ### Configuration for Type Name(s)
- * You can explicity list out the names of the Graphql Types that you want to configure.
+ * ## Available Builder Methods and the patterns they make
  * ```ts
  * const typeFieldName = TypeFieldName.buildTypeNames('Droid, Starship, Human');
- * console.log(typeFieldName) // "Droid;Starship;Human;"
- * ```
+ * console.log(typeFieldName); // "Droid;Starship;Human;"
  *
- * ### Configuration for Any/All TypeName
- * Instead of manually listing out **all** the types in the Graphql Schema, use this to configure any/all the Graphql Types in the Schema
- * ```ts
- * let typeFieldName = TypeFieldName.buildAllTypeNames() // TODO: Create this builder
- * console.log(typeFieldName) // "@*TypeNames;"
- * ```
+ * const typeFieldName = TypeFieldName.buildAllTypeNames(); // TODO: Create this builder
+ * console.log(typeFieldName); // "@*TypeNames';
  *
- * ### Configuration for Any/All TypeName Except Some TypeNames
- * This would apply the configuration to any/all GraphQL Types except those specified.
+ * let typeFieldName = TypeFieldName.buildAllTypeNamesExcludeTypeNames('Droid, Starship');
+ * console.log(typeFieldName); // "@*TypeNames-['Droid,Starship]';"
  *
- * In the example below, the configuration will be applied to any/all the Graphql Types in the Schema except the `Droid` and `Starship` types
- * ```ts
- * let typeFieldName = TypeFieldName.buildAllTypeNamesExceptTypeNames('Droid, Starship');
- * console.log(typeFieldName) // "@*TypeNames-['Droid,Starship]';"
- * ```
- * ## Usage for fields of Graphql Types
- * For each of the 3 builder methods available for configuring Graphql Types, there is also similar builder methods for configuring fields belong to that Graphql Type
- * 
- * ### Configuration for fields of Type Name(s)
- * You can explicity list out the names of the fields of the Graphql Types that you want to configure.
- * ```ts
- * const typeFieldName = TypeFieldName.buildFieldNamesOfTypeName('Droid', 'id, name, friends');
- * console.log(typeFieldName) // "Droid.[id,name,friends];"
- * ```
- * 
- * ### Configuration for any fields of Type Name(s)
- * Instead of manually listing out **all** the fields of the Graphql Type, use this to configure any/all the fields of the Graphql Type.
- * ```ts
+ * const typeFieldName = TypeFieldName.buildFieldNamesOfTypeName('Droid', 'id, name');
+ * console.log(typeFieldName); // "Droid.[id,name,friends];"
+ *
  * const typeFieldName = TypeFieldName.buildAllFieldNamesOfTypeName('Droid');
- * console.log(typeFieldName) // "Droid.@*FieldNames;"
+ * console.log(typeFieldName); // "Droid.@*FieldNames;"
+ *
+ * const typeFieldName = TypeFieldName.buildAllFieldNamesExcludeFieldNamesOfTypeName('Droid', 'id, name');
+ * console.log(typeFieldName); // "Droid.@*FieldNames-[id,name];"
+ *
+ * const typeFieldName = TypeFieldName.buildFieldNamesOfAllTypeNames('id, name');
+ * console.log(typeFieldName); // "@*TypeNames.[id,name];"
+ *
+ * const typeFieldName = TypeFieldName.buildAllFieldNamesOfAllTypeNames();
+ * console.log(typeFieldName); // "@*TypeNames.@*FieldNames;"
+ *
+ * const typeFieldName = TypeFieldName.buildAllFieldNamesExcludeFieldNamesOfAllTypeNames('id, name');
+ * console.log(typeFieldName); // "@*TypeNames.@*FieldNames-[id,name];"
+ *
+ * const typeFieldName = TypeFieldName.buildFieldNamesOfAllTypeNamesExcludeTypeNames('Droid, Starship', 'id, name');
+ * console.log(typeFieldName); // "@*TypeNames-[Droid,Starship].[id,name];"
+ *
+ * const typeFieldName = TypeFieldName.buildAllFieldNamesOfAllTypeNamesExcludeTypeNames('Droid Starship', 'id, name');
+ * console.log(typeFieldName); // "@*TypeNames-[Droid,Starship].@*FieldNames;"
+ *
+ * const typeFieldName = TypeFieldName.buildAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames('Droid Starship', 'id, name');
+ * console.log(typeFieldName); // "@*TypeNames-[Droid,Starship].@*FieldNames-[id,name];"
  * ```
- * 
- * ### Configuration for fields Any/All TypeName
- * You can explicity list out the names of the fields of any Graphql Types that you want to configure. 
- * 
- * If field name that doesn't exists, it would be ignored.
- * ```ts
- * let typeFieldName = TypeFieldName.buildFieldNamesOfAllTypeNames('id, name, friends') // TODO: Create this builder
- * console.log(typeFieldName) // "@*TypeNames.[id,name,friends];"
- * ```
  *
- * ### Configuration for Any/All TypeName Except Some TypeNames
- * This would apply the configuration to any/all GraphQL Types except those specified.
- *
- * In the example below, the configuration will be applied to any/all the Graphql Types in the Schema except the `Droid` and `Starship` types
- * ```ts
- * let typeFieldName = TypeFieldName.buildAllTypeNamesExceptTypeNames('Droid, Starship');
- * console.log(typeFieldName) // "@*TypeNames-['Droid,Starship]';"
- * ```
- * TODO: Update the following documentation
- 
- *
- * ### Configuring the fields of GraphQL Types
- * ```ts
- * let typeFieldName1 = 'Droid.[id,friends]' // in an array, specify one or more fields for that GraphQL Type. This example applies on the `id` and `friends` fields of the Droid GraphQL Type
- *
- * let typeFieldName2 = 'Droid.[id,friends]; Starship.[id]; @*TypeNames.[id];' // same as `typeFieldName1` but for multiple patterns
- *
- * let typeFieldName3 = 'Droid.@*FieldNames' // applies on all fields of the Droid GraphQL Type
- *
- * let typeFieldName4 = 'Droid.@*FieldNames-[name,appearsIn]' // if there are many fields to be specified, use this to specify those to be **excluded**. This example applies on all of the fields of the Droid GraphQL Type except the `name` and `appearsIn` fields
- *
- *
- * let typeFieldName5 = '@*TypeNames.[id]' // applies on the `id` field of any GraphQL Types
- *
- *
- * let typeFieldName6 = '@*TypeNames-[Human,Starship].[id]' // applies on the `id` field of any GraphQL Types except the `Human` and `Starship` types
- *
- * let typeFieldName7 = '@*TypeNames.@*FieldNames' // applies on all of the fields of the GraphQL Types
- *
- * let typeFieldName8 = '@*TypeNames-[Human,Starship].@*FieldNames' // applies on all of the fields of the GraphQL Types except the `Human` and `Starship` types
- *
- * let typeFieldName9 = '@*TypeNames.@*FieldNames-[id,name]' // applies on all of the fields of the GraphQL Types except the `id` and `name` fields
- *
- * let typeFieldName10 = '@*TypeNames-[Human,Movie].@*FieldNames-[id,name]' // applies on all of the fields of the GraphQL Types except the `Human` and `Starship` types and the `id` and `name` fields
- * ```
- * */
+ */
 export class TypeFieldName extends GraphqlTypeFieldName {
-  //#region `'TypeName; AnotherTypeName;'`
+  //#region `'TypeName;AnotherTypeName;'`
 
   public static buildTypeNames = (typeNames: TypeNames): string => {
-    return this.valueOf(typeNames).replace(/\s*,|;\s*/, ';');
+    const _typeNames = this.valueOf(typeNames).replace(/\s*,|;\s*/gm, ';');
+    return _typeNames.endsWith(';') ? _typeNames : _typeNames + ';';
   };
 
-  public static regexpForTypeName = /\b(?!TypeName|FieldName\b)(?<typeName>\w+;)/gim;
+  public static regexpForTypeNames = /\b(?!TypeNames|FieldNames\b)(?<typeNamePattern>\w+;)/gim;
 
-  static matchesTypeName = (typeFieldName: string | TypeFieldName, typeName: TypeName) => {
-    const pattern = this.regexpForTypeName;
+  static matchesTypeNames = (typeFieldNamePatterns: string | string[] | TypeFieldName, typeName: TypeName) => {
+    const regexp = this.regexpForTypeNames;
 
-    const _typeFieldName = this.valueOf(typeFieldName);
-    const _typeName = this.valueOf(typeName);
+    const _typeFieldNamePatterns = this.valueOf(typeFieldNamePatterns);
+    const _typeNamePattern = TypeName.toPattern(typeName);
 
     let result: RegExpExecArray | null;
     let matchFound: boolean;
 
-    while ((result = pattern.exec(_typeFieldName)) !== null) {
-      const typeName = result.groups.typeName;
+    while ((result = regexp.exec(_typeFieldNamePatterns)) !== null) {
+      const typeNamePattern = result.groups.typeNamePattern;
 
-      matchFound = typeName === _typeName;
+      matchFound = typeNamePattern === _typeNamePattern;
 
       if (matchFound) break;
     }
-    this.resetIndex(pattern);
+    this.resetIndex(regexp);
     return matchFound;
   };
   //#endregion
 
-  //#region `'@*TypeNames'`
+  //#region `'@*TypeNames;'`
 
-  public static buildAllTypeNames = (typeNames: TypeNames): string => {
+  public static buildAllTypeNames = (): string => {
     return `${this.allTypeNames};`;
   };
 
-  public static regexpForAllTypeNames = /(?<allTypeNames>@\*TypeName;)/gm;
+  public static regexpForAllTypeNames = /(?<allTypeNames>@\*TypeNames;)/gm;
 
+  /*
   static matchesAllTypeNames = (typeFieldName: string | TypeFieldName) => {
-    const pattern = this.regexpForTypeName;
+    const pattern = this.regexpForTypeNames;
 
     const _typeFieldName = this.valueOf(typeFieldName);
 
@@ -312,32 +236,33 @@ export class TypeFieldName extends GraphqlTypeFieldName {
     }
     return false;
   };
+  */
   //#endregion
 
-  //#region `'@*TypeNames-[exceptTypeNames];'`
+  //#region `'@*TypeNames-[excludeTypeNames];'`
 
-  public static buildAllTypeNamesExceptTypeNames = (exceptTypeNames: TypeNames): string => {
-    const _typeNames = this.valueOf(exceptTypeNames);
+  public static buildAllTypeNamesExcludeTypeNames = (excludeTypeNames: TypeNames): string => {
+    const _typeNames = this.valueOf(excludeTypeNames);
     return `${this.allTypeNames}-[${_typeNames}];`;
   };
 
-  public static regexpForAllTypeNamesExceptTypeNames = /@\*TypeName-\[\s*(?<exceptTypeNames>(\w+,?\s*)*)\];/gim;
+  public static regexpForAllTypeNamesExcludeTypeNames = /@\*TypeNames-\[\s*(?<excludeTypeNames>(\w+,?\s*)*)\];/gim;
 
-  static matchesAllTypeNamesExceptTypeNames = (
+  static matchesAllTypeNamesExcludeTypeNames = (
     typeFieldName: string | TypeFieldName,
-    exceptTypeNames: TypeNames,
+    excludeTypeNames: TypeNames,
     matchAllTypeNames = false
   ) => {
-    const pattern = this.regexpForAllTypeNamesExceptTypeNames;
+    const pattern = this.regexpForAllTypeNamesExcludeTypeNames;
 
     const _typeFieldName = this.valueOf(typeFieldName);
-    const _typeNames = this.valueOf(exceptTypeNames);
+    const _typeNames = this.valueOf(excludeTypeNames);
 
     let result: RegExpExecArray | null;
     let matchFound: boolean;
 
     while ((result = pattern.exec(_typeFieldName)) !== null) {
-      const typeNames = result.groups.exceptTypeNames;
+      const typeNames = result.groups.excludeTypeNames;
 
       matchFound = this.matchAll(typeNames, _typeNames, matchAllTypeNames);
 
@@ -358,7 +283,7 @@ export class TypeFieldName extends GraphqlTypeFieldName {
   };
 
   public static regexpForFieldNamesOfTypeName =
-    /(?<typeName>\w+\s*)(?<!\s*@\s*\*\s*TypeName\s*)\.\[\s*(?<fieldNames>(\w+,?\s*)*)\];/gim;
+    /(?<typeName>\w+\s*)(?<!\s*@\s*\*\s*TypeNames\s*)\.\[\s*(?<fieldNames>(\w+,?\s*)*)\];/gim;
 
   static matchesFieldNamesOfTypeName = (
     typeFieldName: string | TypeFieldName,
@@ -396,7 +321,8 @@ export class TypeFieldName extends GraphqlTypeFieldName {
     return `${_typeName}.${this.allFieldNames};`;
   };
 
-  public static regexpForAllFieldNamesOfTypeName = /(?<typeName>\w+\s*)(?<!\s*@\s*\*\s*TypeName\s*)\.@\*FieldName;/gim;
+  public static regexpForAllFieldNamesOfTypeName =
+    /(?<typeName>\w+\s*)(?<!\s*@\s*\*\s*TypeNames\s*)\.@\*FieldNames;/gim;
 
   static matchesAllFieldNamesOfTypeName = (typeFieldName: string | TypeFieldName, typeName: string | TypeName) => {
     const pattern = this.regexpForAllFieldNamesOfTypeName;
@@ -420,38 +346,38 @@ export class TypeFieldName extends GraphqlTypeFieldName {
 
   //#endregion
 
-  //#region `'TypeName.@*FieldNames-[exceptFieldNames];'`
+  //#region `'TypeName.@*FieldNames-[excludeFieldNames];'`
 
-  public static buildAllFieldNamesExceptFieldNamesOfTypeName = (
+  public static buildAllFieldNamesExcludeFieldNamesOfTypeName = (
     typeName: string | TypeName,
-    exceptFieldNames: FieldNames
+    excludeFieldNames: FieldNames
   ): string => {
     const _typeName = TypeName.fromString(this.valueOf(typeName)).value; // ensures that there is no comma-separated TypeNames in there
-    const _fieldNames = this.valueOf(exceptFieldNames);
+    const _fieldNames = this.valueOf(excludeFieldNames);
     return `${_typeName}.${this.allFieldNames}-[${_fieldNames}];`;
   };
 
-  public static regexpForAllFieldNamesExceptFieldNamesOfTypeName =
-    /(?<typeName>\w+\s*)(?<!\s*@\s*\*\s*TypeName\s*)\.@\*FieldName-\[\s*(?<exceptFieldNames>(\w+,?\s*)*)\];/gim;
+  public static regexpForAllFieldNamesExcludeFieldNamesOfTypeName =
+    /(?<typeName>\w+\s*)(?<!\s*@\s*\*\s*TypeNames\s*)\.@\*FieldNames-\[\s*(?<excludeFieldNames>(\w+,?\s*)*)\];/gim;
 
-  static matchesAllFieldNamesExceptFieldNamesOfTypeName = (
+  static matchesAllFieldNamesExcludeFieldNamesOfTypeName = (
     typeFieldName: string | TypeFieldName,
     typeName: string | TypeName,
-    exceptFieldNames: FieldNames,
+    excludeFieldNames: FieldNames,
     matchAllFieldNames = false
   ) => {
-    const pattern = this.regexpForAllFieldNamesExceptFieldNamesOfTypeName;
+    const pattern = this.regexpForAllFieldNamesExcludeFieldNamesOfTypeName;
 
     const _typeFieldName = this.valueOf(typeFieldName);
     const _typeName = TypeName.fromString(this.valueOf(typeName)).value; // ensures that there is no comma-separated TypeNames in there
-    const _fieldNames = this.valueOf(exceptFieldNames);
+    const _fieldNames = this.valueOf(excludeFieldNames);
 
     let result: RegExpExecArray | null;
     let matchFound: boolean;
 
     while ((result = pattern.exec(_typeFieldName)) !== null) {
       const typeName = result.groups.typeName;
-      const fieldNames = result.groups.exceptFieldNames;
+      const fieldNames = result.groups.excludeFieldNames;
 
       matchFound = typeName === _typeName && this.matchAll(fieldNames, _fieldNames, matchAllFieldNames);
 
@@ -470,7 +396,7 @@ export class TypeFieldName extends GraphqlTypeFieldName {
     return `${this.allTypeNames}.[${_fieldNames}];`;
   };
 
-  public static regexpForFieldNamesOfAllTypeNames = /@\*TypeName\.\[\s*(?<fieldNames>(\w+,?\s*)*)\];/gim;
+  public static regexpForFieldNamesOfAllTypeNames = /@\*TypeNames\.\[\s*(?<fieldNames>(\w+,?\s*)*)\];/gim;
 
   static matchesFieldNamesOfAllTypeNames = (
     typeFieldName: string | TypeFieldName,
@@ -504,14 +430,9 @@ export class TypeFieldName extends GraphqlTypeFieldName {
     return `${this.allTypeNames}.${this.allFieldNames};`;
   };
 
-  public static regexpForAllFieldNamesOfAllTypeNames = /@\*TypeName\.@\*FieldName;/gim;
+  public static regexpForAllFieldNamesOfAllTypeNames = /@\*TypeNames\.@\*FieldNames;/gim;
 
-  /**
-   * returns true or false if typeFieldName matches `'@*TypeNames.@*FieldNames-[exceptFieldNames]'` and the typeFieldName includes the `exceptFieldNames`.
-   * @param typeFieldName
-   * @param exceptFieldNames
-   * @returns boolean
-   */
+  /*
   static matchesAllFieldNamesOfAllTypeNames = (typeFieldName: string | TypeFieldName) => {
     const pattern = this.regexpForAllFieldNamesOfAllTypeNames;
 
@@ -519,34 +440,35 @@ export class TypeFieldName extends GraphqlTypeFieldName {
 
     return pattern.test(_typeFieldName);
   };
+  */
 
   //#endregion
 
-  //#region `'@*TypeNames.@*FieldNames-[exceptFieldNames];'`
+  //#region `'@*TypeNames.@*FieldNames-[excludeFieldNames];'`
 
-  public static buildAllFieldNamesExceptFieldNamesOfAllTypeNames = (exceptFieldName: FieldNames): string => {
-    const _fieldNames = this.valueOf(exceptFieldName);
+  public static buildAllFieldNamesExcludeFieldNamesOfAllTypeNames = (excludeFieldName: FieldNames): string => {
+    const _fieldNames = this.valueOf(excludeFieldName);
     return `${this.allTypeNames}.${this.allFieldNames}-[${_fieldNames}];`;
   };
 
-  public static regexpForAllFieldNamesExceptFieldNamesOfAllTypeNames =
-    /@\*TypeName\.@\*FieldName-\[\s*(?<exceptFieldNames>(\w+,?\s*)*)\];/gim;
+  public static regexpForAllFieldNamesExcludeFieldNamesOfAllTypeNames =
+    /@\*TypeNames\.@\*FieldNames-\[\s*(?<excludeFieldNames>(\w+,?\s*)*)\];/gim;
 
-  static matchesAllFieldNamesExceptFieldNamesOfAllTypeNames = (
+  static matchesAllFieldNamesExcludeFieldNamesOfAllTypeNames = (
     typeFieldName: string | TypeFieldName,
-    exceptFieldNames: FieldNames,
+    excludeFieldNames: FieldNames,
     matchAllFieldNames = false
   ) => {
-    const pattern = this.regexpForAllFieldNamesExceptFieldNamesOfAllTypeNames;
+    const pattern = this.regexpForAllFieldNamesExcludeFieldNamesOfAllTypeNames;
 
     const _typeFieldName = this.valueOf(typeFieldName);
-    const _fieldNames = this.valueOf(exceptFieldNames);
+    const _fieldNames = this.valueOf(excludeFieldNames);
 
     let result: RegExpExecArray | null;
     let matchFound: boolean;
 
     while ((result = pattern.exec(_typeFieldName)) !== null) {
-      const fieldNames = result.groups.exceptFieldNames;
+      const fieldNames = result.groups.excludeFieldNames;
 
       matchFound = this.matchAll(fieldNames, _fieldNames, matchAllFieldNames);
 
@@ -558,38 +480,38 @@ export class TypeFieldName extends GraphqlTypeFieldName {
 
   //#endregion
 
-  //#region `'@*TypeNames-[exceptTypeNames].[fieldNames];'`
+  //#region `'@*TypeNames-[excludeTypeNames].[fieldNames];'`
 
-  public static buildFieldNamesOfAllTypeNamesExceptTypeNames = (
-    exceptTypeNames: TypeNames,
+  public static buildFieldNamesOfAllTypeNamesExcludeTypeNames = (
+    excludeTypeNames: TypeNames,
     fieldNames: FieldNames
   ): string => {
-    const _typeNames = this.valueOf(exceptTypeNames);
+    const _typeNames = this.valueOf(excludeTypeNames);
     const _fieldNames = this.valueOf(fieldNames);
     return `${this.allTypeNames}-[${_typeNames}].[${_fieldNames}];`;
   };
 
-  public static regexpForFieldNamesOfAllTypeNamesExceptTypeNames =
-    /@\*TypeName-\[\s*(?<exceptTypeNames>(\w+,?\s*)*)\]\.\[\s*(?<fieldNames>(\w+,?\s*)*)\];/gim;
+  public static regexpForFieldNamesOfAllTypeNamesExcludeTypeNames =
+    /@\*TypeNames-\[\s*(?<excludeTypeNames>(\w+,?\s*)*)\]\.\[\s*(?<fieldNames>(\w+,?\s*)*)\];/gim;
 
-  static matchesFieldNamesOfAllTypeNamesExceptTypeNames = (
+  static matchesFieldNamesOfAllTypeNamesExcludeTypeNames = (
     typeFieldName: string | TypeFieldName,
-    exceptTypeNames: TypeNames,
+    excludeTypeNames: TypeNames,
     fieldNames: FieldNames,
     matchAllTypeNames = false,
     matchAllFieldNames = false
   ) => {
-    const pattern = this.regexpForFieldNamesOfAllTypeNamesExceptTypeNames;
+    const pattern = this.regexpForFieldNamesOfAllTypeNamesExcludeTypeNames;
 
     const _typeFieldName = this.valueOf(typeFieldName);
-    const _typeNames = this.valueOf(exceptTypeNames);
+    const _typeNames = this.valueOf(excludeTypeNames);
     const _fieldNames = this.valueOf(fieldNames);
 
     let result: RegExpExecArray | null;
     let matchFound: boolean;
 
     while ((result = pattern.exec(_typeFieldName)) !== null) {
-      const typeNames = result.groups.exceptTypeNames;
+      const typeNames = result.groups.excludeTypeNames;
       const fieldNames = result.groups.fieldNames;
 
       matchFound =
@@ -604,31 +526,31 @@ export class TypeFieldName extends GraphqlTypeFieldName {
 
   //#endregion
 
-  //#region `'@*TypeNames-[exceptTypeNames].@*FieldNames;'`
+  //#region `'@*TypeNames-[excludeTypeNames].@*FieldNames;'`
 
-  public static buildAllFieldNamesOfAllTypeNamesExceptTypeNames = (exceptTypeNames: TypeNames): string => {
-    const _typeNames = this.valueOf(exceptTypeNames);
+  public static buildAllFieldNamesOfAllTypeNamesExcludeTypeNames = (excludeTypeNames: TypeNames): string => {
+    const _typeNames = this.valueOf(excludeTypeNames);
     return `${this.allTypeNames}-[${_typeNames}].${this.allFieldNames};`;
   };
 
-  public static regexpForAllFieldNamesOfAllTypeNamesExceptTypeNames =
-    /@\*TypeName-\[\s*(?<exceptTypeNames>(\w+,?\s*)*)\]\.@\*FieldName;/gim;
+  public static regexpForAllFieldNamesOfAllTypeNamesExcludeTypeNames =
+    /@\*TypeNames-\[\s*(?<excludeTypeNames>(\w+,?\s*)*)\]\.@\*FieldNames;/gim;
 
-  static matchesAllFieldNamesOfAllTypeNamesExceptTypeNames = (
+  static matchesAllFieldNamesOfAllTypeNamesExcludeTypeNames = (
     typeFieldName: string | TypeFieldName,
-    exceptTypeNames: TypeNames,
+    excludeTypeNames: TypeNames,
     matchAllTypeNames = false
   ) => {
-    const pattern = this.regexpForAllFieldNamesOfAllTypeNamesExceptTypeNames;
+    const pattern = this.regexpForAllFieldNamesOfAllTypeNamesExcludeTypeNames;
 
     const _typeFieldName = this.valueOf(typeFieldName);
-    const _typeNames = this.valueOf(exceptTypeNames);
+    const _typeNames = this.valueOf(excludeTypeNames);
 
     let result: RegExpExecArray | null;
     let matchFound: boolean;
 
     while ((result = pattern.exec(_typeFieldName)) !== null) {
-      const typeNames = result.groups.exceptTypeNames;
+      const typeNames = result.groups.excludeTypeNames;
 
       matchFound = this.matchAll(typeNames, _typeNames, matchAllTypeNames);
 
@@ -640,39 +562,39 @@ export class TypeFieldName extends GraphqlTypeFieldName {
 
   //#endregion
 
-  //#region `'@*TypeNames-[exceptTypeNames].@*FieldNames-[exceptFieldNames];'`
+  //#region `'@*TypeNames-[excludeTypeNames].@*FieldNames-[excludeFieldNames];'`
 
-  public static buildAllFieldNamesExceptFieldNamesOfAllTypeNamesExceptTypeNames = (
-    exceptTypeNames: TypeNames,
-    exceptFieldNames: FieldNames
+  public static buildAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames = (
+    excludeTypeNames: TypeNames,
+    excludeFieldNames: FieldNames
   ): string => {
-    const _typeNames = this.valueOf(exceptTypeNames);
-    const _fieldNames = this.valueOf(exceptFieldNames);
+    const _typeNames = this.valueOf(excludeTypeNames);
+    const _fieldNames = this.valueOf(excludeFieldNames);
     return `${this.allTypeNames}-[${_typeNames}].${this.allFieldNames}-[${_fieldNames}];`;
   };
 
-  public static regexpForAllFieldNamesExceptFieldNamesOfAllTypeNamesExceptTypeNames =
-    /@\*TypeName-\[\s*(?<exceptTypeNames>(\w+,?\s*)*)\]\.@\*FieldName-\[\s*(?<exceptFieldNames>(\w+,?\s*)*)\];/gim;
+  public static regexpForAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames =
+    /@\*TypeNames-\[\s*(?<excludeTypeNames>(\w+,?\s*)*)\]\.@\*FieldNames-\[\s*(?<excludeFieldNames>(\w+,?\s*)*)\];/gim;
 
-  static matchesAllFieldNamesExceptFieldNamesOfAllTypeNamesExceptTypeNames = (
+  static matchesAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames = (
     typeFieldName: string | TypeFieldName,
-    exceptTypeNames: TypeNames,
-    exceptFieldNames: FieldNames,
+    excludeTypeNames: TypeNames,
+    excludeFieldNames: FieldNames,
     matchAllTypeNames = false,
     matchAllFieldNames = false
   ) => {
-    const pattern = this.regexpForAllFieldNamesExceptFieldNamesOfAllTypeNamesExceptTypeNames;
+    const pattern = this.regexpForAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames;
 
     const _typeFieldName = this.valueOf(typeFieldName);
-    const _typeNames = this.valueOf(exceptTypeNames);
-    const _fieldNames = this.valueOf(exceptFieldNames);
+    const _typeNames = this.valueOf(excludeTypeNames);
+    const _fieldNames = this.valueOf(excludeFieldNames);
 
     let result: RegExpExecArray | null;
     let matchFound: boolean;
 
     while ((result = pattern.exec(_typeFieldName)) !== null) {
-      const typeNames = result.groups.exceptTypeNames;
-      const fieldNames = result.groups.exceptFieldNames;
+      const typeNames = result.groups.excludeTypeNames;
+      const fieldNames = result.groups.excludeFieldNames;
 
       matchFound =
         this.matchAll(typeNames, _typeNames, matchAllTypeNames) &&
@@ -693,56 +615,95 @@ export class TypeFieldName extends GraphqlTypeFieldName {
   public static attemptTypeFieldNameMatches = (
     typeFieldName: string | TypeFieldName,
     typeName: TypeName,
-    fieldName: FieldName
+    fieldName?: FieldName
   ) => {
     return this.attemptIncludes(typeFieldName, typeName, fieldName);
   };
 
-  public static attemptIncludes = (typeFieldName: string | TypeFieldName, typeName: TypeName, fieldName: FieldName) => {
+  public static attemptIncludes = (
+    typeFieldName: string | TypeFieldName,
+    typeName: TypeName,
+    fieldName?: FieldName
+  ) => {
     const _typeFieldName = this.valueOf(typeFieldName);
+    const patternType = 'include';
 
-    if (this.regexpForFieldNamesOfTypeName.test(_typeFieldName)) {
+    if (this.regexpForTypeNames.test(_typeFieldName)) {
+      this.resetIndex(this.regexpForTypeNames);
+      const patternMatches = this.matchesTypeNames(_typeFieldName, typeName);
+      return this.attemptResult(patternType, patternMatches);
+    } else if (this.regexpForAllTypeNames.test(_typeFieldName)) {
+      this.resetIndex(this.regexpForAllTypeNames);
+      const patternMatches = true;
+      return this.attemptResult(patternType, patternMatches);
+    } else if (fieldName && this.regexpForFieldNamesOfTypeName.test(_typeFieldName)) {
       this.resetIndex(this.regexpForFieldNamesOfTypeName);
-      return this.matchesFieldNamesOfTypeName(_typeFieldName, typeName, fieldName);
+      const patternMatches = this.matchesFieldNamesOfTypeName(_typeFieldName, typeName, fieldName);
+      return this.attemptResult(patternType, patternMatches);
     } else if (this.regexpForAllFieldNamesOfTypeName.test(_typeFieldName)) {
       this.resetIndex(this.regexpForAllFieldNamesOfTypeName);
-      return this.matchesAllFieldNamesOfTypeName(_typeFieldName, typeName);
-    } else if (this.regexpForFieldNamesOfAllTypeNames.test(_typeFieldName)) {
+      const patternMatches = this.matchesAllFieldNamesOfTypeName(_typeFieldName, typeName);
+      return this.attemptResult(patternType, patternMatches);
+    } else if (fieldName && this.regexpForFieldNamesOfAllTypeNames.test(_typeFieldName)) {
       this.resetIndex(this.regexpForFieldNamesOfAllTypeNames);
-      return this.matchesFieldNamesOfAllTypeNames(_typeFieldName, fieldName);
+      const patternMatches = this.matchesFieldNamesOfAllTypeNames(_typeFieldName, fieldName);
+      return this.attemptResult(patternType, patternMatches);
     } else if (this.regexpForAllFieldNamesOfAllTypeNames.test(_typeFieldName)) {
       this.resetIndex(this.regexpForAllFieldNamesOfAllTypeNames);
-      return this.matchesAllFieldNamesOfAllTypeNames(_typeFieldName);
+      const patternMatches = true;
+      return this.attemptResult(patternType, patternMatches);
     }
     return this.attemptExcludes(_typeFieldName, typeName, fieldName);
   };
 
-  public static attemptExcludes = (typeFieldName: string | TypeFieldName, typeName: TypeName, fieldName: FieldName) => {
+  public static attemptExcludes = (
+    typeFieldName: string | TypeFieldName,
+    typeName: TypeName,
+    fieldName?: FieldName
+  ) => {
     const _typeFieldName = this.valueOf(typeFieldName);
+    const patternType = 'exclude';
 
-    if (this.regexpForAllFieldNamesExceptFieldNamesOfTypeName.test(_typeFieldName)) {
-      this.resetIndex(this.regexpForAllFieldNamesExceptFieldNamesOfTypeName);
-      return !this.matchesAllFieldNamesExceptFieldNamesOfTypeName(_typeFieldName, typeName, fieldName);
-    } else if (this.regexpForAllFieldNamesExceptFieldNamesOfAllTypeNames.test(_typeFieldName)) {
-      this.resetIndex(this.regexpForAllFieldNamesExceptFieldNamesOfAllTypeNames);
-      return !this.matchesAllFieldNamesExceptFieldNamesOfAllTypeNames(_typeFieldName, fieldName);
-    } else if (this.regexpForAllTypeNamesExceptTypeNames.test(_typeFieldName)) {
-      this.resetIndex(this.regexpForAllTypeNamesExceptTypeNames);
-      return !this.matchesAllTypeNamesExceptTypeNames(_typeFieldName, typeName);
-    } else if (this.regexpForFieldNamesOfAllTypeNamesExceptTypeNames.test(_typeFieldName)) {
-      this.resetIndex(this.regexpForFieldNamesOfAllTypeNamesExceptTypeNames);
-      return !this.matchesFieldNamesOfAllTypeNamesExceptTypeNames(_typeFieldName, typeName, fieldName);
-    } else if (this.regexpForAllFieldNamesOfAllTypeNamesExceptTypeNames.test(_typeFieldName)) {
-      this.resetIndex(this.regexpForAllFieldNamesOfAllTypeNamesExceptTypeNames);
-      return !this.matchesAllFieldNamesOfAllTypeNamesExceptTypeNames(_typeFieldName, typeName);
-    } else if (this.regexpForAllFieldNamesExceptFieldNamesOfAllTypeNamesExceptTypeNames.test(_typeFieldName)) {
-      this.resetIndex(this.regexpForAllFieldNamesExceptFieldNamesOfAllTypeNamesExceptTypeNames);
-      return !this.matchesAllFieldNamesExceptFieldNamesOfAllTypeNamesExceptTypeNames(
+    if (this.regexpForAllTypeNamesExcludeTypeNames.test(_typeFieldName)) {
+      this.resetIndex(this.regexpForAllTypeNamesExcludeTypeNames);
+      const patternMatches = this.matchesAllTypeNamesExcludeTypeNames(_typeFieldName, typeName);
+      return this.attemptResult(patternType, patternMatches);
+    } else if (fieldName && this.regexpForAllFieldNamesExcludeFieldNamesOfTypeName.test(_typeFieldName)) {
+      this.resetIndex(this.regexpForAllFieldNamesExcludeFieldNamesOfTypeName);
+      const patternMatches = this.matchesAllFieldNamesExcludeFieldNamesOfTypeName(_typeFieldName, typeName, fieldName);
+      return this.attemptResult(patternType, patternMatches);
+    } else if (fieldName && this.regexpForAllFieldNamesExcludeFieldNamesOfAllTypeNames.test(_typeFieldName)) {
+      this.resetIndex(this.regexpForAllFieldNamesExcludeFieldNamesOfAllTypeNames);
+      const patternMatches = this.matchesAllFieldNamesExcludeFieldNamesOfAllTypeNames(_typeFieldName, fieldName);
+      return this.attemptResult(patternType, patternMatches);
+    } else if (fieldName && this.regexpForFieldNamesOfAllTypeNamesExcludeTypeNames.test(_typeFieldName)) {
+      this.resetIndex(this.regexpForFieldNamesOfAllTypeNamesExcludeTypeNames);
+      const patternMatches = this.matchesFieldNamesOfAllTypeNamesExcludeTypeNames(_typeFieldName, typeName, fieldName);
+      return this.attemptResult(patternType, patternMatches);
+    } else if (this.regexpForAllFieldNamesOfAllTypeNamesExcludeTypeNames.test(_typeFieldName)) {
+      this.resetIndex(this.regexpForAllFieldNamesOfAllTypeNamesExcludeTypeNames);
+      const patternMatches = this.matchesAllFieldNamesOfAllTypeNamesExcludeTypeNames(_typeFieldName, typeName);
+      return this.attemptResult(patternType, patternMatches);
+    } else if (
+      fieldName &&
+      this.regexpForAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames.test(_typeFieldName)
+    ) {
+      this.resetIndex(this.regexpForAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames);
+      const patternMatches = this.matchesAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames(
         _typeFieldName,
         typeName,
         fieldName
       );
+      return this.attemptResult(patternType, patternMatches);
     }
-    return false;
+
+    return this.attemptResult('exclude', false);
+  };
+
+  private static attemptResult = (patternType: PatternType, patternMatches = true) => {
+    return {
+      patternType,
+      patternMatches,
+    };
   };
 }

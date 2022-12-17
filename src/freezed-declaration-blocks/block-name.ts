@@ -1,6 +1,6 @@
 import { camelCase } from 'change-case-all';
 import { Config } from '../config/config-value';
-import { DART_KEYWORDS, FlutterFreezedPluginConfig, DartIdentifierCasing } from '../config/plugin-config';
+import { DART_KEYWORDS, FlutterFreezedPluginConfig, DartIdentifierCasing, AppliesOn } from '../config/plugin-config';
 import { TypeName, FieldName } from '../config/type-field-name';
 import { dartCasing } from '../utils';
 
@@ -8,11 +8,7 @@ export type BlockNameValue = string;
 
 /**
  * @name BlockName
- * @description Unlike the `TypeName` which is a comma-separated string of GraphQL Type Names, the `BlockName` is a Dart keyword escaped valid identifier which becomes the name of the generated Freezed Block.
- * @exampleMarkdown
- * ```ts filename:"config.ts"
- * TODO: add an example
- * ```
+ * @description The `BlockName` is a Dart keyword escaped valid identifier which becomes the name of the generated Freezed Block.
  * */
 export class BlockName {
   private _value: string;
@@ -27,10 +23,10 @@ export class BlockName {
 
   /**
    * checks whether name is a Dart Language keyword
-   * @param name The name or identifier to be checked
+   * @param identifier The name or identifier to be checked
    * @returns `true` if name is a Dart Language keyword, otherwise `false`
    */
-  public static isDartKeyword = (name: string) => Object.hasOwn(DART_KEYWORDS, name);
+  public static isDartKeyword = (identifier: string) => Object.hasOwn(DART_KEYWORDS, identifier);
 
   /**
    * Ensures that the blockName isn't a valid Dart language reserved keyword. It wraps the blockName the dartKeywordEscapePrefix, dartKeywordEscapeSuffix and dartKeywordEscapeCasing specified in the config
@@ -41,101 +37,109 @@ export class BlockName {
    */
   public static escapeDartKeyword = (
     config: FlutterFreezedPluginConfig,
+    identifier: string,
     typeName: TypeName,
-    fieldName?: FieldName
+    fieldName?: FieldName,
+    blockAppliesOn: AppliesOn[] = []
   ): string => {
-    if (typeName && this.isDartKeyword(name.value)) {
-      const escapeDartKeywords = Config.escapeDartKeywords(config);
-      if (typeof escapeDartKeywords === 'boolean') {
-        const escapedBlockName = `${name}_`;
-        return dartCasing(escapedBlockName);
-      } else if (typeof escapeDartKeywords !== 'undefined') {
-        const prefix = optionFromAnyConfig(escapeDartKeywords[name.value], 'dartKeywordEscapePrefix', '');
-        const suffix = optionFromAnyConfig(escapeDartKeywords[name.value], 'dartKeywordEscapeSuffix', '_');
-        const casing = optionFromAnyConfig(escapeDartKeywords[name.value], 'dartKeywordEscapeCasing');
-
-        const escapedBlockName = `${prefix}${name}${suffix}`;
-
-        return dartCasing(escapedBlockName, casing);
-      }
+    if (this.isDartKeyword(identifier)) {
+      const [prefix, suffix, casing] = Config.escapeDartKeywords(config, typeName, fieldName, blockAppliesOn);
+      const escapedBlockName = `${prefix}${identifier}${suffix}`;
+      return dartCasing(escapedBlockName, casing);
     }
-    return name.value;
+    return identifier;
   };
 
   public static shouldDecorateWithAtJsonKey = (
-    blockType: 'enum_field' | 'parameter_field',
+    blockType: 'enum_value' | 'parameter',
     config: FlutterFreezedPluginConfig,
-    typeName: TypeName,
-    fieldName: FieldName
+    identifier: string
   ): boolean => {
-    const alwaysUseJsonKeyName = config.typeConfig?.[typeName.value]?.alwaysUseJsonKeyName;
-    const useJsonKeyName =
-      typeof alwaysUseJsonKeyName === 'boolean' ? alwaysUseJsonKeyName : alwaysUseJsonKeyName?.[fieldName.value];
-    const alreadyCamelCased = !this.isDartKeyword(fieldName.value) && camelCase(fieldName.value) === fieldName.value;
+    const alreadyCamelCased = !this.isDartKeyword(identifier) && camelCase(identifier) === identifier;
 
-    if (useJsonKeyName) {
-      return true;
-    } else if (alreadyCamelCased) {
+    if (alreadyCamelCased) {
       return false;
-    } else if (blockType === 'enum_field') {
-      return config.camelCasedEnums !== undefined;
+    } else if (blockType === 'enum_value') {
+      return Config.camelCasedEnums(config) !== undefined;
     }
     return false;
   };
 
   private static fromString = (
     config: FlutterFreezedPluginConfig,
+    identifier: string,
     typeName: TypeName,
     fieldName?: FieldName,
     casing?: DartIdentifierCasing,
-    decorateWithAtJsonKey?: boolean
+    decorateWithAtJsonKey?: boolean,
+    blockAppliesOn: AppliesOn[] = []
   ) => {
-    const escapedBlockName = BlockName.escapeDartKeyword(config, fieldName, typeName);
+    const escapedBlockName = BlockName.escapeDartKeyword(config, identifier, typeName, fieldName, blockAppliesOn);
 
     const casedBlockName = dartCasing(escapedBlockName, casing);
 
     if (this.isDartKeyword(casedBlockName)) {
-      const escapedBlockName = BlockName.escapeDartKeyword(config, TypeName.fromString(casedBlockName), typeName);
+      const escapedBlockName = BlockName.escapeDartKeyword(config, casedBlockName, typeName, fieldName, blockAppliesOn);
       return new BlockName(
-        decorateWithAtJsonKey ? `@JsonKey(name: '${fieldName}') ${escapedBlockName}` : escapedBlockName
+        decorateWithAtJsonKey ? `@JsonKey(name: '${identifier}') ${escapedBlockName}` : escapedBlockName
       );
     }
-    return new BlockName(decorateWithAtJsonKey ? `@JsonKey(name: '${fieldName}') ${casedBlockName}` : casedBlockName);
+    return new BlockName(decorateWithAtJsonKey ? `@JsonKey(name: '${identifier}') ${casedBlockName}` : casedBlockName);
   };
 
   public static asEnumTypeName = (config: FlutterFreezedPluginConfig, typeName: TypeName): string =>
-    BlockName.fromString(config, typeName, undefined, 'PascalCase').value;
+    BlockName.fromString(config, typeName.value, typeName, undefined, 'PascalCase', undefined, ['enum']).value;
 
   public static asEnumValueName = (
     config: FlutterFreezedPluginConfig,
     typeName: TypeName,
     fieldName: FieldName
   ): string => {
-    const decorateWithAtJsonKey = BlockName.shouldDecorateWithAtJsonKey('enum_field', config, typeName, fieldName);
+    const decorateWithAtJsonKey = BlockName.shouldDecorateWithAtJsonKey('enum_value', config, fieldName.value);
     const casing = Config.camelCasedEnums(config);
-    return BlockName.fromString(config, fieldName, typeName, casing, decorateWithAtJsonKey).value;
+    return BlockName.fromString(config, fieldName.value, typeName, fieldName, casing, decorateWithAtJsonKey, [
+      'enum_value',
+    ]).value;
   };
 
   public static asClassName = (config: FlutterFreezedPluginConfig, typeName: TypeName): string =>
-    BlockName.fromString(config, typeName, undefined, 'PascalCase').value;
+    BlockName.fromString(config, typeName.value, typeName, undefined, 'PascalCase', undefined, ['class']).value;
 
   public static asNamedConstructor = (
     config: FlutterFreezedPluginConfig,
     typeName: TypeName,
-    namedConstructor: string
+    namedConstructor: string,
+    blockAppliesOn: AppliesOn[] = []
   ): string =>
     FactoryName.fromNamed(
-      BlockName.fromString(config, typeName, undefined, 'PascalCase'),
-      BlockName.fromString(config, FieldName.fromString(namedConstructor), undefined, 'camelCase')
+      BlockName.fromString(config, typeName.value, typeName, undefined, 'PascalCase', undefined, blockAppliesOn),
+      BlockName.fromString(
+        config,
+        namedConstructor,
+        typeName,
+        FieldName.fromString(namedConstructor),
+        'camelCase',
+        undefined,
+        blockAppliesOn
+      )
     ).value;
 
   public static asParameterName = (
     config: FlutterFreezedPluginConfig,
     typeName: TypeName,
-    fieldName: FieldName
+    fieldName: FieldName,
+    blockAppliesOn: AppliesOn[] = []
   ): string => {
-    const decorateWithAtJsonKey = BlockName.shouldDecorateWithAtJsonKey('enum_field', config, typeName, fieldName);
-    return BlockName.fromString(config, fieldName, typeName, 'camelCase', decorateWithAtJsonKey).value;
+    const decorateWithAtJsonKey = BlockName.shouldDecorateWithAtJsonKey('enum_value', config, fieldName.value);
+    return BlockName.fromString(
+      config,
+      fieldName.value,
+      typeName,
+      fieldName,
+      'camelCase',
+      decorateWithAtJsonKey,
+      blockAppliesOn
+    ).value;
   };
 }
 

@@ -9,8 +9,14 @@ export const nodeIsObjectType = (
 ): node is ObjectTypeDefinitionNode | InputObjectTypeDefinitionNode =>
   node.kind === Kind.OBJECT_TYPE_DEFINITION || node.kind === Kind.INPUT_OBJECT_TYPE_DEFINITION;
 
-export const appliesOnBlock = <T extends AppliesOn>(appliesOn: T[], expected: readonly T[], matchSome = false) => {
-  return matchSome ? appliesOn.some(a => expected.includes(a)) : appliesOn.every(a => expected.includes(a));
+export const appliesOnBlock = <T extends AppliesOn>(
+  configAppliesOn: T[],
+  blockAppliesOn: readonly T[],
+  matchSome = false
+) => {
+  return matchSome
+    ? configAppliesOn.some(a => blockAppliesOn.includes(a))
+    : configAppliesOn.every(a => blockAppliesOn.includes(a));
 };
 
 export const dartCasing = (name: string, casing?: DartIdentifierCasing): string => {
