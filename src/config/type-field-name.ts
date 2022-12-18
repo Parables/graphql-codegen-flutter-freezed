@@ -583,25 +583,48 @@ export class TypeFieldName extends GraphqlTypeFieldName {
     matchAllTypeNames = false,
     matchAllFieldNames = false
   ) => {
+    //#region helper methods
+    const strToList = (str: string) => str.split(/\s*,\s*/gim).filter(s => s.length > 0);
+
+    const everyOrSome = (value: boolean): 'every' | 'some' => (value ? 'every' : 'some');
+
+    const markAsFound = (expected: string[], found: string[], result: Record<string, boolean>) => {
+      expected.forEach(p => {
+        found.find(c => {
+          if (p === c) {
+            result[p] = true;
+          } else if (result[p] === undefined) {
+            result[p] = false;
+          }
+        });
+      });
+      return result;
+    };
+    //#endregion
+
     const pattern = this.regexpForAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames;
 
     const _typeFieldName = this.valueOf(typeFieldName);
-    const _typeNames = this.valueOf(excludeTypeNames);
-    const _fieldNames = this.valueOf(excludeFieldNames);
+    const _typeNames = strToList(this.valueOf(excludeTypeNames));
+    const _fieldNames = strToList(this.valueOf(excludeFieldNames));
 
     let result: RegExpExecArray | null;
-    let matchFound: boolean;
+    const typeNameResult: Record<string, boolean> = {};
+    const fieldNameResult: Record<string, boolean> = {};
 
     while ((result = pattern.exec(_typeFieldName)) !== null) {
-      const typeNames = result.groups.excludeTypeNames;
-      const fieldNames = result.groups.excludeFieldNames;
+      const typeNames = strToList(result.groups.excludeTypeNames);
+      const fieldNames = strToList(result.groups.excludeFieldNames);
 
-      matchFound =
-        this.matchAll(typeNames, _typeNames, matchAllTypeNames) &&
-        this.matchAll(fieldNames, _fieldNames, matchAllFieldNames);
+      const rT = markAsFound(_typeNames, typeNames, typeNameResult);
+      const rF = markAsFound(_fieldNames, fieldNames, fieldNameResult);
 
-      if (matchFound) break;
+      console.log(rT, rF);
     }
+    const matchFound =
+      Object.values(typeNameResult)[everyOrSome(matchAllTypeNames)](v => v) &&
+      Object.values(fieldNameResult)[everyOrSome(matchAllFieldNames)](v => v);
+
     this.resetIndex(pattern);
     return matchFound;
   };
