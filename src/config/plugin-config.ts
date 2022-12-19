@@ -654,7 +654,7 @@ export type FlutterFreezedPluginConfig = {
 //#endregion
 
 //#region type alias
-
+export type StringOrT<T> = string | T;
 /**
  * @name TypeNamePatterns
  * @see {@link url TypeFieldNamePatterns}

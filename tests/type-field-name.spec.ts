@@ -474,20 +474,16 @@ describe('pattern matchers: return a boolean if the given args are found within 
         ],
         [
           false,
-          'the fieldNames given: `friends` are not in the exclusion list of fieldNames for the typeName given: `Droid`',
-          [Droid, [friends, name], undefined, true],
-        ],
-
-        [
-          false,
-          'one of the fieldNames given: `name` is not in the exclusion list of fieldNames of the typeName given: `Droid` in the pattern.',
-          [Droid, [id, name, friends], undefined, true],
+          'the fieldName given: `friend` is not in the exclusion list of fieldNames for the typeName given: `Droid`',
+          [Droid, friend],
         ],
         [
           false,
-          'one of the typeNames given: `Starship` is not in the exclusion list of typeNames in the pattern.',
-          [[Droid, Starship], id, true],
+          'the typeNames given: `Starship` is not in the exclusion list of typeNames in the pattern.',
+          [Starship, id],
         ],
+        [false, 'the typeNames given: `Human` is not in the exclusion list of typeNames in the pattern.', [Human, id]],
+        [false, 'the typeNames given: `Movie` is not in the exclusion list of typeNames in the pattern.', [Movie, id]],
       ],
     ],
   ];
