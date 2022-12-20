@@ -272,10 +272,10 @@ export class TypeFieldName extends GraphqlTypeFieldName {
       const foundTypeNames = strToList(result.groups.typeNames);
 
       if (foundTypeNames.find(_typeName => _typeName === typeName)) {
-        return matchFound(regexp);
+        return matchFound(regexp, false);
       }
     }
-    return matchFound(regexp, false);
+    return matchFound(regexp, true);
   };
 
   //#endregion
@@ -389,7 +389,7 @@ export class TypeFieldName extends GraphqlTypeFieldName {
       const foundTypeName = result.groups.typeName;
       const foundFieldNames = strToList(result.groups.fieldNames);
 
-      if (foundTypeName === typeName && foundFieldNames.find(_fieldName => _fieldName === fieldName)) {
+      if (foundTypeName === typeName && !foundFieldNames.includes(fieldName)) {
         return matchFound(regexp);
       }
     }
@@ -472,7 +472,7 @@ export class TypeFieldName extends GraphqlTypeFieldName {
     while ((result = regexp.exec(pattern)) !== null) {
       const foundFieldNames = strToList(result.groups.fieldNames);
 
-      if (foundFieldNames.find(_fieldName => _fieldName === fieldName)) {
+      if (!foundFieldNames.includes(fieldName)) {
         return matchFound(regexp);
       }
     }
@@ -537,7 +537,7 @@ export class TypeFieldName extends GraphqlTypeFieldName {
     while ((result = regexp.exec(pattern)) !== null) {
       const foundTypeNames = strToList(result.groups.typeNames);
 
-      if (foundTypeNames.find(_typeName => _typeName === typeName)) {
+      if (!foundTypeNames.includes(typeName)) {
         return matchFound(regexp);
       }
     }
