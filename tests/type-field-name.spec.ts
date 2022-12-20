@@ -16,15 +16,15 @@ test('helper method: indexArray(arr[][]): returns a new array where the first el
 
 const Droid = TypeName.fromString('Droid');
 const Starship = TypeName.fromString('Starship');
-const Human = TypeName.fromString('Human');
-const Movie = TypeName.fromString('Movie');
+// const Human = TypeName.fromString('Human');
+// const Movie = TypeName.fromString('Movie');
 
-const id = FieldName.fromString('id');
-const name = FieldName.fromString('name');
+// const id = FieldName.fromString('id');
+// const name = FieldName.fromString('name');
 const friends = FieldName.fromString('friends');
-const friend = FieldName.fromString('friend');
-const title = FieldName.fromString('title');
-const episode = FieldName.fromString('episode');
+// const friend = FieldName.fromString('friend');
+// const title = FieldName.fromString('title');
+// const episode = FieldName.fromString('episode');
 
 describe("integrity checks: ensures that these values don't change and if they are updated accordingly", () => {
   describe('integrity check: all Regular Expressions are accounted for', () => {
@@ -194,7 +194,7 @@ describe('pattern matchers: return a boolean if the given args are found within 
     method => method.startsWith('matches') && typeof TypeFieldName[method] === 'function'
   );
 
-  const testedPatternMatchers: string[] = [];
+  // const testedPatternMatchers: string[] = [];
 
   expect(definedPatternMatchers.length).toBe(patternBuildersCount);
 
@@ -214,314 +214,328 @@ describe('pattern matchers: return a boolean if the given args are found within 
     ]
   >(
     indexArray([
-      [
-        'matchesTypeNames',
-        'Droid;Starship;',
-        'returns true if the typeName given was specified in the pattern, otherwise false',
-        [
-          [true, '`Droid` was specified in the pattern', [Droid]],
-          [true, '`Starship` was specified in the pattern', [Starship]],
-          [false, '`Human` was given but was not specified in the pattern', [Human]],
-          [false, '`Movie` was given but was not specified in the pattern', [Movie]],
-        ],
-      ],
-      [
-        'matchesAllTypeNames',
-        '@*TypeNames',
-        'pattern for all TypeNames',
-        [[false, 'not a valid pattern: missing semi-colon', []]],
-      ],
-      [
-        'matchesAllTypeNamesExcludeTypeNames',
-        '@*TypeNames-[Droid,Starship];',
-        'returns true if the typeNames given were specified in the exclusion list of typeNames in the pattern, otherwise false.',
-        [
-          [false, '`Droid` is in the exclusion list of typeNames in the pattern', [Droid]],
-          [false, '`Starship` is in the exclusion list of typeNames in the pattern', [Starship]],
-          [true, '`Human` is not in the exclusion list of typeNames in the pattern', [Human]],
-          [true, '`Movie` is not in the exclusion list of typeNames in the pattern', [Movie]],
-        ],
-      ],
-      [
-        'matchesFieldNamesOfTypeName',
-        'Droid.[id,name,friends];Movie.[title,episode];',
-        'returns true if the fieldNames given were specified in the list of fieldNames for the typeName given in the pattern, otherwise false.',
-        [
-          [true, '`id` was specified in the list of fieldNames for `Droid` in the pattern', [Droid, id]],
-          [true, '`name` was specified in the list of fieldNames for `Droid` in the pattern', [Droid, name]],
-          [true, '`friends` was specified in the list of fieldNames for `Droid` in the pattern', [Droid, friends]],
-          [false, '`friend` was not specified in the list of fieldNames for `Droid` in the pattern', [Droid, friend]],
-          [false, '`title` was not specified in the list of fieldNames for `Droid` in the pattern', [Droid, title]],
-          [true, '`title` was specified in the list of fieldNames for `Movie` in the pattern', [Movie, title]],
-          [true, '`episode` was specified in the list of fieldNames for `Movie` in the pattern', [Movie, episode]],
-          [false, '`id` was not specified in the list of fieldNames for `Movie` in the pattern', [Movie, id]],
-          [false, '`name` was not specified in the list of fieldNames for `Movie` in the pattern', [Movie, name]],
-          [false, '`friends` was not specified in the list of fieldNames for `Movie` in the pattern', [Movie, friends]],
-          [false, '`friend` was not specified in the list of fieldNames for `Movie` in the pattern', [Movie, friend]],
-        ],
-      ],
-      [
-        'matchesAllFieldNamesOfTypeName',
-        'Movies.@*FieldNames;Droid.@*FieldNames;Starship;',
-        'returns a boolean if the `typeName` given was specified in the pattern. Since the pattern contains `@*FieldNames`,this matcher does not require a `fieldName` parameter',
-        [
-          [true, '`Droid` was specified as a `typeName` in the pattern', [Droid]],
-          [false, '`Movie` was given but `Movies` was specified in the pattern', [Movie]],
-          [
-            false,
-            'even though `Starship` was specified as a `typeName` in the pattern, it is not a valid pattern for allFieldNames which must end with `.@*FieldNames;`',
-            [Starship],
-          ],
-        ],
-      ],
-      [
-        'matchesAllFieldNamesExcludeFieldNamesOfTypeName',
-        'Movie.@*FieldNames-[id];Droid.@*FieldNames-[name];',
-        'returns a boolean if fieldNames given were specified in the exclusion list of fieldNames for the typeName given in the pattern.',
-        [
-          [false, '`id` was specified in the exclusion list of fieldNames for `Movie` in the pattern', [Movie, id]],
-          [
-            true,
-            '`title` was not specified in the exclusion list of fieldNames for `Movie` in the pattern',
-            [Movie, title],
-          ],
-          [
-            true,
-            '`name` was not specified in the exclusion list of fieldNames for `Movie` in the pattern',
-            [Movie, name],
-          ],
-          [false, '`name` was specified in the exclusion list of fieldNames for `Droid` in the pattern', [Droid, name]],
-          // TODO: Add more test cases
-        ],
-      ],
-      [
-        'matchesFieldNamesOfAllTypeNames',
-        '@*TypeNames.[id,name];@*TypeNames.[title];',
-        'returns a boolean if the `fieldNames` given were specified in the list of fieldNames in the pattern. Since the pattern contains `@*TypeNames`, this matcher does not require a `typeName` parameter.',
-        [
-          [true, '`id` was specified in the list of fieldNames in the pattern', [id]],
-          [true, '`name` was specified in the list of fieldNames in the pattern', [name]],
-          [true, '`title` was specified in the list of fieldNames in the pattern', [title]],
-          [false, '`friends` was not specified in the list of fieldNames in the pattern', [friends]],
-          [false, '`friend` was not specified in the list of fieldNames in the pattern', [friend]],
-          [false, '`episode` was not specified in the list of fieldNames in the pattern', [episode]],
-        ],
-      ],
-      [
-        'matchesAllFieldNamesOfAllTypeNames',
-        '@*TypeNames.@*FieldNames;',
-        'returns true for any fieldName and fieldName given',
-        [
-          [true, 'it matches basically anything', [Droid, id]],
-          [true, 'it matches basically anything', [Droid, name]],
-          [true, 'it matches basically anything', [Droid, friends]],
-          [true, 'it matches basically anything', [Droid, friend]],
-          [true, 'it matches basically anything', [Droid, title]],
-          [true, 'it matches basically anything', [Droid, episode]],
+      // [
+      //   'matchesTypeNames',
+      //   'Droid;Starship;',
+      //   'returns true if the typeName given was specified in the pattern, otherwise false',
+      //   [
+      //     [true, '`Droid` was specified in the pattern', [Droid]],
+      //     [true, '`Starship` was specified in the pattern', [Starship]],
+      //     [false, '`Human` was given but was not specified in the pattern', [Human]],
+      //     [false, '`Movie` was given but was not specified in the pattern', [Movie]],
+      //   ],
+      // ],
+      // [
+      //   'matchesAllTypeNames',
+      //   '@*TypeNames',
+      //   'pattern for all TypeNames',
+      //   [[false, 'not a valid pattern: missing semi-colon', []]],
+      // ],
+      // [
+      //   'matchesAllTypeNamesExcludeTypeNames',
+      //   '@*TypeNames-[Droid,Starship];',
+      //   'returns true if the typeNames given were specified in the exclusion list of typeNames in the pattern, otherwise false.',
+      //   [
+      //     [false, '`Droid` is in the exclusion list of typeNames in the pattern', [Droid]],
+      //     [false, '`Starship` is in the exclusion list of typeNames in the pattern', [Starship]],
+      //     [true, '`Human` is not in the exclusion list of typeNames in the pattern', [Human]],
+      //     [true, '`Movie` is not in the exclusion list of typeNames in the pattern', [Movie]],
+      //   ],
+      // ],
+      // [
+      //   'matchesFieldNamesOfTypeName',
+      //   'Droid.[id,name,friends];Movie.[title,episode];',
+      //   'returns true if the fieldNames given were specified in the list of fieldNames for the typeName given in the pattern, otherwise false.',
+      //   [
+      //     [true, '`id` was specified in the list of fieldNames for `Droid` in the pattern', [Droid, id]],
+      //     [true, '`name` was specified in the list of fieldNames for `Droid` in the pattern', [Droid, name]],
+      //     [true, '`friends` was specified in the list of fieldNames for `Droid` in the pattern', [Droid, friends]],
+      //     [false, '`friend` was not specified in the list of fieldNames for `Droid` in the pattern', [Droid, friend]],
+      //     [false, '`title` was not specified in the list of fieldNames for `Droid` in the pattern', [Droid, title]],
+      //     [true, '`title` was specified in the list of fieldNames for `Movie` in the pattern', [Movie, title]],
+      //     [true, '`episode` was specified in the list of fieldNames for `Movie` in the pattern', [Movie, episode]],
+      //     [false, '`id` was not specified in the list of fieldNames for `Movie` in the pattern', [Movie, id]],
+      //     [false, '`name` was not specified in the list of fieldNames for `Movie` in the pattern', [Movie, name]],
+      //     [false, '`friends` was not specified in the list of fieldNames for `Movie` in the pattern', [Movie, friends]],
+      //     [false, '`friend` was not specified in the list of fieldNames for `Movie` in the pattern', [Movie, friend]],
+      //   ],
+      // ],
+      // [
+      //   'matchesAllFieldNamesOfTypeName',
+      //   'Movies.@*FieldNames;Droid.@*FieldNames;Starship;',
+      //   'returns a boolean if the `typeName` given was specified in the pattern. Since the pattern contains `@*FieldNames`,this matcher does not require a `fieldName` parameter',
+      //   [
+      //     [true, '`Droid` was specified as a `typeName` in the pattern', [Droid]],
+      //     [false, '`Movie` was given but `Movies` was specified in the pattern', [Movie]],
+      //     [
+      //       false,
+      //       'even though `Starship` was specified as a `typeName` in the pattern, it is not a valid pattern for allFieldNames which must end with `.@*FieldNames;`',
+      //       [Starship],
+      //     ],
+      //   ],
+      // ],
+      // [
+      //   'matchesAllFieldNamesExcludeFieldNamesOfTypeName',
+      //   'Movie.@*FieldNames-[id];Droid.@*FieldNames-[name];',
+      //   'returns a boolean if fieldNames given were specified in the exclusion list of fieldNames for the typeName given in the pattern.',
+      //   [
+      //     [false, '`id` was specified in the exclusion list of fieldNames for `Movie` in the pattern', [Movie, id]],
+      //     [
+      //       true,
+      //       '`title` was not specified in the exclusion list of fieldNames for `Movie` in the pattern',
+      //       [Movie, title],
+      //     ],
+      //     [
+      //       true,
+      //       '`name` was not specified in the exclusion list of fieldNames for `Movie` in the pattern',
+      //       [Movie, name],
+      //     ],
+      //     [false, '`name` was specified in the exclusion list of fieldNames for `Droid` in the pattern', [Droid, name]],
+      //     // TODO: Add more test cases
+      //   ],
+      // ],
+      // [
+      //   'matchesFieldNamesOfAllTypeNames',
+      //   '@*TypeNames.[id,name];@*TypeNames.[title];',
+      //   'returns a boolean if the `fieldNames` given were specified in the list of fieldNames in the pattern. Since the pattern contains `@*TypeNames`, this matcher does not require a `typeName` parameter.',
+      //   [
+      //     [true, '`id` was specified in the list of fieldNames in the pattern', [id]],
+      //     [true, '`name` was specified in the list of fieldNames in the pattern', [name]],
+      //     [true, '`title` was specified in the list of fieldNames in the pattern', [title]],
+      //     [false, '`friends` was not specified in the list of fieldNames in the pattern', [friends]],
+      //     [false, '`friend` was not specified in the list of fieldNames in the pattern', [friend]],
+      //     [false, '`episode` was not specified in the list of fieldNames in the pattern', [episode]],
+      //   ],
+      // ],
+      // [
+      //   'matchesAllFieldNamesOfAllTypeNames',
+      //   '@*TypeNames.@*FieldNames;',
+      //   'returns true for any fieldName and fieldName given',
+      //   [
+      //     [true, 'it matches basically anything', [Droid, id]],
+      //     [true, 'it matches basically anything', [Droid, name]],
+      //     [true, 'it matches basically anything', [Droid, friends]],
+      //     [true, 'it matches basically anything', [Droid, friend]],
+      //     [true, 'it matches basically anything', [Droid, title]],
+      //     [true, 'it matches basically anything', [Droid, episode]],
 
-          [true, 'it matches basically anything', [Starship, id]],
-          [true, 'it matches basically anything', [Starship, name]],
-          [true, 'it matches basically anything', [Starship, friends]],
-          [true, 'it matches basically anything', [Starship, friend]],
-          [true, 'it matches basically anything', [Starship, title]],
-          [true, 'it matches basically anything', [Starship, episode]],
+      //     [true, 'it matches basically anything', [Starship, id]],
+      //     [true, 'it matches basically anything', [Starship, name]],
+      //     [true, 'it matches basically anything', [Starship, friends]],
+      //     [true, 'it matches basically anything', [Starship, friend]],
+      //     [true, 'it matches basically anything', [Starship, title]],
+      //     [true, 'it matches basically anything', [Starship, episode]],
 
-          [true, 'it matches basically anything', [Human, id]],
-          [true, 'it matches basically anything', [Human, name]],
-          [true, 'it matches basically anything', [Human, friends]],
-          [true, 'it matches basically anything', [Human, friend]],
-          [true, 'it matches basically anything', [Human, title]],
-          [true, 'it matches basically anything', [Human, episode]],
+      //     [true, 'it matches basically anything', [Human, id]],
+      //     [true, 'it matches basically anything', [Human, name]],
+      //     [true, 'it matches basically anything', [Human, friends]],
+      //     [true, 'it matches basically anything', [Human, friend]],
+      //     [true, 'it matches basically anything', [Human, title]],
+      //     [true, 'it matches basically anything', [Human, episode]],
 
-          [true, 'it matches basically anything', [Movie, id]],
-          [true, 'it matches basically anything', [Movie, name]],
-          [true, 'it matches basically anything', [Movie, friends]],
-          [true, 'it matches basically anything', [Movie, friend]],
-          [true, 'it matches basically anything', [Movie, title]],
-          [true, 'it matches basically anything', [Movie, episode]],
-        ],
-      ],
-      [
-        'matchesAllFieldNamesExcludeFieldNamesOfAllTypeNames',
-        '@*TypeNames.@*FieldNames-[id,name];@*TypeNames.@*FieldNames-[title];',
-        'returns a boolean if the fieldNames given were specified in the exclusion list of fieldNames in the pattern. Since the pattern contains `@*TypeNames`, this matcher does not require a `typeName` parameter.',
-        [
-          [false, '`id` was specified in the list of fieldNames in the pattern', [id]],
-          [false, '`name` was specified in the list of fieldNames in the pattern', [name]],
-          [false, '`title` was specified in the list of fieldNames in the pattern', [title]],
-          [true, '`friends` was not specified in the list of fieldNames in the pattern', [friends]],
-          [true, '`friend` was not specified in the list of fieldNames in the pattern', [friend]],
-          [true, '`episode` was not specified in the list of fieldNames in the pattern', [episode]],
-        ],
-      ],
-      [
-        'matchesFieldNamesOfAllTypeNamesExcludeTypeNames',
-        '@*TypeNames-[Droid,Human].[id,name];@*TypeNames-[Movie,Human].[title];',
-        'returns true if the fieldNames given were specified in the list of fieldNames and the typeNames given is found in the exclusion list of typeNames in the pattern.',
-        [
-          [
-            true,
-            '`id` was specified as a fieldName of  the excluded typeName: `Droid` in the pattern ',
-            [Starship, id],
-          ],
-          [
-            true,
-            '`id` was specified as a fieldName of  the excluded typeName: `Droid` in the pattern ',
-            [Starship, name],
-          ],
-          [
-            true,
-            '`id` was specified as a fieldName of  the excluded typeName: `Droid` in the pattern ',
-            [Starship, title],
-          ],
-          [true, '`id` was specified as a fieldName of  the excluded typeName: `Droid` in the pattern ', [Movie, id]],
-          [true, '`id` was specified as a fieldName of  the excluded typeName: `Droid` in the pattern ', [Movie, name]],
-          [
-            true,
-            '`id` was specified as a fieldName of  the excluded typeName: `Droid` in the pattern ',
-            [Droid, title],
-          ],
-          [false, '`id` was specified as a fieldName of  the excluded typeName: `Droid` in the pattern ', [Droid, id]],
-          [
-            false,
-            '`name` was specified as a fieldName of the excluded `typeName`: `Droid` in the pattern ',
-            [Droid, name],
-          ],
-          [false, '`id` was specified as a fieldName of  the excluded typeName: `Human` in the pattern ', [Human, id]],
-          [
-            false,
-            '`name` was specified as a fieldName of the excluded `typeName`: `Human` in the pattern ',
-            [Human, name],
-          ],
-          [
-            false,
-            '`title` was specified as a fieldName of the excluded `typeName`: `Human` in the pattern ',
-            [Human, title],
-          ],
-          [
-            false,
-            '`title` was specified as a fieldName of the excluded `typeName`: `Movie` in the pattern ',
-            [Movie, title],
-          ],
-          [
-            false,
-            '`title` was not specified as fieldNames of the excluded `typeName`: `Droid`in the pattern ',
-            [Droid, title],
-          ],
-          [
-            false,
-            '`friends` was not specified as fieldNames of the excluded `typeName`: `Droid`in the pattern ',
-            [Droid, friends],
-          ],
-          [
-            false,
-            '`friend` was not specified as fieldNames of the excluded `typeName`: `Droid`in the pattern ',
-            [Droid, friend],
-          ],
-          [
-            false,
-            '`episode` was not specified as fieldNames of the excluded `typeName`: `Droid`in the pattern ',
-            [Droid, episode],
-          ],
-          [
-            false,
-            '`id` of `Movie` was not specified as a fieldName of an excluded `typeName` in the pattern ',
-            [Movie, id],
-          ],
-          [
-            false,
-            '`name` of `Movie` was not specified as a fieldName of an excluded `typeName` in the pattern ',
-            [Movie, name],
-          ],
-          [
-            false,
-            '`friends` of `Movie` was not specified as a fieldName of an excluded `typeName` in the pattern ',
-            [Movie, friends],
-          ],
-          [
-            false,
-            '`friend` of `Movie` was not specified as a fieldName of an excluded `typeName` in the pattern ',
-            [Movie, friend],
-          ],
-          [
-            false,
-            '`episode` of `Movie` was not specified as a fieldName of an excluded `typeName` in the pattern ',
-            [Movie, episode],
-          ],
-        ],
-      ],
-      [
-        'matchesAllFieldNamesOfAllTypeNamesExcludeTypeNames',
-        '@*TypeNames-[Droid].@*FieldNames;@*TypeNames-[Movie,Human].@*FieldNames;',
-        'returns a boolean if the `typeName` given is found in the excluded list of typeNames . Since the pattern contains `@*FieldNames`, this matcher does not require a `fieldName` parameter.',
-        [
-          [true, '`Droid` is in the excluded list of `typeNames`', [Droid]],
-          [true, '`Movie` is in the excluded list of `typeNames`', [Movie]],
-          [true, '`Human` is in the excluded list of `typeNames`', [Human]],
-          [false, '`Starship` is not in the excluded list of `typeNames`', [Starship, true]],
-        ],
-      ],
+      //     [true, 'it matches basically anything', [Movie, id]],
+      //     [true, 'it matches basically anything', [Movie, name]],
+      //     [true, 'it matches basically anything', [Movie, friends]],
+      //     [true, 'it matches basically anything', [Movie, friend]],
+      //     [true, 'it matches basically anything', [Movie, title]],
+      //     [true, 'it matches basically anything', [Movie, episode]],
+      //   ],
+      // ],
+      // [
+      //   'matchesAllFieldNamesExcludeFieldNamesOfAllTypeNames',
+      //   '@*TypeNames.@*FieldNames-[id,name];@*TypeNames.@*FieldNames-[title];',
+      //   'returns a boolean if the fieldNames given were specified in the exclusion list of fieldNames in the pattern. Since the pattern contains `@*TypeNames`, this matcher does not require a `typeName` parameter.',
+      //   [
+      //     [false, '`id` was specified in the list of fieldNames in the pattern', [id]],
+      //     [false, '`name` was specified in the list of fieldNames in the pattern', [name]],
+      //     [false, '`title` was specified in the list of fieldNames in the pattern', [title]],
+      //     [true, '`friends` was not specified in the list of fieldNames in the pattern', [friends]],
+      //     [true, '`friend` was not specified in the list of fieldNames in the pattern', [friend]],
+      //     [true, '`episode` was not specified in the list of fieldNames in the pattern', [episode]],
+      //   ],
+      // ],
+      // [
+      //   'matchesFieldNamesOfAllTypeNamesExcludeTypeNames',
+      //   '@*TypeNames-[Droid,Human].[id,name];@*TypeNames-[Movie,Human].[title];',
+      //   'returns true if the fieldNames given were specified in the list of fieldNames and the typeNames given is found in the exclusion list of typeNames in the pattern.',
+      //   [
+      //     [
+      //       true,
+      //       '`id` was specified as a fieldName of  the excluded typeName: `Droid` in the pattern ',
+      //       [Starship, id],
+      //     ],
+      //     [
+      //       true,
+      //       '`id` was specified as a fieldName of  the excluded typeName: `Droid` in the pattern ',
+      //       [Starship, name],
+      //     ],
+      //     [
+      //       true,
+      //       '`id` was specified as a fieldName of  the excluded typeName: `Droid` in the pattern ',
+      //       [Starship, title],
+      //     ],
+      //     [true, '`id` was specified as a fieldName of  the excluded typeName: `Droid` in the pattern ', [Movie, id]],
+      //     [true, '`id` was specified as a fieldName of  the excluded typeName: `Droid` in the pattern ', [Movie, name]],
+      //     [
+      //       true,
+      //       '`id` was specified as a fieldName of  the excluded typeName: `Droid` in the pattern ',
+      //       [Droid, title],
+      //     ],
+      //     [false, '`id` was specified as a fieldName of  the excluded typeName: `Droid` in the pattern ', [Droid, id]],
+      //     [
+      //       false,
+      //       '`name` was specified as a fieldName of the excluded `typeName`: `Droid` in the pattern ',
+      //       [Droid, name],
+      //     ],
+      //     [false, '`id` was specified as a fieldName of  the excluded typeName: `Human` in the pattern ', [Human, id]],
+      //     [
+      //       false,
+      //       '`name` was specified as a fieldName of the excluded `typeName`: `Human` in the pattern ',
+      //       [Human, name],
+      //     ],
+      //     [
+      //       false,
+      //       '`title` was specified as a fieldName of the excluded `typeName`: `Human` in the pattern ',
+      //       [Human, title],
+      //     ],
+      //     [
+      //       false,
+      //       '`title` was specified as a fieldName of the excluded `typeName`: `Movie` in the pattern ',
+      //       [Movie, title],
+      //     ],
+      //     [
+      //       false,
+      //       '`title` was not specified as fieldNames of the excluded `typeName`: `Droid`in the pattern ',
+      //       [Droid, title],
+      //     ],
+      //     [
+      //       false,
+      //       '`friends` was not specified as fieldNames of the excluded `typeName`: `Droid`in the pattern ',
+      //       [Droid, friends],
+      //     ],
+      //     [
+      //       false,
+      //       '`friend` was not specified as fieldNames of the excluded `typeName`: `Droid`in the pattern ',
+      //       [Droid, friend],
+      //     ],
+      //     [
+      //       false,
+      //       '`episode` was not specified as fieldNames of the excluded `typeName`: `Droid`in the pattern ',
+      //       [Droid, episode],
+      //     ],
+      //     [
+      //       false,
+      //       '`id` of `Movie` was not specified as a fieldName of an excluded `typeName` in the pattern ',
+      //       [Movie, id],
+      //     ],
+      //     [
+      //       false,
+      //       '`name` of `Movie` was not specified as a fieldName of an excluded `typeName` in the pattern ',
+      //       [Movie, name],
+      //     ],
+      //     [
+      //       false,
+      //       '`friends` of `Movie` was not specified as a fieldName of an excluded `typeName` in the pattern ',
+      //       [Movie, friends],
+      //     ],
+      //     [
+      //       false,
+      //       '`friend` of `Movie` was not specified as a fieldName of an excluded `typeName` in the pattern ',
+      //       [Movie, friend],
+      //     ],
+      //     [
+      //       false,
+      //       '`episode` of `Movie` was not specified as a fieldName of an excluded `typeName` in the pattern ',
+      //       [Movie, episode],
+      //     ],
+      //   ],
+      // ],
+      // [
+      //   'matchesAllFieldNamesOfAllTypeNamesExcludeTypeNames',
+      //   '@*TypeNames-[Droid].@*FieldNames;@*TypeNames-[Movie,Human].@*FieldNames;',
+      //   'returns a boolean if the `typeName` given is found in the excluded list of typeNames . Since the pattern contains `@*FieldNames`, this matcher does not require a `fieldName` parameter.',
+      //   [
+      //     [true, '`Droid` is in the excluded list of `typeNames`', [Droid]],
+      //     [true, '`Movie` is in the excluded list of `typeNames`', [Movie]],
+      //     [true, '`Human` is in the excluded list of `typeNames`', [Human]],
+      //     [false, '`Starship` is not in the excluded list of `typeNames`', [Starship, true]],
+      //   ],
+      // ],
       [
         'matchesAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames',
         '@*TypeNames-[Droid].@*FieldNames-[id];@*TypeNames-[Movie,Human, Droid].@*FieldNames-[name];@*TypeNames-[Movie, Human].@*FieldNames-[title];',
         'returns true if the fieldNames given is found in the exclusion list of fieldNames and the typeNames given is found in the exclusion list of typeNames.',
         [
-          [true, '`Droid` and `id` are in the excluded list of `typeNames` and `fieldNames` respectively', [Droid, id]],
+          // [
+          //   false,
+          //   '`Droid` and `id` are in the excluded list of `typeNames` and `fieldNames` respectively',
+          //   [Droid, id],
+          // ],
+          // [
+          //   false,
+          //   '`Droid` and `id` are in the excluded list of `typeNames` and `fieldNames` respectively',
+          //   [Droid, name],
+          // ],
           [
             true,
-            '`Movie` and `name` are in the excluded list of `typeNames` and `fieldNames` respectively',
-            [Movie, name],
-          ],
-          [
-            true,
-            '`Human` and `name` are in the excluded list of `typeNames` and `fieldNames` respectively',
-            [Human, name],
-          ],
-          [
-            true,
-            '`Movie` and `title` are in the excluded list of `typeNames` and `fieldNames` respectively',
-            [Movie, title],
-          ],
-          [
-            true,
-            '`Human` and `title` are in the excluded list of `typeNames` and `fieldNames` respectively',
-            [Human, title],
-          ],
-          [
-            true,
-            'the fieldName given: `name` is not in the exclusion list of fieldNames for the typeName given: `Droid`',
-            [Droid, name],
-          ],
-          [
-            false,
-            'the fieldName given: `title` is not in the exclusion list of fieldNames for the typeName given: `Droid`',
-            [Droid, title],
-          ],
-          [
-            false,
-            'the fieldName given: `friends` is not in the exclusion list of fieldNames for the typeName given: `Droid`',
+            '`Droid` and `id` are in the excluded list of `typeNames` and `fieldNames` respectively',
             [Droid, friends],
           ],
-          [
-            false,
-            'the fieldName given: `friend` is not in the exclusion list of fieldNames for the typeName given: `Droid`',
-            [Droid, friend],
-          ],
-          [
-            false,
-            'the typeNames given: `Starship` is not in the exclusion list of typeNames in the pattern.',
-            [Starship, id],
-          ],
-          [
-            false,
-            'the typeNames given: `Human` is not in the exclusion list of typeNames in the pattern.',
-            [Human, id],
-          ],
-          [
-            false,
-            'the typeNames given: `Movie` is not in the exclusion list of typeNames in the pattern.',
-            [Movie, id],
-          ],
+          // [
+          //   false,
+          //   '`Movie` and `name` are in the excluded list of `typeNames` and `fieldNames` respectively',
+          //   [Movie, name],
+          // ],
+          // [
+          //   true,
+          //   '`Human` and `name` are in the excluded list of `typeNames` and `fieldNames` respectively',
+          //   [Human, name],
+          // ],
+          // [
+          //   true,
+          //   '`Movie` and `title` are in the excluded list of `typeNames` and `fieldNames` respectively',
+          //   [Movie, title],
+          // ],
+          // [
+          //   true,
+          //   '`Human` and `title` are in the excluded list of `typeNames` and `fieldNames` respectively',
+          //   [Human, title],
+          // ],
+          // [
+          //   true,
+          //   'the fieldName given: `name` is not in the exclusion list of fieldNames for the typeName given: `Droid`',
+          //   [Droid, name],
+          // ],
+          // [
+          //   false,
+          //   'the fieldName given: `title` is not in the exclusion list of fieldNames for the typeName given: `Droid`',
+          //   [Droid, title],
+          // ],
+          // [
+          //   false,
+          //   'the fieldName given: `friends` is not in the exclusion list of fieldNames for the typeName given: `Droid`',
+          //   [Droid, friends],
+          // ],
+          // [
+          //   false,
+          //   'the fieldName given: `friend` is not in the exclusion list of fieldNames for the typeName given: `Droid`',
+          //   [Droid, friend],
+          // ],
+          // [
+          //   false,
+          //   'the typeNames given: `Starship` is not in the exclusion list of typeNames in the pattern.',
+          //   [Starship, id],
+          // ],
+          // [
+          //   false,
+          //   'the typeNames given: `Human` is not in the exclusion list of typeNames in the pattern.',
+          //   [Human, id],
+          // ],
+          // [
+          //   false,
+          //   'the typeNames given: `Movie` is not in the exclusion list of typeNames in the pattern.',
+          //   [Movie, id],
+          // ],
         ],
       ],
     ])
@@ -530,163 +544,163 @@ describe('pattern matchers: return a boolean if the given args are found within 
       expect(mockedPatternMatcher(matcher, pattern, ...args)).toBe(expected);
     });
 
-    test('matcher is tested in order as defined in TypeFieldName', () => {
-      expect(definedPatternMatchers.includes(matcher)).toBe(true);
-      expect(definedPatternMatchers.includes(matcher)).toBe(true);
-      expect(definedPatternMatchers[index]).toBe(matcher);
-      // if none of the expectations above fails...
-      testedPatternMatchers.push(matcher);
-    });
+    // test('matcher is tested in order as defined in TypeFieldName', () => {
+    //   expect(definedPatternMatchers.includes(matcher)).toBe(true);
+    //   expect(definedPatternMatchers.includes(matcher)).toBe(true);
+    //   expect(definedPatternMatchers[index]).toBe(matcher);
+    //   // if none of the expectations above fails...
+    //   testedPatternMatchers.push(matcher);
+    // });
   });
 
-  test('all defined matchers were tested', () => {
-    expect(definedPatternMatchers).toMatchObject(testedPatternMatchers);
-  });
+  // test('all defined matchers were tested', () => {
+  //   expect(definedPatternMatchers).toMatchObject(testedPatternMatchers);
+  // });
 });
 
-describe('TypeFieldName.shouldBeConfigured: returns true if a TypeFieldName should be configured ', () => {
-  describe('matchesAllTypes: returns true for any TypeName given', () => {
-    const pattern = TypeFieldName.buildAllTypeNames();
-    expect(pattern).toBe('@*TypeNames;');
-    console.log('🚀 ~ file: type-field-name.spec.ts:488 ~ describe ~ pattern', pattern);
+// describe('TypeFieldName.shouldBeConfigured: returns true if a TypeFieldName should be configured ', () => {
+//   describe('matchesAllTypes: returns true for any TypeName given', () => {
+//     const pattern = TypeFieldName.buildAllTypeNames();
+//     expect(pattern).toBe('@*TypeNames;');
+//     console.log('🚀 ~ file: type-field-name.spec.ts:488 ~ describe ~ pattern', pattern);
 
-    it.each([Droid, Starship, Human, Movie])('%s should be configured', typeName => {
-      expect(TypeFieldName.shouldBeConfigured(pattern, typeName)).toBe(true);
-      // because it matches all TypeNames
-      expect(TypeFieldName.matchesAllTypeNames(pattern)).toBe(true);
-    });
-  });
+//     it.each([Droid, Starship, Human, Movie])('%s should be configured', typeName => {
+//       expect(TypeFieldName.shouldBeConfigured(pattern, typeName)).toBe(true);
+//       // because it matches all TypeNames
+//       expect(TypeFieldName.matchesAllTypeNames(pattern)).toBe(true);
+//     });
+//   });
 
-  describe('matchesAllTypeNamesExcludeTypeNames: returns true for any TypeName given except those excluded', () => {
-    const pattern = TypeFieldName.buildAllTypeNamesExcludeTypeNames([Starship, Movie]);
-    expect(pattern).toBe('@*TypeNames-[Starship,Movie];');
+//   describe('matchesAllTypeNamesExcludeTypeNames: returns true for any TypeName given except those excluded', () => {
+//     const pattern = TypeFieldName.buildAllTypeNamesExcludeTypeNames([Starship, Movie]);
+//     expect(pattern).toBe('@*TypeNames-[Starship,Movie];');
 
-    it.each([Droid, Human])('%s is configured', typeName => {
-      expect(TypeFieldName.shouldBeConfigured(pattern, typeName)).toBe(true);
-      // because it is not excluded
-      expect(TypeFieldName.matchesAllTypeNamesExcludeTypeNames(pattern, typeName)).toBe(false);
-    });
+//     it.each([Droid, Human])('%s is configured', typeName => {
+//       expect(TypeFieldName.shouldBeConfigured(pattern, typeName)).toBe(true);
+//       // because it is not excluded
+//       expect(TypeFieldName.matchesAllTypeNamesExcludeTypeNames(pattern, typeName)).toBe(false);
+//     });
 
-    it.each([Starship, Movie])('%s is not configured', typeName => {
-      expect(TypeFieldName.shouldBeConfigured(pattern, typeName)).toBe(false);
-      // because it is excluded
-      expect(TypeFieldName.matchesAllTypeNamesExcludeTypeNames(pattern, typeName)).toBe(true);
-    });
-  });
+//     it.each([Starship, Movie])('%s is not configured', typeName => {
+//       expect(TypeFieldName.shouldBeConfigured(pattern, typeName)).toBe(false);
+//       // because it is excluded
+//       expect(TypeFieldName.matchesAllTypeNamesExcludeTypeNames(pattern, typeName)).toBe(true);
+//     });
+//   });
 
-  describe('matchesAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames: returns true for any fieldName given except those excluded', () => {
-    const pattern = TypeFieldName.buildAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames(
-      [Starship, Droid],
-      [id, name]
-    );
-    expect(pattern).toBe('@*TypeNames-[Starship,Droid].@*FieldNames-[id,name];');
-    it.each([
-      [Droid, title],
-      [Droid, friends],
-      [Droid, friend],
-      [Movie, id],
-      [Movie, name],
-      [Movie, title],
-      [Movie, episode],
-      [Human, title],
-      [Human, episode],
-    ])('%s should be configured', (typeName, fieldName) => {
-      expect(TypeFieldName.shouldBeConfigured(pattern, typeName, fieldName)).toBe(true);
-      // because it is not excluded
-      expect(
-        TypeFieldName.matchesAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames(pattern, typeName, fieldName)
-      ).toBe(false);
-    });
+//   describe('matchesAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames: returns true for any fieldName given except those excluded', () => {
+//     const pattern = TypeFieldName.buildAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames(
+//       [Starship, Droid],
+//       [id, name]
+//     );
+//     expect(pattern).toBe('@*TypeNames-[Starship,Droid].@*FieldNames-[id,name];');
+//     it.each([
+//       [Droid, title],
+//       [Droid, friends],
+//       [Droid, friend],
+//       [Movie, id],
+//       [Movie, name],
+//       [Movie, title],
+//       [Movie, episode],
+//       [Human, title],
+//       [Human, episode],
+//     ])('%s should be configured', (typeName, fieldName) => {
+//       expect(TypeFieldName.shouldBeConfigured(pattern, typeName, fieldName)).toBe(true);
+//       // because it is not excluded
+//       expect(
+//         TypeFieldName.matchesAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames(pattern, typeName, fieldName)
+//       ).toBe(false);
+//     });
 
-    it.each([
-      [Starship, id],
-      [Droid, id],
-      [Droid, name],
-      [Starship, name],
-    ])('%s should not be configured', (typeName, fieldName) => {
-      expect(TypeFieldName.shouldBeConfigured(pattern, typeName, fieldName)).toBe(false);
-      // because it is excluded
-      expect(
-        TypeFieldName.matchesAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames(pattern, typeName, fieldName)
-      ).toBe(true);
-    });
-  });
+//     it.each([
+//       [Starship, id],
+//       [Droid, id],
+//       [Droid, name],
+//       [Starship, name],
+//     ])('%s should not be configured', (typeName, fieldName) => {
+//       expect(TypeFieldName.shouldBeConfigured(pattern, typeName, fieldName)).toBe(false);
+//       // because it is excluded
+//       expect(
+//         TypeFieldName.matchesAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames(pattern, typeName, fieldName)
+//       ).toBe(true);
+//     });
+//   });
 
-  describe('matchesFieldNamesOfAllTypeNamesExcludeTypeNames: returns true for only the fieldName specified in the pattern', () => {
-    const pattern = TypeFieldName.buildFieldNamesOfAllTypeNamesExcludeTypeNames([Starship, Droid], [id, name]);
-    expect(pattern).toBe('@*TypeNames-[Starship,Droid].[id,name];');
-    it.each([
-      [Movie, id],
-      [Movie, name],
-      [Human, id],
-      [Human, name],
-    ])('%s.%s should be configured', (typeName, fieldName) => {
-      expect(TypeFieldName.shouldBeConfigured(pattern, typeName, fieldName)).toBe(true);
-    });
+//   describe('matchesFieldNamesOfAllTypeNamesExcludeTypeNames: returns true for only the fieldName specified in the pattern', () => {
+//     const pattern = TypeFieldName.buildFieldNamesOfAllTypeNamesExcludeTypeNames([Starship, Droid], [id, name]);
+//     expect(pattern).toBe('@*TypeNames-[Starship,Droid].[id,name];');
+//     it.each([
+//       [Movie, id],
+//       [Movie, name],
+//       [Human, id],
+//       [Human, name],
+//     ])('%s.%s should be configured', (typeName, fieldName) => {
+//       expect(TypeFieldName.shouldBeConfigured(pattern, typeName, fieldName)).toBe(true);
+//     });
 
-    it.each([
-      [Starship, id],
-      [Starship, name],
-      [Starship, friends],
-      //   [Starship, friend],
-      //   [Starship, title],
-      //   [Starship, episode],
+//     it.each([
+//       [Starship, id],
+//       [Starship, name],
+//       [Starship, friends],
+//       //   [Starship, friend],
+//       //   [Starship, title],
+//       //   [Starship, episode],
 
-      [Droid, id],
-      [Droid, name],
-      //   [Droid, friends],
-      //   [Droid, friend],
-      //   [Droid, title],
-      //   [Droid, episode],
+//       [Droid, id],
+//       [Droid, name],
+//       //   [Droid, friends],
+//       //   [Droid, friend],
+//       //   [Droid, title],
+//       //   [Droid, episode],
 
-      //   [Movie, friends],
-      //   [Movie, friend],
-      //   [Movie, title],
-      //   [Movie, episode],
+//       //   [Movie, friends],
+//       //   [Movie, friend],
+//       //   [Movie, title],
+//       //   [Movie, episode],
 
-      //   [Human, friends],
-      //   [Human, friend],
-      //   [Human, title],
-      //   [Human, episode],
-    ])('%s.%s should not be configured', (typeName, fieldName) => {
-      expect(TypeFieldName.shouldBeConfigured(pattern, typeName, fieldName)).toBe(false);
-    });
+//       //   [Human, friends],
+//       //   [Human, friend],
+//       //   [Human, title],
+//       //   [Human, episode],
+//     ])('%s.%s should not be configured', (typeName, fieldName) => {
+//       expect(TypeFieldName.shouldBeConfigured(pattern, typeName, fieldName)).toBe(false);
+//     });
 
-    it.each([
-      [Starship, id],
-      [Starship, name],
-      [Droid, id],
-      [Droid, name],
-    ])(`%s.%s matches the pattern: ${pattern}`, (typeName, fieldName) => {
-      expect(TypeFieldName.matchesFieldNamesOfAllTypeNamesExcludeTypeNames(pattern, typeName, fieldName)).toBe(true);
-    });
+//     it.each([
+//       [Starship, id],
+//       [Starship, name],
+//       [Droid, id],
+//       [Droid, name],
+//     ])(`%s.%s matches the pattern: ${pattern}`, (typeName, fieldName) => {
+//       expect(TypeFieldName.matchesFieldNamesOfAllTypeNamesExcludeTypeNames(pattern, typeName, fieldName)).toBe(true);
+//     });
 
-    it.each([
-      [Starship, friends],
-      [Starship, friend],
-      [Starship, title],
-      [Starship, episode],
+//     it.each([
+//       [Starship, friends],
+//       [Starship, friend],
+//       [Starship, title],
+//       [Starship, episode],
 
-      [Droid, friends],
-      [Droid, friend],
-      [Droid, title],
-      [Droid, episode],
+//       [Droid, friends],
+//       [Droid, friend],
+//       [Droid, title],
+//       [Droid, episode],
 
-      [Movie, id],
-      [Movie, name],
-      [Movie, friends],
-      [Movie, friend],
-      [Movie, title],
-      [Movie, episode],
+//       [Movie, id],
+//       [Movie, name],
+//       [Movie, friends],
+//       [Movie, friend],
+//       [Movie, title],
+//       [Movie, episode],
 
-      [Human, id],
-      [Human, name],
-      [Human, friends],
-      [Human, friend],
-      [Human, title],
-      [Human, episode],
-    ])('%s.%s does not match the pattern ', (typeName, fieldName) => {
-      expect(TypeFieldName.matchesFieldNamesOfAllTypeNamesExcludeTypeNames(pattern, typeName, fieldName)).toBe(false);
-    });
-  });
-});
+//       [Human, id],
+//       [Human, name],
+//       [Human, friends],
+//       [Human, friend],
+//       [Human, title],
+//       [Human, episode],
+//     ])('%s.%s does not match the pattern ', (typeName, fieldName) => {
+//       expect(TypeFieldName.matchesFieldNamesOfAllTypeNamesExcludeTypeNames(pattern, typeName, fieldName)).toBe(false);
+//     });
+//   });
+// });
