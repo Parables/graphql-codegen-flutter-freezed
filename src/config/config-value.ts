@@ -45,7 +45,7 @@ export class Config {
     const _defaultValues = config.defaultValues;
 
     const typeFieldNames = _defaultValues.map(([_typeFieldName]) => _typeFieldName);
-    const lastPatternIndex = this.findLastMatchedPattern(typeFieldNames, typeName, fieldName);
+    const lastPatternIndex = this.findLastConfiguration(typeFieldNames, typeName, fieldName);
     if (lastPatternIndex !== undefined && _defaultValues[lastPatternIndex]) {
       const [, defaultValue, configAppliesOn, directiveName, directiveArgName] = _defaultValues[lastPatternIndex];
       if (appliesOnBlock(configAppliesOn, blockAppliesOn)) {
@@ -64,7 +64,7 @@ export class Config {
     const _deprecated = config.deprecated;
 
     const typeFieldNames = _deprecated.map(([_typeFieldName]) => _typeFieldName);
-    const lastPatternIndex = this.findLastMatchedPattern(typeFieldNames, typeName, fieldName);
+    const lastPatternIndex = this.findLastConfiguration(typeFieldNames, typeName, fieldName);
     if (lastPatternIndex !== undefined && _deprecated[lastPatternIndex]) {
       const [, configAppliesOn] = _deprecated[lastPatternIndex];
       if (appliesOnBlock(configAppliesOn, blockAppliesOn)) {
@@ -88,7 +88,7 @@ export class Config {
     }
 
     const typeFieldNames = _escapeDartKeywords.map(([_typeFieldName]) => _typeFieldName);
-    const lastPatternIndex = this.findLastMatchedPattern(typeFieldNames, typeName, fieldName);
+    const lastPatternIndex = this.findLastConfiguration(typeFieldNames, typeName, fieldName);
     if (lastPatternIndex !== undefined && _escapeDartKeywords[lastPatternIndex]) {
       const [, prefix, suffix, casing, configAppliesOn] = _escapeDartKeywords[lastPatternIndex];
       if (appliesOnBlock(configAppliesOn, blockAppliesOn)) {
@@ -111,7 +111,7 @@ export class Config {
     const _final = config.final;
 
     const typeFieldNames = _final.map(([_typeFieldName]) => _typeFieldName);
-    const lastPatternIndex = this.findLastMatchedPattern(typeFieldNames, typeName, fieldName);
+    const lastPatternIndex = this.findLastConfiguration(typeFieldNames, typeName, fieldName);
     if (lastPatternIndex !== undefined && _final[lastPatternIndex]) {
       const [, configAppliesOn] = _final[lastPatternIndex];
       if (appliesOnBlock(configAppliesOn, blockAppliesOn)) {
@@ -131,7 +131,7 @@ export class Config {
 
     if (Array.isArray(_fromJsonToJson)) {
       const typeFieldNames = _fromJsonToJson.map(([_typeFieldName]) => _typeFieldName);
-      const lastPatternIndex = this.findLastMatchedPattern(typeFieldNames, typeName, fieldName);
+      const lastPatternIndex = this.findLastConfiguration(typeFieldNames, typeName, fieldName);
       if (lastPatternIndex !== undefined && _fromJsonToJson[lastPatternIndex]) {
         const [, classOrFunctionName, useClassConverter, configAppliesOn] = _fromJsonToJson[lastPatternIndex];
         if (appliesOnBlock(configAppliesOn, blockAppliesOn)) {
@@ -143,8 +143,8 @@ export class Config {
   };
 
   static ignoreTypes = (config: FlutterFreezedPluginConfig, typeName: TypeName) => {
-    const _ignoreTypes = config.ignoreTypes;
-    return TypeFieldName.matchesTypeNames(_ignoreTypes, typeName);
+    const pattern = TypeFieldName.buildTypeNames(config.ignoreTypes);
+    return TypeFieldName.matchesTypeNames(pattern, typeName);
   };
 
   static immutable = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
@@ -206,7 +206,7 @@ export class Config {
   static unionClass = (config: FlutterFreezedPluginConfig, index: number, unionTypeName: TypeName) => {
     const _unionClass = config['unionClass'];
     const typeFieldNames = _unionClass.map(([_unionTypeName]) => _unionTypeName);
-    const lastPatternIndex = this.findLastMatchedPattern(typeFieldNames, unionTypeName);
+    const lastPatternIndex = this.findLastConfiguration(typeFieldNames, unionTypeName);
     if (lastPatternIndex !== undefined && _unionClass[lastPatternIndex]) {
       return _unionClass[lastPatternIndex][index];
     }
@@ -217,7 +217,7 @@ export class Config {
     const value = config[option];
     if (typeof value === 'string' || Array.isArray(value)) {
       const typeFieldNames = typeof value === 'string' ? [value] : value;
-      const lastPatternIndex = this.findLastMatchedPattern(typeFieldNames, typeName);
+      const lastPatternIndex = this.findLastConfiguration(typeFieldNames, typeName);
       if (lastPatternIndex !== undefined && typeFieldNames[lastPatternIndex]) {
         return true;
       }
@@ -226,31 +226,21 @@ export class Config {
     return value;
   };
 
-  public static findLastMatchedPattern = (typeFieldNames: string[], typeName: TypeName, fieldName?: FieldName) => {
-    let lastPatternIndex: number;
-    // let lastPatternType: PatternType;
+  public static findLastConfiguration = (listOfPatterns: string[], typeName: TypeName, fieldName?: FieldName) => {
+    let lastIndex: number;
 
-    typeFieldNames.forEach((stringOfPatterns, index) => {
-      stringOfPatterns
+    listOfPatterns.forEach((patterns, index) => {
+      patterns
         .split(/\s*;\s*/)
         .filter(pattern => pattern.length > 0)
-        .forEach(typeFieldName => {
-          const { patternMatches, patternType } = TypeFieldName.attemptTypeFieldNameMatches(
-            `${typeFieldName};`,
-            typeName,
-            fieldName
-          );
-          if (
-            (patternType === 'include' && patternMatches === true) ||
-            (patternType === 'exclude' && patternMatches === false)
-          ) {
-            // lastPatternType = patternType;
-            lastPatternIndex = index;
+        .forEach(pattern => {
+          if (TypeFieldName.shouldBeConfigured(`${pattern};`, typeName, fieldName)) {
+            lastIndex = index;
           }
         });
     });
 
-    return lastPatternIndex; //{ lastPatternIndex, lastPatternType };
+    return lastIndex;
   };
 
   public static create = (...config: Partial<FlutterFreezedPluginConfig>[]): FlutterFreezedPluginConfig => {

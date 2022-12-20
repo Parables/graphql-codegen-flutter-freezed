@@ -654,7 +654,7 @@ export type FlutterFreezedPluginConfig = {
 //#endregion
 
 //#region type alias
-export type StringOrT<T> = string | T;
+export type StringOr<T> = string | T;
 /**
  * @name TypeNamePatterns
  * @see {@link url TypeFieldNamePatterns}
@@ -858,8 +858,6 @@ export type TypeFieldNameOption = Extract<
   ConfigOption,
   'defaultValues' | 'deprecated' | 'escapeDartKeywords' | 'final' | 'fromJsonToJson'
 >;
-
-export type PatternType = 'include' | 'exclude';
 
 export type MultiConstructorOption = FlutterFreezedPluginConfig['unionClass'];
 
