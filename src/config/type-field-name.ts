@@ -356,15 +356,13 @@ export class TypeFieldName extends GraphqlTypeFieldName {
     typeName = TypeName.fromString(TypeFieldName.valueOf(typeName)).value;
 
     let result: RegExpExecArray | null;
+    let expandedPattern: string[];
 
     while ((result = regexp.exec(pattern)) !== null) {
       const foundTypeName = result.groups.typeName;
-
-      if (foundTypeName === typeName) {
-        return matchFound(regexp);
-      }
+      expandedPattern = [...(expandedPattern ?? []), foundTypeName];
     }
-    return matchFound(regexp, false);
+    return matchFound(regexp, expandedPattern.includes(typeName));
   };
 
   //#endregion
@@ -638,25 +636,25 @@ export class TypeFieldName extends GraphqlTypeFieldName {
       fieldName?: StringOr<FieldName>
     ): boolean => TypeFieldName[`matches${baseName}`]?.(pattern, typeName, fieldName);
 
-    const matchList: [baseName: string, shouldInclude: boolean][] = [
-      ['TypeNames', true],
-      ['AllTypeNames', true], // tested
-      ['AllTypeNamesExcludeTypeNames', false], //tested
-      ['FieldNamesOfTypeName', true],
-      ['AllFieldNamesOfTypeName', true],
-      ['AllFieldNamesExcludeFieldNamesOfTypeName', false],
-      ['FieldNamesOfAllTypeNames', true],
-      ['AllFieldNamesOfAllTypeNames', true],
-      ['AllFieldNamesExcludeFieldNamesOfAllTypeNames', false],
-      ['FieldNamesOfAllTypeNamesExcludeTypeNames', false],
-      ['AllFieldNamesOfAllTypeNamesExcludeTypeNames', false],
-      ['AllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames', false], // tested
-    ];
+    const matchList: string[] = [
+      'TypeNames',
+      'AllTypeNames',
+      'AllTypeNamesExcludeTypeNames',
+      'FieldNamesOfTypeName',
+      'AllFieldNamesOfTypeName',
+      'AllFieldNamesExcludeFieldNamesOfTypeName',
+      'FieldNamesOfAllTypeNames',
+      'AllFieldNamesOfAllTypeNames',
+      'AllFieldNamesExcludeFieldNamesOfAllTypeNames',
+      'FieldNamesOfAllTypeNamesExcludeTypeNames',
+      'AllFieldNamesOfAllTypeNamesExcludeTypeNames',
+      'AllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames',
+    ].reverse(); // runs more specific patterns first(in asc order)
 
     let shouldConfigure: boolean;
 
     for (let i = 0; i < matchList.length; i++) {
-      const [baseName] = matchList[i];
+      const baseName = matchList[i];
 
       if (regexpFor(baseName).test(pattern)) {
         shouldConfigure = matches(baseName, pattern, typeName, fieldName);

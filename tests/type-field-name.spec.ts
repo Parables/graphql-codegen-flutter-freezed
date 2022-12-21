@@ -223,12 +223,7 @@ describe('pattern matchers: return a boolean if the given args are found within 
           [false, '`Movie` was given but was not specified in the pattern', [Movie]],
         ],
       ],
-      [
-        'matchesAllTypeNames',
-        '@*TypeNames',
-        'pattern for all TypeNames',
-        [[false, 'not a valid pattern: missing semi-colon', []]],
-      ],
+      ['matchesAllTypeNames', '@*TypeNames;', 'pattern for all TypeNames', [[true, 'matches all TypeNames', []]]],
       [
         'matchesAllTypeNamesExcludeTypeNames',
         '@*TypeNames-[Droid,Starship];',
@@ -260,16 +255,14 @@ describe('pattern matchers: return a boolean if the given args are found within 
       ],
       [
         'matchesAllFieldNamesOfTypeName',
-        'Movies.@*FieldNames;Droid.@*FieldNames;Starship;',
+        'Movie.@*FieldNames;Droid.@*FieldNames;',
         'returns a boolean if the `typeName` given was specified in the pattern. Since the pattern contains `@*FieldNames`,this matcher does not require a `fieldName` parameter',
         [
           [true, '`Droid` was specified as a `typeName` in the pattern', [Droid]],
-          [false, '`Movie` was given but `Movies` was specified in the pattern', [Movie]],
-          [
-            false,
-            'even though `Starship` was specified as a `typeName` in the pattern, it is not a valid pattern for allFieldNames which must end with `.@*FieldNames;`',
-            [Starship],
-          ],
+          [false, '`Starship` was given but `Human` was specified in the pattern', [Starship]],
+          [false, '`Human` was given but `Human` was specified in the pattern', [Human]],
+          [true, '`Movie` was given but `Movie` was specified in the pattern', [Movie]],
+          [false, '`Movies` was given but `Movies` was specified in the pattern', ['Movies']],
         ],
       ],
       [
@@ -629,6 +622,7 @@ describe('pattern matchers: return a boolean if the given args are found within 
   )('%i. TypeFieldName.%s: given the pattern: `%s` %s', (index, matcher, pattern, _description, testEachCases) => {
     it.each(testEachCases)('returns `%s` because %s', (expected, _title, args) => {
       expect(mockedPatternMatcher(matcher, pattern, ...args)).toBe(expected);
+      expect(mockedPatternMatcher('shouldBeConfigured', pattern, ...args)).toBe(expected);
     });
 
     test('matcher is tested in order as defined in TypeFieldName', () => {
@@ -642,181 +636,5 @@ describe('pattern matchers: return a boolean if the given args are found within 
 
   test('all defined matchers were tested', () => {
     expect(definedPatternMatchers).toMatchObject(testedPatternMatchers);
-  });
-});
-
-// TODO:
-// describe('TypeFieldName.shouldBeConfigured: returns true if a TypeFieldName should be configured ', () => {
-//   describe('matchesAllTypeNames: returns true for any TypeName given', () => {
-//     const pattern = TypeFieldName.buildAllTypeNames();
-//     expect(pattern).toBe('@*TypeNames;');
-
-//     it.each([Droid, Starship, Human, Movie])('%s should be configured', typeName => {
-//       expect(TypeFieldName.shouldBeConfigured(pattern, typeName)).toBe(true);
-//       // because it matches all TypeNames
-//       expect(TypeFieldName.matchesAllTypeNames(pattern)).toBe(true);
-//     });
-//   });
-
-//   describe('matchesAllTypeNamesExcludeTypeNames: returns true for any TypeName given except those excluded', () => {
-//     const pattern = TypeFieldName.buildAllTypeNamesExcludeTypeNames([Starship, Movie]);
-//     expect(pattern).toBe('@*TypeNames-[Starship,Movie];');
-
-//     it.each([Droid, Human])('%s is configured', typeName => {
-//       expect(TypeFieldName.shouldBeConfigured(pattern, typeName)).toBe(true);
-//       // because it is not excluded
-//       expect(TypeFieldName.matchesAllTypeNamesExcludeTypeNames(pattern, typeName)).toBe(true);
-//     });
-
-//     it.each([Starship, Movie])('%s is not configured', typeName => {
-//       expect(TypeFieldName.shouldBeConfigured(pattern, typeName)).toBe(false);
-//       // because it is excluded
-//       expect(TypeFieldName.matchesAllTypeNamesExcludeTypeNames(pattern, typeName)).toBe(false);
-//     });
-//   });
-
-//   describe('matchesAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames: returns true for any fieldName given except those excluded', () => {
-//     const pattern = TypeFieldName.buildAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames(
-//       [Starship, Droid],
-//       [id, name]
-//     );
-//     expect(pattern).toBe('@*TypeNames-[Starship,Droid].@*FieldNames-[id,name];');
-//     it.each([
-//       [Droid, title],
-//       [Droid, friends],
-//       [Droid, friend],
-//       [Movie, id],
-//       [Movie, name],
-//       [Movie, title],
-//       [Movie, episode],
-//       [Human, title],
-//       [Human, episode],
-//     ])('%s should be configured', (typeName, fieldName) => {
-//       expect(TypeFieldName.shouldBeConfigured(pattern, typeName, fieldName)).toBe(true);
-//       // because it is not excluded
-//       expect(
-//         TypeFieldName.matchesAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames(pattern, typeName, fieldName)
-//       ).toBe(true);
-//     });
-
-//     it.each([
-//       [Starship, id],
-//       [Droid, id],
-//       [Droid, name],
-//       [Starship, name],
-//     ])('%s should not be configured', (typeName, fieldName) => {
-//       expect(TypeFieldName.shouldBeConfigured(pattern, typeName, fieldName)).toBe(false);
-//       // because it is excluded
-//       expect(
-//         TypeFieldName.matchesAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames(pattern, typeName, fieldName)
-//       ).toBe(false);
-//     });
-//   });
-
-//   describe('matchesFieldNamesOfAllTypeNamesExcludeTypeNames: returns true for only the fieldName specified in the pattern', () => {
-//     const pattern = TypeFieldName.buildFieldNamesOfAllTypeNamesExcludeTypeNames([Starship, Droid], [id, name]);
-//     expect(pattern).toBe('@*TypeNames-[Starship,Droid].[id,name];');
-//     it.each([
-//       [Movie, id],
-//       [Movie, name],
-//       [Human, id],
-//       [Human, name],
-//     ])('%s.%s should be configured', (typeName, fieldName) => {
-//       expect(TypeFieldName.shouldBeConfigured(pattern, typeName, fieldName)).toBe(true);
-//     });
-
-//     it.each([
-//       [Starship, id],
-//       [Starship, name],
-//       [Starship, friends],
-//       //   [Starship, friend],
-//       //   [Starship, title],
-//       //   [Starship, episode],
-
-//       [Droid, id],
-//       [Droid, name],
-//       //   [Droid, friends],
-//       //   [Droid, friend],
-//       //   [Droid, title],
-//       //   [Droid, episode],
-
-//       //   [Movie, friends],
-//       //   [Movie, friend],
-//       //   [Movie, title],
-//       //   [Movie, episode],
-
-//       //   [Human, friends],
-//       //   [Human, friend],
-//       //   [Human, title],
-//       //   [Human, episode],
-//     ])('%s.%s should not be configured', (typeName, fieldName) => {
-//       expect(TypeFieldName.shouldBeConfigured(pattern, typeName, fieldName)).toBe(false);
-//     });
-
-//     it.each([
-//       [Starship, id],
-//       [Starship, name],
-//       [Droid, id],
-//       [Droid, name],
-//     ])(`%s.%s matches the pattern: ${pattern}`, (typeName, fieldName) => {
-//       expect(TypeFieldName.matchesFieldNamesOfAllTypeNamesExcludeTypeNames(pattern, typeName, fieldName)).toBe(true);
-//     });
-
-//     it.each([
-//       [Starship, friends],
-//       [Starship, friend],
-//       [Starship, title],
-//       [Starship, episode],
-
-//       [Droid, friends],
-//       [Droid, friend],
-//       [Droid, title],
-//       [Droid, episode],
-
-//       [Movie, id],
-//       [Movie, name],
-//       [Movie, friends],
-//       [Movie, friend],
-//       [Movie, title],
-//       [Movie, episode],
-
-//       [Human, id],
-//       [Human, name],
-//       [Human, friends],
-//       [Human, friend],
-//       [Human, title],
-//       [Human, episode],
-//     ])('%s.%s does not match the pattern ', (typeName, fieldName) => {
-//       expect(TypeFieldName.matchesFieldNamesOfAllTypeNamesExcludeTypeNames(pattern, typeName, fieldName)).toBe(false);
-//     });
-//   });
-// });
-
-describe('integration tests:', () => {
-  describe('build a pattern and run it through a list of matchers to determine if a matcher would return true', () => {
-    it('matchesTypeNames: returns true if a pattern specifies the typeName given', () => {
-      const buildTypeNames = jest.spyOn(TypeFieldName, 'buildTypeNames');
-      const matchedTypeNames = jest.spyOn(TypeFieldName, 'matchesTypeNames');
-      const shouldBeConfigured = jest.spyOn(TypeFieldName, 'shouldBeConfigured');
-      jest.mock('../src/config/type-field-name', () => {
-        return jest.fn().mockImplementation(() => {
-          return {
-            buildTypeNames,
-            shouldBeConfigured,
-            matchedTypeNames,
-          };
-        });
-      });
-      // it("builds a pattern: 'TypeName1;TYpeName2;'", () => {
-      const pattern = TypeFieldName.buildTypeNames('Droid,Starship');
-      const expected = 'Droid;Starship;';
-      expect(pattern).toBe(expected);
-      expect(buildTypeNames).toReturnWith(expected);
-
-      TypeFieldName.shouldBeConfigured(pattern, Droid);
-      const result = TypeFieldName.matchesTypeNames(pattern, Droid);
-      expect(shouldBeConfigured).toReturnWith(result); //.toReturnWith(matchedTypeNames);
-      // });
-    });
   });
 });
