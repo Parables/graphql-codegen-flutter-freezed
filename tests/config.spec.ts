@@ -1,5 +1,5 @@
 import { DART_KEYWORDS, DART_SCALARS, defaultFreezedPluginConfig } from '../src/config/plugin-config';
-import { TypeName } from '../src/config/type-field-name';
+import { TypeName, FieldName } from '../src/config/type-field-name';
 import { Config } from '../src/config/config-value';
 
 describe("integrity checks: ensures that these values don't change and if they do, they're updated accordingly", () => {
@@ -120,6 +120,18 @@ describe("integrity checks: ensures that these values don't change and if they d
   });
 });
 
+const Droid = TypeName.fromString('Droid');
+const Starship = TypeName.fromString('Starship');
+const Human = TypeName.fromString('Human');
+const Movie = TypeName.fromString('Movie');
+
+// const id = FieldName.fromString('id');
+// const name = FieldName.fromString('name');
+const friends = FieldName.fromString('friends');
+const friend = FieldName.fromString('friend');
+// const title = FieldName.fromString('title');
+// const episode = FieldName.fromString('episode');
+
 describe('Config: has methods that returns a ready-to-use value for all the config options', () => {
   const config = Config.create({});
 
@@ -169,20 +181,20 @@ describe('Config: has methods that returns a ready-to-use value for all the conf
 
     test('enable it only for some specified Graphql Types using TypeNamePatterns', () => {
       config[option] = 'Droid;Starship;';
-      expect(Config[option](config, TypeName.fromString('Droid'))).toBe(true);
-      expect(Config[option](config, TypeName.fromString('Starship'))).toBe(true);
-      expect(Config[option](config, TypeName.fromString('Human'))).toBe(undefined);
+      expect(Config[option](config, Droid)).toBe(true);
+      expect(Config[option](config, Starship)).toBe(true);
+      expect(Config[option](config, Human)).toBe(undefined);
 
       config[option] = '@*TypeNames;';
-      expect(Config[option](config, TypeName.fromString('Droid'))).toBe(true);
-      expect(Config[option](config, TypeName.fromString('Starship'))).toBe(true);
-      expect(Config[option](config, TypeName.fromString('Human'))).toBe(true);
+      expect(Config[option](config, Droid)).toBe(true);
+      expect(Config[option](config, Starship)).toBe(true);
+      expect(Config[option](config, Human)).toBe(true);
 
       config[option] = '@*TypeNames-[Droid,Movie];';
-      expect(Config[option](config, TypeName.fromString('Droid'))).toBeUndefined();
-      expect(Config[option](config, TypeName.fromString('Movie'))).toBeUndefined();
-      expect(Config[option](config, TypeName.fromString('Starship'))).toBe(true);
-      expect(Config[option](config, TypeName.fromString('Human'))).toBe(true);
+      expect(Config[option](config, Droid)).toBeUndefined();
+      expect(Config[option](config, Movie)).toBeUndefined();
+      expect(Config[option](config, Starship)).toBe(true);
+      expect(Config[option](config, Human)).toBe(true);
     });
   });
 
@@ -239,23 +251,65 @@ describe('Config: has methods that returns a ready-to-use value for all the conf
       expect(config.defaultValues).toBeUndefined();
     });
 
-    test.skip('set the defaultValues for fields of Graphql Types using TypeFieldNamePatterns', () => {
-      // config.defaultValues = [['Droid.[id];Starship.[id];', 'UUID.new()', ['default_factory_parameter']]];
-      // const typeName = TypeName.fromString('Droid');
-      // const fieldName = FieldName.fromString('id');
-      // expect(Config.defaultValues(config, typeName, fieldName, APPLIES_ON_PARAMETERS)).toBe(true);
-      // expect(Config.equal(config, TypeName.fromString('Starship'))).toBe(true);
-      // expect(Config.equal(config, TypeName.fromString('Human'))).toBe(undefined);
-      // config.equal = '@*TypeNames;';
-      // expect(Config.equal(config, TypeName.fromString('Droid'))).toBe(true);
-      // expect(Config.equal(config, TypeName.fromString('Starship'))).toBe(true);
-      // expect(Config.equal(config, TypeName.fromString('Human'))).toBe(true);
-      // config.equal = '@*TypeNames-[Droid,Movie];';
-      // expect(Config.equal(config, TypeName.fromString('Droid'))).toBe(false);
-      // expect(Config.equal(config, TypeName.fromString('Movie'))).toBe(false);
-      // expect(Config.equal(config, TypeName.fromString('Starship'))).toBe(true);
-      // expect(Config.equal(config, TypeName.fromString('Human'))).toBe(true);
+    it('can set the defaultValues for fields of Graphql Types using TypeFieldNamePatterns', () => {
+      config.defaultValues = [['Movie.[friends];Droid.[friends]', '[]', ['parameter']]];
+
+      expect(Config.defaultValues(config, Droid, friends, ['parameter'])).toEqual(
+        expect.arrayContaining(['[]', undefined, undefined])
+      );
+      expect(Config.defaultValues(config, Droid, friend, ['parameter'])).toBeUndefined();
+      expect(Config.defaultValues(config, Starship, friends, ['parameter'])).toBeUndefined();
+      expect(Config.defaultValues(config, Human, friends, ['parameter'])).toBeUndefined();
+      expect(Config.defaultValues(config, Movie, friends, ['parameter'])).toEqual(
+        expect.arrayContaining(['[]', undefined, undefined])
+      );
+      expect(Config.defaultValues(config, Movie, friend, ['parameter'])).toBeUndefined();
     });
+
+    // TODO: this test should be done in the parameter block class by a method that places a decorator on top of the parameter
+    it('will get the defaultValue from the directive if both directiveName and directiveArgName is passed', () => {
+      config.defaultValues = [['Movie.[friends];Droid.[friends]', '[]', ['parameter'], 'constraint', 'min']];
+      expect(Config.defaultValues(config, Droid, friends, ['parameter'])).toEqual(
+        expect.arrayContaining(['[]', 'constraint', 'min'])
+      );
+      expect(Config.defaultValues(config, Droid, friend, ['parameter'])).toBeUndefined();
+    });
+  });
+
+  describe.skip('Config.deprecated(...): returns `@deprecated` if the TypeName or FieldName is specified using a TypeFieldNamePattern', () => {
+    config.deprecated = [];
+  });
+
+  describe.skip('Config.escapeDartKeywords(...): returns ', () => {
+    config.deprecated = [];
+  });
+
+  describe.skip('Config.final(...): returns ', () => {
+    config.deprecated = [];
+  });
+
+  describe.skip('Config.fromJsonToJson(...): returns ', () => {
+    config.deprecated = [];
+  });
+
+  describe.skip('Config.ignoreTypes(...): returns ', () => {
+    config.deprecated = [];
+  });
+
+  describe.skip('Config.mergeInputs(...): returns ', () => {
+    config.deprecated = [];
+  });
+
+  describe.skip('Config.mutableInputs(...): returns ', () => {
+    config.deprecated = [];
+  });
+
+  describe.skip('Config.unionClass(...): returns ', () => {
+    config.deprecated = [];
+  });
+
+  describe.skip('Config.(...): returns ', () => {
+    config.deprecated = [];
   });
 });
 

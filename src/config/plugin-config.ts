@@ -154,7 +154,7 @@ export type FlutterFreezedPluginConfig = {
    *           defaultValues: [
    *             ['MovieCharacter.[appearsIn]', `Episode.jedi`, ['default_factory_parameter']],
    *             // default value from directive. See Graphql Constraints: url
-   *             ['@*TypeNames.[age]', `0`, ['parameter'], 'constraint', min],
+   *             ['@*TypeNames.[age]', `18`, ['parameter'], 'constraint', min],
    *           ],
    *         },
    *       },

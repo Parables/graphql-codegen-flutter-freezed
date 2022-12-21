@@ -35,7 +35,7 @@ class GraphqlTypeFieldName {
     return '@*FieldNames';
   }
 
-  static valueOf(value: StringOr<string[] | GraphqlTypeFieldName | GraphqlTypeFieldName[]>) {
+  static valueOf = (value: StringOr<string[] | GraphqlTypeFieldName | GraphqlTypeFieldName[]>) => {
     if (Array.isArray(value)) {
       return value
         .map((v: StringOr<GraphqlTypeFieldName>) => {
@@ -49,15 +49,14 @@ class GraphqlTypeFieldName {
     return value instanceof GraphqlTypeFieldName
       ? GraphqlTypeFieldName.fromStringOrArray(value.value)
       : GraphqlTypeFieldName.fromStringOrArray(value);
-  }
+  };
 
-  static fromStringOrArray(value: StringOr<string[]>) {
-    return typeof value === 'string'
+  static fromStringOrArray = (value: StringOr<string[]>) =>
+    typeof value === 'string'
       ? GraphqlTypeFieldName.trimNameList(value)
       : value.map(field => GraphqlTypeFieldName.trimNameList(field)).join();
-  }
 
-  static trimNameList(name: string) {
+  static trimNameList = (name: string) => {
     if (name.length < 1) {
       throw new Error('Name cannot be empty');
     }
@@ -66,15 +65,15 @@ class GraphqlTypeFieldName {
       .map(n => n.trim())
       .filter(type => type.length > 0)
       .join();
-  }
+  };
 
-  static matchAll(parent: string, child: string, matchAll = false) {
+  static matchAll = (parent: string, child: string, matchAll = false) => {
     const parentList = parent.split(/\s*,\s*/gim).filter(p => p.length > 0);
     const childList = child.split(/\s*,\s*/gim).filter(p => p.length > 0);
     return matchAll
       ? childList.every(c => parentList.find(p => p === c))
       : childList.some(c => parentList.find(p => p === c));
-  }
+  };
 }
 
 /**
@@ -97,24 +96,24 @@ export class TypeName extends GraphqlTypeFieldName {
     super(value);
   }
 
-  static fromString(value: string) {
+  static fromString = (value: string) => {
     if (value.length < 1) {
       throw new Error('TypeName requires a GraphQL Type name');
     } else if (value.includes(',') || value.includes(';')) {
       throw new Error('TypeName cannot contain multiple GraphQL Type names');
     }
     return new TypeName(value.trim());
-  }
+  };
 
-  static fromTypeNames(typeNames: TypeNames) {
+  static fromTypeNames = (typeNames: TypeNames) => {
     return strToList(TypeName.valueOf(typeNames).replace(/\s*,|;\s*/gm, ','))
       .map(value => TypeName.fromString(value).value)
       .join();
-  }
+  };
 
-  static toPattern(value: StringOr<TypeName>) {
+  static toPattern = (value: StringOr<TypeName>) => {
     return new TypeName(TypeName.valueOf(value)).value + ';';
-  }
+  };
 }
 
 /**
@@ -137,20 +136,20 @@ export class FieldName extends GraphqlTypeFieldName {
     super(value);
   }
 
-  static fromString(value: string) {
+  static fromString = (value: string) => {
     if (value.length < 1) {
       throw new Error('FieldName requires a name of a field in GraphQL Type');
     } else if (value.includes(',') || value.includes(';')) {
       throw new Error('FieldName cannot contain multiple GraphQL Field names');
     }
     return new FieldName(value.trim());
-  }
+  };
 
-  static fromFieldNames(fieldNames: TypeNames) {
+  static fromFieldNames = (fieldNames: TypeNames) => {
     return strToList(FieldName.valueOf(fieldNames).replace(/\s*,|;\s*/gm, ','))
       .map(value => FieldName.fromString(value).value)
       .join();
-  }
+  };
 }
 
 /**
@@ -214,14 +213,14 @@ export class FieldName extends GraphqlTypeFieldName {
 export class TypeFieldName extends GraphqlTypeFieldName {
   //#region `'TypeName;AnotherTypeName;'`
 
-  static buildTypeNames(typeNames: TypeNames) {
+  static buildTypeNames = (typeNames: TypeNames) => {
     typeNames = TypeName.fromTypeNames(typeNames).replace(/\s*,|;\s*/gm, ';');
     return typeNames.endsWith(';') ? typeNames : typeNames + ';';
-  }
+  };
 
   public static regexpForTypeNames = /\b(?!TypeNames|FieldNames\b)(?<typeName>\w+;)/gim;
 
-  static matchesTypeNames(pattern: string, typeName: StringOr<TypeName>) {
+  static matchesTypeNames = (pattern: string, typeName: StringOr<TypeName>) => {
     const regexp = TypeFieldName.regexpForTypeNames;
     resetIndex(regexp);
 
@@ -238,14 +237,14 @@ export class TypeFieldName extends GraphqlTypeFieldName {
       }
     }
     return matchFound(regexp, false);
-  }
+  };
   //#endregion
 
   //#region `'@*TypeNames;'`
 
-  static buildAllTypeNames() {
+  static buildAllTypeNames = () => {
     return `${TypeFieldName.allTypeNames};`;
-  }
+  };
 
   public static regexpForAllTypeNames = /(?<allTypeNames>@\*TypeNames;)/gm;
 
