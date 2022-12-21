@@ -794,15 +794,29 @@ describe('pattern matchers: return a boolean if the given args are found within 
 
 describe('integration tests:', () => {
   describe('build a pattern and run it through a list of matchers to determine if a matcher would return true', () => {
-    // builder
-    const spy = jest.spyOn(TypeFieldName, 'buildTypeNames');
-    const pattern = TypeFieldName.buildTypeNames('Droid,Starship');
-    const expected = 'Droid;Starship;';
-    expect(spy).toHaveBeenCalled();
-    expect(spy).toReturnWith(expected);
-    expect(pattern).toBe(expected);
+    it('matchesTypeNames: returns true if a pattern specifies the typeName given', () => {
+      const buildTypeNames = jest.spyOn(TypeFieldName, 'buildTypeNames');
+      const matchedTypeNames = jest.spyOn(TypeFieldName, 'matchesTypeNames');
+      const shouldBeConfigured = jest.spyOn(TypeFieldName, 'shouldBeConfigured');
+      jest.mock('../src/config/type-field-name', () => {
+        return jest.fn().mockImplementation(() => {
+          return {
+            buildTypeNames,
+            shouldBeConfigured,
+            matchedTypeNames,
+          };
+        });
+      });
+      // it("builds a pattern: 'TypeName1;TYpeName2;'", () => {
+      const pattern = TypeFieldName.buildTypeNames('Droid,Starship');
+      const expected = 'Droid;Starship;';
+      expect(pattern).toBe(expected);
+      expect(buildTypeNames).toReturnWith(expected);
 
-    // use module mocking
-    jest.mock('../src/config/type-field-name');
+      TypeFieldName.shouldBeConfigured(pattern, Droid);
+      const result = TypeFieldName.matchesTypeNames(pattern, Droid);
+      expect(shouldBeConfigured).toReturnWith(result); //.toReturnWith(matchedTypeNames);
+      // });
+    });
   });
 });
