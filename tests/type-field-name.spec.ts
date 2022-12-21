@@ -274,22 +274,36 @@ describe('pattern matchers: return a boolean if the given args are found within 
       ],
       [
         'matchesAllFieldNamesExcludeFieldNamesOfTypeName',
-        'Movie.@*FieldNames-[id];Droid.@*FieldNames-[name];',
+        'Movie.@*FieldNames-[id];Droid.@*FieldNames-[name,friends];Movie.@*FieldNames-[title];',
         'returns a boolean if fieldNames given were specified in the exclusion list of fieldNames for the typeName given in the pattern.',
         [
-          [false, '`id` was specified in the exclusion list of fieldNames for `Movie` in the pattern', [Movie, id]],
-          [
-            true,
-            '`title` was not specified in the exclusion list of fieldNames for `Movie` in the pattern',
-            [Movie, title],
-          ],
-          [
-            true,
-            '`name` was not specified in the exclusion list of fieldNames for `Movie` in the pattern',
-            [Movie, name],
-          ],
-          [false, '`name` was specified in the exclusion list of fieldNames for `Droid` in the pattern', [Droid, name]],
-          // TODO: Add more test cases
+          [true, 'it matches basically anything', [Droid, id]],
+          [false, 'it matches basically anything', [Droid, name]],
+          [false, 'it matches basically anything', [Droid, friends]],
+          [true, 'it matches basically anything', [Droid, friend]],
+          [true, 'it matches basically anything', [Droid, title]],
+          [true, 'it matches basically anything', [Droid, episode]],
+
+          [false, 'it matches basically anything', [Starship, id]],
+          [false, 'it matches basically anything', [Starship, name]],
+          [false, 'it matches basically anything', [Starship, friends]],
+          [false, 'it matches basically anything', [Starship, friend]],
+          [false, 'it matches basically anything', [Starship, title]],
+          [false, 'it matches basically anything', [Starship, episode]],
+
+          [false, 'it matches basically anything', [Human, id]],
+          [false, 'it matches basically anything', [Human, name]],
+          [false, 'it matches basically anything', [Human, friends]],
+          [false, 'it matches basically anything', [Human, friend]],
+          [false, 'it matches basically anything', [Human, title]],
+          [false, 'it matches basically anything', [Human, episode]],
+
+          [false, 'it matches basically anything', [Movie, id]],
+          [true, 'it matches basically anything', [Movie, name]],
+          [true, 'it matches basically anything', [Movie, friends]],
+          [true, 'it matches basically anything', [Movie, friend]],
+          [false, 'it matches basically anything', [Movie, title]],
+          [true, 'it matches basically anything', [Movie, episode]],
         ],
       ],
       [
@@ -633,7 +647,7 @@ describe('pattern matchers: return a boolean if the given args are found within 
 
 // TODO:
 // describe('TypeFieldName.shouldBeConfigured: returns true if a TypeFieldName should be configured ', () => {
-//   describe('matchesAllTypes: returns true for any TypeName given', () => {
+//   describe('matchesAllTypeNames: returns true for any TypeName given', () => {
 //     const pattern = TypeFieldName.buildAllTypeNames();
 //     expect(pattern).toBe('@*TypeNames;');
 
@@ -777,3 +791,18 @@ describe('pattern matchers: return a boolean if the given args are found within 
 //     });
 //   });
 // });
+
+describe('integration tests:', () => {
+  describe('build a pattern and run it through a list of matchers to determine if a matcher would return true', () => {
+    // builder
+    const spy = jest.spyOn(TypeFieldName, 'buildTypeNames');
+    const pattern = TypeFieldName.buildTypeNames('Droid,Starship');
+    const expected = 'Droid;Starship;';
+    expect(spy).toHaveBeenCalled();
+    expect(spy).toReturnWith(expected);
+    expect(pattern).toBe(expected);
+
+    // use module mocking
+    jest.mock('../src/config/type-field-name');
+  });
+});

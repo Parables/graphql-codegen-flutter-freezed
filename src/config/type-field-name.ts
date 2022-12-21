@@ -162,7 +162,7 @@ export class FieldName extends GraphqlTypeFieldName {
  * const typeFieldName = TypeFieldName.buildTypeNames('Droid, Starship, Human');
  * console.log(typeFieldName); // "Droid;Starship;Human;"
  *
- * const typeFieldName = TypeFieldName.buildAllTypeNames(); // TODO: Create this builder
+ * const typeFieldName = TypeFieldName.buildAllTypeNames();
  * console.log(typeFieldName); // "@*TypeNames';
  *
  * let typeFieldName = TypeFieldName.buildAllTypeNamesExcludeTypeNames('Droid, Starship');
@@ -384,16 +384,23 @@ export class TypeFieldName extends GraphqlTypeFieldName {
     fieldName = FieldName.fromString(this.valueOf(fieldName)).value;
 
     let result: RegExpExecArray | null;
+    const expandedPattern: Record<string, string[]> = {};
 
     while ((result = regexp.exec(pattern)) !== null) {
       const foundTypeName = result.groups.typeName;
       const foundFieldNames = strToList(result.groups.fieldNames);
 
-      if (foundTypeName === typeName && !foundFieldNames.includes(fieldName)) {
-        return matchFound(regexp);
-      }
+      foundFieldNames.forEach(_fieldName => {
+        expandedPattern['excludes'] = [...(expandedPattern['excludes'] ?? []), `${foundTypeName}.${_fieldName}`];
+      });
+
+      expandedPattern['typeNames'] = [...(expandedPattern['typeNames'] ?? []), foundTypeName];
     }
-    return matchFound(regexp, false);
+    return matchFound(
+      regexp,
+      !expandedPattern?.['excludes']?.includes(`${typeName}.${fieldName}`) &&
+        expandedPattern?.['typeNames']?.includes(typeName)
+    );
   };
 
   //#endregion
@@ -647,7 +654,6 @@ export class TypeFieldName extends GraphqlTypeFieldName {
 }
 
 //#region helper methods
-// TODO: Handle duplicates
 export const strToList = (str: string) => str.split(/\s*,\s*/gim).filter(s => s.length > 0);
 
 export const resetIndex = (regexp: RegExp) => (regexp.lastIndex = 0);
