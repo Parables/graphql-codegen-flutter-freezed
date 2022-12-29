@@ -276,40 +276,49 @@ describe('Config: has methods that returns a ready-to-use value for all the conf
     });
   });
 
-  describe.skip('Config.deprecated(...): returns `@deprecated` if the TypeName or FieldName is specified using a TypeFieldNamePattern', () => {
-    config.deprecated = [];
+  describe('Config.deprecated(...): returns `@deprecated` if the TypeName or FieldName is specified using a TypeFieldNamePattern', () => {
+    config.deprecated = [
+      ['Droid;', ['default_factory']],
+      ['@*TypeNames-[Droid,Starship,Human];', ['named_factory']],
+      ['Movie.[title];', ['named_factory_parameter_for_union_types']],
+      ['Movie.@*FieldNames-[title];', ['default_factory_parameter']],
+    ];
+
+    it('deprecates when appliesOn is `default_factory`', () => {
+      expect(Config.deprecated(config, Droid, undefined, ['default_factory'])).toBe(false);
+    });
   });
 
   describe.skip('Config.escapeDartKeywords(...): returns ', () => {
-    config.deprecated = [];
+    // config.deprecated = [];
   });
 
   describe.skip('Config.final(...): returns ', () => {
-    config.deprecated = [];
+    // config.deprecated = [];
   });
 
   describe.skip('Config.fromJsonToJson(...): returns ', () => {
-    config.deprecated = [];
+    // config.deprecated = [];
   });
 
   describe.skip('Config.ignoreTypes(...): returns ', () => {
-    config.deprecated = [];
+    // config.deprecated = [];
   });
 
   describe.skip('Config.mergeInputs(...): returns ', () => {
-    config.deprecated = [];
+    // config.deprecated = [];
   });
 
   describe.skip('Config.mutableInputs(...): returns ', () => {
-    config.deprecated = [];
+    // config.deprecated = [];
   });
 
   describe.skip('Config.unionClass(...): returns ', () => {
-    config.deprecated = [];
+    // config.deprecated = [];
   });
 
   describe.skip('Config.(...): returns ', () => {
-    config.deprecated = [];
+    // config.deprecated = [];
   });
 });
 
@@ -422,29 +431,7 @@ describe('Config: has methods that returns a ready-to-use value for all the conf
 //     ).toBeUndefined();
 //   });
 
-//   describe('typeNameOptionValue', () => {
-//     test.each([
-//       'copyWith',
-//       'equal',
-//       'immutable',
-//       'makeCollectionsUnmodifiable',
-//       'mutableInputs',
-//       'privateEmptyConstructor',
-//     ])('%s', option => {
-//       expect(config[option]).toBe(defaultFreezedPluginConfig[option]);
-//       expect(Config[option](config)).toBe(defaultFreezedPluginConfig[option]);
-
-//       // enable it for the following Types using a string
-//       config[option] = 'Droid, Starship';
-//       expect(Config[option](config, TypeName.fromString('Droid'))).toBe(true);
-//       expect(Config[option](config, TypeName.fromString('Human'))).toBe(false);
-
-//       // enable it for the following Types using a list of Type names
-//       config[option] = ['Droid', 'Starship'];
-//       expect(Config[option](config, TypeName.fromString('Droid'))).toBe(true);
-//       expect(Config[option](config, TypeName.fromString('Human'))).toBe(false);
-//     });
-//   });
+//
 
 //   describe('typeFieldNameOptionValue', () => {
 //     const config2 = Config.create({
