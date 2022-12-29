@@ -37,6 +37,10 @@ describe("integrity checks: ensures that these values don't change and if they a
 
     expect(definedRegexps.length).toBe(regexpCount);
 
+    /**
+     * A mock function that takes in a regular expression name and returns a regular expression from the 
+     * TypeFieldName class
+     */
     const mockedTypeFieldNameRegExp = jest.fn((regexpName: string): RegExp => TypeFieldName[regexpName]);
 
     test.each([
