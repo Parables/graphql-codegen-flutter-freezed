@@ -188,13 +188,12 @@ describe('pattern matchers: return a boolean if the given args are found within 
   // Hard coded for integrity purposes. Update this if more pattern builders are added
   const patternBuildersCount = 12;
 
-  const definedPatternMatchers = Object.getOwnPropertyNames(TypeFieldName).filter(
-    method => method.startsWith('matches') && typeof TypeFieldName[method] === 'function'
+  const definedMatchAndConfigureMethods = Object.getOwnPropertyNames(TypeFieldName).filter(
+    method => method.startsWith('matchAndConfigure') && typeof TypeFieldName[method] === 'function'
   );
+  expect(definedMatchAndConfigureMethods.length).toBe(patternBuildersCount);
 
   const testedPatternMatchers: string[] = [];
-
-  expect(definedPatternMatchers.length).toBe(patternBuildersCount);
 
   const mockedPatternMatcher = jest.fn(
     (matcher: string, ...args: any): ((typeFieldNamePatterns: TypeFieldNamePatterns, ...args: any) => boolean) =>
@@ -213,7 +212,7 @@ describe('pattern matchers: return a boolean if the given args are found within 
   >(
     indexArray([
       [
-        'matchesTypeNames',
+        'matchAndConfigureTypeNames',
         'Droid;Starship;',
         'returns true if the typeName given was specified in the pattern, otherwise false',
         [
@@ -223,9 +222,14 @@ describe('pattern matchers: return a boolean if the given args are found within 
           [false, '`Movie` was given but was not specified in the pattern', [Movie]],
         ],
       ],
-      ['matchesAllTypeNames', '@*TypeNames;', 'pattern for all TypeNames', [[true, 'matches all TypeNames', []]]],
       [
-        'matchesAllTypeNamesExcludeTypeNames',
+        'matchAndConfigureAllTypeNames',
+        '@*TypeNames;',
+        'pattern for all TypeNames',
+        [[true, 'matches all TypeNames', []]],
+      ],
+      [
+        'matchAndConfigureAllTypeNamesExcludeTypeNames',
         '@*TypeNames-[Droid,Starship];',
         'returns true if the typeNames given were specified in the exclusion list of typeNames in the pattern, otherwise false.',
         [
@@ -236,7 +240,7 @@ describe('pattern matchers: return a boolean if the given args are found within 
         ],
       ],
       [
-        'matchesFieldNamesOfTypeName',
+        'matchAndConfigureFieldNamesOfTypeName',
         'Droid.[id,name,friends];Movie.[title,episode];',
         'returns true if the fieldNames given were specified in the list of fieldNames for the typeName given in the pattern, otherwise false.',
         [
@@ -254,7 +258,7 @@ describe('pattern matchers: return a boolean if the given args are found within 
         ],
       ],
       [
-        'matchesAllFieldNamesOfTypeName',
+        'matchAndConfigureAllFieldNamesOfTypeName',
         'Movie.@*FieldNames;Droid.@*FieldNames;',
         'returns a boolean if the `typeName` given was specified in the pattern. Since the pattern contains `@*FieldNames`,this matcher does not require a `fieldName` parameter',
         [
@@ -266,7 +270,7 @@ describe('pattern matchers: return a boolean if the given args are found within 
         ],
       ],
       [
-        'matchesAllFieldNamesExcludeFieldNamesOfTypeName',
+        'matchAndConfigureAllFieldNamesExcludeFieldNamesOfTypeName',
         'Movie.@*FieldNames-[id];Droid.@*FieldNames-[name,friends];Movie.@*FieldNames-[title];',
         'returns a boolean if fieldNames given were specified in the exclusion list of fieldNames for the typeName given in the pattern.',
         [
@@ -300,7 +304,7 @@ describe('pattern matchers: return a boolean if the given args are found within 
         ],
       ],
       [
-        'matchesFieldNamesOfAllTypeNames',
+        'matchAndConfigureFieldNamesOfAllTypeNames',
         '@*TypeNames.[id,name];@*TypeNames.[title];',
         'returns a boolean if the `fieldNames` given were specified in the list of fieldNames in the pattern. Since the pattern contains `@*TypeNames`, this matcher does not require a `typeName` parameter.',
         [
@@ -313,7 +317,7 @@ describe('pattern matchers: return a boolean if the given args are found within 
         ],
       ],
       [
-        'matchesAllFieldNamesOfAllTypeNames',
+        'matchAndConfigureAllFieldNamesOfAllTypeNames',
         '@*TypeNames.@*FieldNames;',
         'returns true for any fieldName and fieldName given',
         [
@@ -347,7 +351,7 @@ describe('pattern matchers: return a boolean if the given args are found within 
         ],
       ],
       [
-        'matchesAllFieldNamesExcludeFieldNamesOfAllTypeNames',
+        'matchAndConfigureAllFieldNamesExcludeFieldNamesOfAllTypeNames',
         '@*TypeNames.@*FieldNames-[id,name];@*TypeNames.@*FieldNames-[title];',
         'returns a boolean if the fieldNames given were specified in the exclusion list of fieldNames in the pattern. Since the pattern contains `@*TypeNames`, this matcher does not require a `typeName` parameter.',
         [
@@ -360,7 +364,7 @@ describe('pattern matchers: return a boolean if the given args are found within 
         ],
       ],
       [
-        'matchesFieldNamesOfAllTypeNamesExcludeTypeNames',
+        'matchAndConfigureFieldNamesOfAllTypeNamesExcludeTypeNames',
         '@*TypeNames-[Droid,Human].[id,name];@*TypeNames-[Movie,Human].[title];',
         'returns true if the fieldNames given were specified in the list of fieldNames and the typeNames given is found in the exclusion list of typeNames in the pattern.',
         [
@@ -486,7 +490,7 @@ describe('pattern matchers: return a boolean if the given args are found within 
         ],
       ],
       [
-        'matchesAllFieldNamesOfAllTypeNamesExcludeTypeNames',
+        'matchAndConfigureAllFieldNamesOfAllTypeNamesExcludeTypeNames',
         '@*TypeNames-[Droid].@*FieldNames;@*TypeNames-[Movie,Human].@*FieldNames;',
         'returns a boolean if the `typeName` given is found in the excluded list of typeNames . Since the pattern contains `@*FieldNames`, this matcher does not require a `fieldName` parameter.',
         [
@@ -497,7 +501,7 @@ describe('pattern matchers: return a boolean if the given args are found within 
         ],
       ],
       [
-        'matchesAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames',
+        'matchAndConfigureAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames',
         '@*TypeNames-[Droid].@*FieldNames-[id];@*TypeNames-[Movie,Human, Droid].@*FieldNames-[name];@*TypeNames-[Movie, Human].@*FieldNames-[title];',
         'returns true if the fieldNames given is found in the exclusion list of fieldNames and the typeNames given is found in the exclusion list of typeNames.',
         [
@@ -626,15 +630,15 @@ describe('pattern matchers: return a boolean if the given args are found within 
     });
 
     test('matcher is tested in order as defined in TypeFieldName', () => {
-      expect(definedPatternMatchers.includes(matcher)).toBe(true);
-      expect(definedPatternMatchers.includes(matcher)).toBe(true);
-      expect(definedPatternMatchers[index]).toBe(matcher);
+      expect(definedMatchAndConfigureMethods.includes(matcher)).toBe(true);
+      expect(definedMatchAndConfigureMethods.includes(matcher)).toBe(true);
+      expect(definedMatchAndConfigureMethods[index]).toBe(matcher);
       // if none of the expectations above fails...
       testedPatternMatchers.push(matcher);
     });
   });
 
   test('all defined matchers were tested', () => {
-    expect(definedPatternMatchers).toMatchObject(testedPatternMatchers);
+    expect(definedMatchAndConfigureMethods).toMatchObject(testedPatternMatchers);
   });
 });

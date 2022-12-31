@@ -18,59 +18,59 @@ The patterns themselves are readable and easy to manually type it out in the con
 
 Wherever a builder method accepts parameter with a type signature of [`TypeNames`]() or [`FieldNames`](), you can use any of the following:
 
-1.  a single string. E.g: `'Droid'`
+1. a single string. E.g: `'Droid'`
 
-    ```ts
-    const typeFieldName = TypeFieldName.buildTypeNames('Droid');
-    console.log(typeFieldName); // "Droid;"
-    ```
+   ```ts
+   const typeFieldName = TypeFieldName.buildTypeNames('Droid');
+   console.log(typeFieldName); // "Droid;"
+   ```
 
-2.  a comma-separated string for multiple types/fields. E.g: `'Droid, Starship, Human'`
+2. a comma-separated string for multiple types/fields. E.g: `'Droid, Starship, Human'`
 
-    > The rest of this guide uses this approach wherever a builder method accepts a parameter with a type signature of [`TypeNames`]() or [`FieldNames`]()
+   > The rest of this guide uses this approach wherever a builder method accepts a parameter with a type signature of [`TypeNames`]() or [`FieldNames`]()
 
-    ```ts
-    const typeFieldName = TypeFieldName.buildTypeNames('Droid, Starship, Human');
-    console.log(typeFieldName); // "Droid;Starship;Human;"
-    ```
+   ```ts
+   const typeFieldName = TypeFieldName.buildTypeNames('Droid, Starship, Human');
+   console.log(typeFieldName); // "Droid;Starship;Human;"
+   ```
 
-3.  an array of strings. E.g: `['Droid', 'Starship']`
+3. an array of strings. E.g: `['Droid', 'Starship']`
 
-    ```ts
-    const typeFieldName = TypeFieldName.buildTypeNames(['Droid', 'Starship', 'Human']);
-    console.log(typeFieldName); // "Droid;Starship;Human;"
-    ```
+   ```ts
+   const typeFieldName = TypeFieldName.buildTypeNames(['Droid', 'Starship', 'Human']);
+   console.log(typeFieldName); // "Droid;Starship;Human;"
+   ```
 
-4.  a single TypeName or FieldName. E.g: `TypeName.fromString('Droid')`
+4. a single TypeName or FieldName. E.g: `TypeName.fromString('Droid')`
 
-    ```ts
-    const typeName = TypeName.fromString('Droid');
-    const typeFieldName = TypeFieldName.buildTypeNames(typeName);
-    console.log(typeFieldName); // "Droid;"
-    ```
+   ```ts
+   const typeName = TypeName.fromString('Droid');
+   const typeFieldName = TypeFieldName.buildTypeNames(typeName);
+   console.log(typeFieldName); // "Droid;"
+   ```
 
-5.  an array of TypeName or FieldName. E.g: `[TypeName.fromString('Droid'), [TypeName.fromString('Starship')]]`
+5. an array of TypeName or FieldName. E.g: `[TypeName.fromString('Droid'), [TypeName.fromString('Starship')]]`
 
-    ```ts
-    const Droid = TypeName.fromString('Droid');
-    const Starship = TypeName.fromString('Starship');
-    const Human = TypeName.fromString('Human');
+   ```ts
+   const Droid = TypeName.fromString('Droid');
+   const Starship = TypeName.fromString('Starship');
+   const Human = TypeName.fromString('Human');
 
-    const typeFieldName = TypeFieldName.buildTypeNames([Droid, Starship, Human]);
-    console.log(typeFieldName); // "Droid;Starship;Human;"
-    ```
+   const typeFieldName = TypeFieldName.buildTypeNames([Droid, Starship, Human]);
+   console.log(typeFieldName); // "Droid;Starship;Human;"
+   ```
 
 @exampleMarkdown
 
 ## Usage for Graphql Types
 
-### Configuring multiple Graphql Types
+### Configuring specific Graphql Types
 
 You can explicitly list out the names of the Graphql Types that you want to configure.
 
 ```ts
-const typeFieldName = TypeFieldName.buildTypeNames('Droid, Starship, Human');
-console.log(typeFieldName); // "Droid;Starship;Human;"
+const typeFieldName = TypeFieldName.buildTypeNames('Droid, Starship');
+console.log(typeFieldName); // "Droid;Starship;"
 ```
 
 ### Configuring all Graphql Types
@@ -82,43 +82,47 @@ const typeFieldName = TypeFieldName.buildAllTypeNames(); // TODO: Create this bu
 console.log(typeFieldName); // "@*TypeNames';
 ```
 
-### Configuring all Graphql Types exclude some Types
+### Configuring all Graphql Types except those specified
 
-You can configure all GraphQL Types exclude those specified.
+You can configure all GraphQL Types except those specified.
 
-The example below configures all the Graphql Types in the Schema exclude the `Droid` and `Starship` Graphql Types
+The example below configures all the Graphql Types in the Schema except the `Droid` and `Starship` Graphql Types
 
 ```ts
-let typeFieldName = TypeFieldName.buildAllTypeNamesExcludeTypeNames('Droid, Starship');
+let typeFieldName = TypeFieldName.buildAllTypeNamesexceptTypeNames('Droid, Starship');
 console.log(typeFieldName); // "@*TypeNames-['Droid,Starship]';"
 ```
 
 ## Usage for fields of Graphql Types
 
-### Configuring some fields of a Graphql Type
+### Configuring specific fields of a specific Graphql Type
 
 You can explicitly list out the names of the fields of the Graphql Types that you want to configure.
 
 ```ts
-const typeFieldName = TypeFieldName.buildFieldNamesOfTypeName('Droid', 'id, name');
-console.log(typeFieldName); // "Droid.[id,name,friends];"
+const typeFieldName = TypeFieldName.buildFieldNamesOfTypeName([
+  ['Droid', 'id,name,friends'],
+  ['Human', 'id,name,title'],
+  ['Starship', 'name,length'],
+]);
+console.log(typeFieldName); // "Droid.[id,name,friends];Human.[id,name,title];Starship.[name,length];"
 ```
 
-### Configuring all fields of a Graphql Type
+### Configuring all fields of a specific Graphql Type
 
 Instead of manually listing out **all the fields** of the Graphql Type, use the allFieldNames (`@*FieldNames`) to configure all the fields of the Graphql Type.
 
 ```ts
 const typeFieldName = TypeFieldName.buildAllFieldNamesOfTypeName('Droid');
-console.log(typeFieldName); // "Droid.@*FieldNames;"
+console.log(typeFieldName); // "Droid.@*FieldNames;Movie.@*FieldNames"
 ```
 
-### Configuring all fields exclude some fields of a Graphql Type
+### Configuring all fields except some fields of a Graphql Type
 
-In the example below, the `id` and the `name` fields will be excluded from the configuration while all the remaining fields of the `Droid` Graphql Type will be configured
+In the example below, the `id` and the `name` fields will be exceptd from the configuration while all the remaining fields of the `Droid` Graphql Type will be configured
 
 ```ts
-const typeFieldName = TypeFieldName.buildAllFieldNamesExcludeFieldNamesOfTypeName('Droid', 'id, name');
+const typeFieldName = TypeFieldName.buildAllFieldNamesexceptFieldNamesOfTypeName('Droid', 'id, name');
 console.log(typeFieldName); // "Droid.@*FieldNames-[id,name];"
 ```
 
@@ -142,41 +146,41 @@ let typeFieldName = TypeFieldName.buildAllFieldNamesOfAllTypeNames();
 console.log(typeFieldName); // "@*TypeNames.@*FieldNames;"
 ```
 
-### Configuring all fields exclude some fields of all Graphql Types
+### Configuring all fields except some fields of all Graphql Types
 
-As always, you can make some excludeion when you use the allFieldNames (`@*FieldNames`) to exclude some fields from the configuration.
+As always, you can make some exception when you use the allFieldNames (`@*FieldNames`) to except some fields from the configuration.
 
-In the example below, the `id` and the `name` fields will be excluded from the configuration while all the remaining fields of all Graphql Type will be configured
+In the example below, the `id` and the `name` fields will be exceptd from the configuration while all the remaining fields of all Graphql Type will be configured
 
 ```ts
-let typeFieldName = TypeFieldName.buildAllFieldNamesExcludeFieldNamesOfAllTypeNames('id, name');
+let typeFieldName = TypeFieldName.buildAllFieldNamesexceptFieldNamesOfAllTypeNames('id, name');
 console.log(typeFieldName); // "@*TypeNames.@*FieldNames-[id,name];"
 ```
 
-### Configuring some fields of all Graphql Types excludes some Types
+### Configuring some fields of all Graphql Types excepts some Types
 
-In the example below, the `id` and `name` fields will be configured for all the Graphql Types in the Schema exclude`Droid` and `Starship`
+In the example below, the `id` and `name` fields will be configured for all the Graphql Types in the Schema except`Droid` and `Starship`
 
 ```ts
-let typeFieldName = TypeFieldName.buildFieldNamesOfAllTypeNamesExcludeTypeNames('Droid, Starship', 'id, name');
+let typeFieldName = TypeFieldName.buildFieldNamesOfAllTypeNamesexceptTypeNames('Droid, Starship', 'id, name');
 console.log(typeFieldName); // "@*TypeNames-[Droid,Starship].[id,name];"
 ```
 
-### Configuring all fields of all Graphql Types exclude some Types
+### Configuring all fields of all Graphql Types except some Types
 
-In the example below, all fields of all Graphql Types in the Schema exclude for the fields of `Droid` and `Starship` will be excluded from the configuration while all the remaining fields of all Graphql Type will be configured
+In the example below, all fields of all Graphql Types in the Schema except for the fields of `Droid` and `Starship` will be exceptd from the configuration while all the remaining fields of all Graphql Type will be configured
 
 ```ts
-let typeFieldName = TypeFieldName.buildAllFieldNamesOfAllTypeNamesExcludeTypeNames('Droid Starship', 'id, name');
+let typeFieldName = TypeFieldName.buildAllFieldNamesOfAllTypeNamesexceptTypeNames('Droid Starship', 'id, name');
 console.log(typeFieldName); // "@*TypeNames-[Droid,Starship].@*FieldNames;"
 ```
 
-### Configuring all fields exclude some fields of all Graphql Types exclude some Types
+### Configuring all fields except some fields of all Graphql Types except some Types
 
-In the example below, the `id` and the `name` fields of `Droid` or `Starship` will be excluded from the configuration while all the **remaining fields** of all Graphql Types(including `Droid` and `Starship`) will be configured
+In the example below, the `id` and the `name` fields of `Droid` or `Starship` will be exceptd from the configuration while all the **remaining fields** of all Graphql Types(including `Droid` and `Starship`) will be configured
 
 ```ts
-let typeFieldName = TypeFieldName.buildAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames(
+let typeFieldName = TypeFieldName.buildAllFieldNamesexceptFieldNamesOfAllTypeNamesexceptTypeNames(
   'Droid Starship',
   'id, name'
 );

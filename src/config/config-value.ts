@@ -144,7 +144,7 @@ export class Config {
 
   static ignoreTypes = (config: FlutterFreezedPluginConfig, typeName: TypeName) => {
     const pattern = TypeFieldName.buildTypeNames(config.ignoreTypes);
-    return TypeFieldName.matchesTypeNames(pattern, typeName);
+    return TypeFieldName.matchAndConfigureTypeNames(pattern, typeName);
   };
 
   static immutable = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
@@ -234,7 +234,7 @@ export class Config {
         .split(/\s*;\s*/)
         .filter(pattern => pattern.length > 0)
         .forEach(pattern => {
-          if (TypeFieldName.shouldBeConfigured(`${pattern};`, typeName, fieldName)) {
+          if (TypeFieldName.attemptMatchAndConfigure(`${pattern};`, typeName, fieldName)) {
             lastIndex = index;
           }
         });
