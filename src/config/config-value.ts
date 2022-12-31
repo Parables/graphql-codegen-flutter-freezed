@@ -9,7 +9,7 @@ import {
   defaultFreezedPluginConfig,
   FlutterFreezedPluginConfig,
 } from './plugin-config';
-import { FieldName, TypeFieldName, TypeName } from './type-field-name';
+import { FieldName, splitPatterns, TypeFieldName, TypeName, strToList } from './type-field-name';
 import { FreezedOption, DartIdentifierCasing } from './plugin-config';
 import { UnionValueCase } from '../../.history/src/config/plugin-config_20221214004237';
 
@@ -45,9 +45,9 @@ export class Config {
     const _defaultValues = config.defaultValues;
 
     const typeFieldNames = _defaultValues.map(([_typeFieldName]) => _typeFieldName);
-    const lastPatternIndex = this.findLastConfiguration(typeFieldNames, typeName, fieldName);
-    if (lastPatternIndex !== undefined && _defaultValues[lastPatternIndex]) {
-      const [, defaultValue, configAppliesOn, directiveName, directiveArgName] = _defaultValues[lastPatternIndex];
+    const { lastIndex, shouldConfigure } = this.findLastConfiguration(typeFieldNames, typeName, fieldName);
+    if (shouldConfigure && lastIndex !== undefined && _defaultValues[lastIndex]) {
+      const [, defaultValue, configAppliesOn, directiveName, directiveArgName] = _defaultValues[lastIndex];
       if (appliesOnBlock(configAppliesOn, blockAppliesOn)) {
         return [defaultValue, directiveName, directiveArgName];
       }
@@ -226,21 +226,26 @@ export class Config {
     return value;
   };
 
-  public static findLastConfiguration = (listOfPatterns: string[], typeName: TypeName, fieldName?: FieldName) => {
+  public static findLastConfiguration = (
+    patternsList: string | string[],
+    typeName: TypeName,
+    fieldName?: FieldName
+  ) => {
     let lastIndex: number;
+    let shouldConfigure: boolean;
 
-    listOfPatterns.forEach((patterns, index) => {
-      patterns
-        .split(/\s*;\s*/)
-        .filter(pattern => pattern.length > 0)
-        .forEach(pattern => {
-          if (TypeFieldName.attemptMatchAndConfigure(`${pattern};`, typeName, fieldName)) {
-            lastIndex = index;
-          }
-        });
+    patternsList = strToList(TypeFieldName.valueOf(patternsList));
+    patternsList.forEach((patterns, index) => {
+      splitPatterns(patterns).forEach(pattern => {
+        const { shouldBeConfigured } = TypeFieldName.attemptMatchAndConfigure(`${pattern};`, typeName, fieldName);
+        if (shouldBeConfigured) {
+          lastIndex = index;
+          shouldConfigure = shouldBeConfigured;
+        }
+      });
     });
 
-    return lastIndex;
+    return { lastIndex, shouldConfigure };
   };
 
   public static create = (...config: Partial<FlutterFreezedPluginConfig>[]): FlutterFreezedPluginConfig => {
