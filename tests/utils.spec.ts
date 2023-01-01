@@ -2,10 +2,25 @@ import { transformSchemaAST } from '@graphql-codegen/schema-ast';
 import { starWarsSchema } from './schema';
 import { appliesOnBlock, dartCasing, nodeIsObjectType, NodeRepository } from '../src/utils';
 import { defaultFreezedPluginConfig, APPLIES_ON_PARAMETERS, ObjectType } from '../src/config/plugin-config';
+import { arrayWrap } from '../src/config/type-field-name';
 
 const {
   ast: { definitions: nodes },
 } = transformSchemaAST(starWarsSchema, defaultFreezedPluginConfig);
+
+describe('arrayWrap:', () => {
+  it('wraps the value in array if the value is not an array', () => {
+    expect(arrayWrap('Hello')).toMatchObject(['Hello']);
+  });
+
+  it('returns the value if the value is already an array', () => {
+    expect(arrayWrap(['Hello'])).toMatchObject(['Hello']);
+  });
+
+  it('returns an empty array `[]` if the value is undefined', () => {
+    expect(arrayWrap(undefined)).toMatchObject([]);
+  });
+});
 
 test('method: nodeIsObjectType() => returns true if node is an ObjectType', () => {
   const expected = [false, true, true, true, true, true, true, false, true, true, true, false];

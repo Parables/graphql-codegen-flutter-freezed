@@ -1,0 +1,7 @@
+import { TypeName, TypeFieldName, FieldName, getMatchList } from '../src/config/type-field-name';
+
+// describe('Wherever a builder accepts a parameter with a type signature of TypeNames or FieldNames, any of the following values can be passed')
+
+//#region attemptMatchAndConfigure
+
+//#endregion
