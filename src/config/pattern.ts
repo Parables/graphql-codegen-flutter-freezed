@@ -97,6 +97,100 @@ export class FieldName {
   };
 }
 
+/**
+ *  @name Pattern
+ *
+ * @description A compact string of patterns used in the config for granular configuration for each Graphql Type and/or its fieldNames
+ *
+ * The string can contain one or more patterns, each pattern ends with a semi-colon (`;`).
+ *
+ * A dot (`.`) is used to separate the TypeName from the FieldNames in each pattern.
+ *
+ * To apply an option to all Graphql Types or all fields, use the allTypeNames (`@*TypeNames`) and allFieldNames (`@*FieldNames`) tokens respectively.
+ *
+ * Wherever you use the allTypeNames and the allFieldNames, know very well that you can make some exceptions. After all, to every rule, there is an exception.
+ *
+ * A **square bracket** (`[]`) is used to specify what should be included and a **negated square bracket** (`-[]`) is used to specify what should be excluded.
+ *
+ * Manually typing out a pattern may be prone to typos resulting in invalid patterns therefore the [`TypeFieldName`]() class exposes some builder methods which you can use in your plugin config file.
+ *
+ * ## Available Builder Methods and the patterns they make
+ * ```ts
+ * const Droid = TypeName.fromString('Droid');
+ * const Starship = TypeName.fromString('Starship');
+ * const Human = TypeName.fromString('Human');
+ * const Movie = TypeName.fromString('Movie');
+ *
+ * const id = FieldName.fromString('id');
+ * const name = FieldName.fromString('name');
+ * const friends = FieldName.fromString('friends');
+ * const friend = FieldName.fromString('friend');
+ * const title = FieldName.fromString('title');
+ * const episode = FieldName.fromString('episode');
+ * const length = FieldName.fromString('length');
+ *
+ * // Configuring specific Graphql Types
+ * const pattern = Pattern.forTypeNames([Droid, Starship]);
+ * console.log(pattern); // "Droid;Starship;"
+ *
+ * // Configuring all Graphql Types
+ * const pattern = Pattern.forAllTypeNames();
+ * console.log(pattern); // "@*TypeNames;"
+ 
+ * // Configuring all Graphql Types except those specified in the exclusion list of TypeNames
+ * const pattern = Pattern.forAllTypeNamesExcludeTypeNames([Droid, Starship]);
+ * console.log(pattern); // "@*TypeNames-[Droid,Starship];"
+ *
+ * // Configuring specific fields of a specific Graphql Type
+ * const pattern = Pattern.forFieldNamesOfTypeName([
+ *   [Droid, [id, name, friends]], // individual
+ *   [Human, [id, name, title]], // individual
+ *   [Starship, [name, length]], // individual
+ * ]);
+ * console.log(pattern); // "Droid.[id,name,friends];Human.[id,name,title];Starship.[name,length];"
+ *
+ * // Configuring all fields of a specific Graphql Type
+ * const pattern = Pattern.forAllFieldNamesOfTypeName([Droid, Movie]);
+ * console.log(pattern); // "Droid.@*FieldNames;Movie.@*FieldNames;"
+ *
+ * // Configuring all fields except those specified in the exclusion list of FieldNames for a specific GraphQL Type
+ * const pattern = Pattern.forAllFieldNamesExcludeFieldNamesOfTypeName([
+ *   [Droid, [id, name, friends]], // individual
+ *   [Human, [id, name, title]], // individual
+ *   [Starship, [name, length]], // individual
+ * ]);
+ * console.log(pattern); // "Droid.@*FieldNames-[id,name,friends];Human.@*FieldNames-[id,name,title];Starship.@*FieldNames-[name,length];"
+ *
+ * // Configuring specific fields of all Graphql Types
+ * const pattern = Pattern.forFieldNamesOfAllTypeNames([id, name, friends]);
+ * console.log(pattern); // "@*TypeNames.[id,name,friends];"
+ *
+ * // Configuring all fields of all Graphql Types
+ * const pattern = Pattern.forAllFieldNamesOfAllTypeNames();
+ * console.log(pattern); // "@*TypeNames.@*FieldNames;"
+ *
+ * // Configuring all fields except those specified in the exclusion list of FieldNames for all GraphQL Types
+ * const pattern = Pattern.forAllFieldNamesExcludeFieldNamesOfAllTypeNames([id, name, friends]);
+ * console.log(pattern); // "@*TypeNames.@*FieldNames-[id,name,friends];"
+ *
+ * // Configuring specific fields of all GraphQL Types except those specified in the exclusion list of TypeNames
+ * const pattern = Pattern.forFieldNamesOfAllTypeNamesExcludeTypeNames([Droid, Human], [id, name, friends]);
+ * console.log(pattern); // "@*TypeNames-[Droid,Human].[id,name,friends];"
+ *
+ * // Configuring all fields of all GraphQL Types except those specified in the exclusion list of TypeNames
+ * const pattern = Pattern.forAllFieldNamesOfAllTypeNamesExcludeTypeNames([Droid, Human]);
+ * console.log(pattern); // "@*TypeNames-[Droid,Human].@*FieldNames;"
+ *
+ * // Configuring all fields except those specified in the exclusion list of FieldNames of all GraphQL Types except those specified in the exclusion list of TypeNames
+ * const pattern = Pattern.forAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames(
+ *   [Droid, Human],
+ *   [id, name, friends]
+ * );
+ * console.log(pattern); // "@*TypeNames-[Droid,Human].@*FieldNames-[id,name,friends];"
+ * ```
+ *
+ */
+
 @frozen
 export class Pattern {
   private _value: string;
@@ -569,7 +663,7 @@ export class Pattern {
   //#endregion
 
   // #region attemptMatchAndConfigure
-  static attemptMatchAndConfigure = (pattern: Pattern, ...typeNameOrFieldName: (TypeName | FieldName)[]) => {
+  static attemptMatchAndConfigure = (pattern: Pattern, ...args: (TypeName | FieldName)[]) => {
     if (pattern.value.split(';').filter(_pattern => _pattern.length > 0).length !== 1) {
       throw new Error(
         'attemptMatchAndConfigure can only handle one pattern at a time... use the `splitPatterns(...)` helper function to split your patterns into a list and loop over the list calling the `attemptMatchAndConfigure(...)`  for each single pattern'
@@ -581,20 +675,39 @@ export class Pattern {
     const matchAndConfigure = (
       baseName: string,
       pattern: Pattern,
-      ...typeNameOrFieldName: (TypeName | FieldName)[]
+      ...args: (TypeName | FieldName)[]
     ): { matchFound: boolean; shouldBeConfigured: boolean } | undefined =>
-      Pattern[`matchAndConfigure${baseName}`](pattern, ...typeNameOrFieldName);
+      Pattern[`matchAndConfigure${baseName}`](pattern, ...args);
 
     const matchList: string[] = Pattern.getMatchList();
     for (let i = 0; i < matchList.length; i++) {
       const baseName = matchList[i];
 
       if (regexpFor(baseName).test(pattern.value)) {
-        console.log(baseName, pattern);
-        return matchAndConfigure(baseName, pattern, ...typeNameOrFieldName);
+        return matchAndConfigure(baseName, pattern, ...args);
       }
     }
+
     return undefined;
+  };
+  //#endregion
+
+  //#region composePatterns
+  static compose = (data: Pattern[]): Pattern => {
+    if (data.length < 1) {
+      throw new Error('Pattern cannot be created... an empty array was passed as parameter');
+    }
+
+    return Pattern.fromString(data.map(pattern => pattern.value).join(''));
+  };
+  //#endregion
+
+  //#region split
+  static split = (pattern: Pattern): Pattern[] => {
+    return pattern.value
+      .split(';')
+      .filter(_pattern => _pattern.length > 0)
+      .map(_pattern => Pattern.fromString(_pattern));
   };
   //#endregion
 
@@ -611,3 +724,17 @@ export class Pattern {
   };
   //#endregion
 }
+
+// type MatchAndConfigure =
+//   | 'matchAndConfigureTypeNames'
+//   | 'matchAndConfigureAllTypeNames'
+//   | 'matchAndConfigureAllTypeNamesExcludeTypeNames'
+//   | 'matchAndConfigureFieldNamesOfTypeName'
+//   | 'matchAndConfigureAllFieldNamesOfTypeName'
+//   | 'matchAndConfigureAllFieldNamesExcludeFieldNamesOfTypeName'
+//   | 'matchAndConfigureFieldNamesOfAllTypeNames'
+//   | 'matchAndConfigureAllFieldNamesOfAllTypeNames'
+//   | 'matchAndConfigureAllFieldNamesExcludeFieldNamesOfAllTypeNames'
+//   | 'matchAndConfigureFieldNamesOfAllTypeNamesExcludeTypeNames'
+//   | 'matchAndConfigureAllFieldNamesOfAllTypeNamesExcludeTypeNames'
+//   | 'matchAndConfigureAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames';

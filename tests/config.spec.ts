@@ -1,4 +1,6 @@
 import { DART_KEYWORDS, DART_SCALARS, defaultFreezedPluginConfig } from '../src/config/plugin-config';
+import { Config } from '../src/config/config-value';
+import { FieldName, Pattern, TypeName } from '../src/config/pattern';
 
 describe("integrity checks: ensures that these values don't change and if they do, they're updated accordingly", () => {
   test('integrity check: DART_SCALARS contains corresponding Dart Types mapping for built-in Graphql Scalars', () => {
@@ -107,7 +109,7 @@ describe("integrity checks: ensures that these values don't change and if they d
       escapeDartKeywords: true,
       final: undefined,
       fromJsonToJson: true,
-      ignoreTypes: [],
+      ignoreTypes: undefined,
       immutable: true,
       makeCollectionsUnmodifiable: undefined,
       mergeInputs: undefined,
@@ -119,209 +121,263 @@ describe("integrity checks: ensures that these values don't change and if they d
 });
 
 // TODO: Uncomment these tests ... v
-// const Droid = TypeName.fromString('Droid');
+const Droid = TypeName.fromString('Droid');
 // const Starship = TypeName.fromString('Starship');
-// const Human = TypeName.fromString('Human');
+const Human = TypeName.fromString('Human');
 // const Movie = TypeName.fromString('Movie');
 
-// const id = FieldName.fromString('id');
-// const name = FieldName.fromString('name');
+const id = FieldName.fromString('id');
+const name = FieldName.fromString('name');
 // const friends = FieldName.fromString('friends');
 // const friend = FieldName.fromString('friend');
-// const title = FieldName.fromString('title');
+const title = FieldName.fromString('title');
 // const episode = FieldName.fromString('episode');
 
-// describe('Config: has methods that returns a ready-to-use value for all the config options', () => {
-//   const config = Config.create({});
+describe('Config: has methods that returns a ready-to-use value for all the config options', () => {
+  const config = Config.create({});
 
-//   describe('Config.camelCasedEnums(...): returns a `DartIdentifierCasing` or `undefined`', () => {
-//     it('config.camelCasedEnums: defaults to `true`', () => {
-//       expect(config.camelCasedEnums).toBe(true);
-//     });
+  describe('Config.camelCasedEnums(...): returns a `DartIdentifierCasing` or `undefined`', () => {
+    it('config.camelCasedEnums: defaults to `true`', () => {
+      expect(config.camelCasedEnums).toBe(true);
+    });
 
-//     it('returns `camelCase` if set to `true`. Defaults to `true`', () => {
-//       expect(Config.camelCasedEnums(config)).toBe('camelCase');
-//     });
+    it('returns `camelCase` if set to `true`. Defaults to `true`', () => {
+      expect(Config.camelCasedEnums(config)).toBe('camelCase');
+    });
 
-//     it('allow to you to specify your preferred casing', () => {
-//       config.camelCasedEnums = 'PascalCase';
-//       expect(Config.camelCasedEnums(config)).toBe('PascalCase');
-//     });
+    it('allow to you to specify your preferred casing', () => {
+      config.camelCasedEnums = 'PascalCase';
+      expect(Config.camelCasedEnums(config)).toBe('PascalCase');
+    });
 
-//     it('can be disabled by setting it to `false` or `undefined`', () => {
-//       config.camelCasedEnums = undefined;
-//       expect(Config.camelCasedEnums(config)).toBeUndefined();
-//       config.camelCasedEnums = false;
-//       expect(Config.camelCasedEnums(config)).toBeUndefined();
-//     });
-//   });
+    it('can be disabled by setting it to `false` or `undefined`', () => {
+      config.camelCasedEnums = undefined;
+      expect(Config.camelCasedEnums(config)).toBeUndefined();
+      config.camelCasedEnums = false;
+      expect(Config.camelCasedEnums(config)).toBeUndefined();
+    });
+  });
 
-//   // The following methods have the same signature that is why they're all tested using the same conditions
-//   describe.each([
-//     ['copyWith', undefined],
-//     ['equal', undefined],
-//     ['immutable', true],
-//     ['makeCollectionsUnmodifiable', undefined],
-//     ['mutableInputs', true],
-//     ['privateEmptyConstructor', true],
-//   ])('Config.%s(...): returns a `boolean` or `undefined`', (option, defaultValue) => {
-//     it(`config.${option}: defaults to \`undefined\``, () => {
-//       expect(config[option]).toBe(defaultValue);
-//       expect(Config[option](config)).toBe(defaultValue);
-//     });
+  describe('Config.customScalars(...): returns an equivalent Dart Type for a given Graphql Scalar Type', () => {
+    it('config.customScalars: defaults to an empty object `{}`', () => {
+      expect(config.customScalars).toMatchObject({});
+    });
 
-//     it('returns a boolean if set to a boolean', () => {
-//       config[option] = true;
-//       expect(Config[option](config)).toBe(true);
+    // tell Dart how to handle your custom Graphql Scalars by mapping them to an corresponding Dart type
+    config.customScalars = {
+      jsonb: 'Map<String, dynamic>',
+      timestamp: 'DateTime',
+      UUID: 'String',
+    };
 
-//       config[option] = false;
-//       expect(Config[option](config)).toBe(false);
-//     });
+    describe.each([
+      // [scalar, dart-type]
+      ['jsonb', 'Map<String, dynamic>'],
+      ['timestamp', 'DateTime'],
+      ['UUID', 'String'],
+    ])('returns the equivalent Dart Type from the config', (scalar, dartType) => {
+      it(`the Dart equivalent of scalar: '${scalar}' is Dart type: '${dartType}'`, () => {
+        expect(Config.customScalars(config, scalar)).toBe(dartType);
+      });
+    });
 
-//     test('enable it only for some specified Graphql Types using TypeNamePatterns', () => {
-//       config[option] = 'Droid;Starship;';
-//       expect(Config[option](config, Droid)).toBe(true);
-//       expect(Config[option](config, Starship)).toBe(true);
-//       expect(Config[option](config, Human)).toBe(undefined);
+    describe.each([
+      // [scalar, dart-type]
+      ['ID', 'String'],
+      ['String', 'String'],
+      ['Boolean', 'bool'],
+      ['Int', 'int'],
+      ['Float', 'double'],
+      ['DateTime', 'DateTime'],
+    ])('returns the equivalent Dart Type from the DART_SCALARS', (scalar, dartType) => {
+      it(`the Dart equivalent of scalar: '${scalar}' is Dart type: '${dartType}'`, () => {
+        expect(Config.customScalars(config, scalar)).toBe(dartType);
+      });
+    });
 
-//       config[option] = '@*TypeNames;';
-//       expect(Config[option](config, Droid)).toBe(true);
-//       expect(Config[option](config, Starship)).toBe(true);
-//       expect(Config[option](config, Human)).toBe(true);
+    test('you can override the DART_SCALARS with the config', () => {
+      expect(Config.customScalars(config, 'ID')).toBe('String');
+      config.customScalars = { ...config.customScalars, ID: 'int' };
+      expect(Config.customScalars(config, 'ID')).toBe('int');
+    });
 
-//       config[option] = '@*TypeNames-[Droid,Movie];';
-//       expect(Config[option](config, Droid)).toBeUndefined();
-//       expect(Config[option](config, Movie)).toBeUndefined();
-//       expect(Config[option](config, Starship)).toBe(true);
-//       expect(Config[option](config, Human)).toBe(true);
-//     });
-//   });
+    it('returns the Graphql Scalar if no equivalent type is found', () => {
+      expect(Config.customScalars(config, 'NanoId')).toBe('NanoId');
+    });
 
-//   describe('Config.customScalars(...): returns an equivalent Dart Type for a given Graphql Scalar Type', () => {
-//     it('config.customScalars: defaults to an empty object `{}`', () => {
-//       expect(config.customScalars).toMatchObject({});
-//     });
+    it('is case-sensitive: returns the Graphql Scalar if no equivalent type is found', () => {
+      expect(Config.customScalars(config, 'UUID')).toBe('String');
+      expect(Config.customScalars(config, 'uuid')).toBe('uuid');
+    });
 
-//     // tell Dart how to handle your custom Graphql Scalars by mapping them to an corresponding Dart type
-//     config.customScalars = {
-//       jsonb: 'Map<String, dynamic>',
-//       timestamp: 'DateTime',
-//       UUID: 'String',
-//     };
+    test('order of precedence: config > DART_SCALARS > graphql scalar', () => {
+      config.customScalars = undefined;
+      expect(Config.customScalars(config, 'ID')).toBe('String');
+      expect(Config.customScalars(config, 'uuid')).toBe('uuid');
+    });
+  });
 
-//     it('returns the equivalent Dart Type from the config', () => {
-//       expect(Config.customScalars(config, 'jsonb')).toBe('Map<String, dynamic>');
-//       expect(Config.customScalars(config, 'UUID')).toBe('String');
-//     });
+  describe('Config.findLastConfiguration(...): returns the index of the pattern in the list of patterns where the Pattern.matchedAndConfigure returned `shouldBeConfigured:true`', () => {
+    it('returns 2 because Pattern at index: 2 returns `shouldBeConfigured: true`', () => {
+      expect(
+        Config.findLastConfiguration(
+          [
+            Pattern.forTypeNames(Droid),
+            Pattern.forAllTypeNamesExcludeTypeNames([Human, Droid]),
+            Pattern.forAllTypeNames(),
+          ],
+          Human
+        )
+      ).toBe(2);
+    });
 
-//     it('returns the equivalent Dart Type from the DART_SCALARS', () => {
-//       expect(Config.customScalars(config, 'ID')).toBe('String');
-//       expect(Config.customScalars(config, 'String')).toBe('String');
-//       expect(Config.customScalars(config, 'Boolean')).toBe('bool');
-//       expect(Config.customScalars(config, 'Int')).toBe('int');
-//       expect(Config.customScalars(config, 'Float')).toBe('double');
-//       expect(Config.customScalars(config, 'DateTime')).toBe('DateTime');
-//     });
+    it('returns undefined because Pattern at index: 1 returns `shouldBeConfigured: false`', () => {
+      expect(
+        Config.findLastConfiguration(
+          [Pattern.forTypeNames(Droid), Pattern.forAllTypeNamesExcludeTypeNames([Human, Droid])],
+          Human
+        )
+      ).toBeUndefined();
+    });
 
-//     test('you can override the DART_SCALARS with the config', () => {
-//       expect(Config.customScalars(config, 'ID')).toBe('String');
-//       config.customScalars = { ...config.customScalars, ID: 'int' };
-//       expect(Config.customScalars(config, 'ID')).toBe('int');
-//     });
+    it('returns undefined because Pattern at index: 0 returns `shouldBeConfigured: false`', () => {
+      expect(
+        Config.findLastConfiguration(
+          [
+            Pattern.compose([
+              Pattern.forTypeNames(Droid),
+              Pattern.forAllTypeNamesExcludeTypeNames([Human, Droid]),
+              Pattern.forAllFieldNamesExcludeFieldNamesOfTypeName([[Human, [name, title]]]),
+              Pattern.forFieldNamesOfTypeName([[Droid, name]]),
+            ]),
+          ],
+          Human,
+          id
+        )
+      ).toBe(10);
+    });
+  });
 
-//     it('returns the Graphql Scalar if no equivalent type is found', () => {
-//       expect(Config.customScalars(config, 'NanoId')).toBe('NanoId');
-//     });
+  //   // The following methods have the same signature that is why they're all tested using the same conditions
+  //   describe.each([
+  //     ['copyWith', undefined],
+  //     ['equal', undefined],
+  //     ['immutable', true],
+  //     ['makeCollectionsUnmodifiable', undefined],
+  //     ['mutableInputs', true],
+  //     ['privateEmptyConstructor', true],
+  //   ])('Config.%s(...): returns a `boolean` or `undefined`', (option, defaultValue) => {
+  //     it(`config.${option}: defaults to \`undefined\``, () => {
+  //       expect(config[option]).toBe(defaultValue);
+  //       expect(Config[option](config)).toBe(defaultValue);
+  //     });
 
-//     it('is case-sensitive: returns the Graphql Scalar if no equivalent type is found', () => {
-//       expect(Config.customScalars(config, 'UUID')).toBe('String');
-//       expect(Config.customScalars(config, 'uuid')).toBe('uuid');
-//     });
+  //     it('returns a boolean if set to a boolean', () => {
+  //       config[option] = true;
+  //       expect(Config[option](config)).toBe(true);
 
-//     test('order of precedence: config > DART_SCALARS > graphql scalar', () => {
-//       config.customScalars = undefined;
-//       expect(Config.customScalars(config, 'ID')).toBe('String');
-//       expect(Config.customScalars(config, 'uuid')).toBe('uuid');
-//     });
-//   });
+  //       config[option] = false;
+  //       expect(Config[option](config)).toBe(false);
+  //     });
 
-//   describe('Config.defaultValue(...): returns a tuple containing: `[defaultValue, directiveName, directiveArgName]`', () => {
-//     it('config.defaultValue: defaults to `undefined`', () => {
-//       expect(config.defaultValues).toBeUndefined();
-//     });
+  //     test('enable it only for some specified Graphql Types using TypeNamePatterns', () => {
+  //       config[option] = 'Droid;Starship;';
+  //       expect(Config[option](config, Droid)).toBe(true);
+  //       expect(Config[option](config, Starship)).toBe(true);
+  //       expect(Config[option](config, Human)).toBe(undefined);
 
-//     it('can set the defaultValues for fields of Graphql Types using TypeFieldNamePatterns', () => {
-//       config.defaultValues = [['Movie.[friends];Droid.[friends]', '[]', ['parameter']]];
+  //       config[option] = '@*TypeNames;';
+  //       expect(Config[option](config, Droid)).toBe(true);
+  //       expect(Config[option](config, Starship)).toBe(true);
+  //       expect(Config[option](config, Human)).toBe(true);
 
-//       expect(Config.defaultValues(config, Droid, friends, ['parameter'])).toEqual(
-//         expect.arrayContaining(['[]', undefined, undefined])
-//       );
-//       expect(Config.defaultValues(config, Droid, friend, ['parameter'])).toBeUndefined();
-//       expect(Config.defaultValues(config, Starship, friends, ['parameter'])).toBeUndefined();
-//       expect(Config.defaultValues(config, Human, friends, ['parameter'])).toBeUndefined();
-//       expect(Config.defaultValues(config, Movie, friends, ['parameter'])).toEqual(
-//         expect.arrayContaining(['[]', undefined, undefined])
-//       );
-//       expect(Config.defaultValues(config, Movie, friend, ['parameter'])).toBeUndefined();
-//     });
+  //       config[option] = '@*TypeNames-[Droid,Movie];';
+  //       expect(Config[option](config, Droid)).toBeUndefined();
+  //       expect(Config[option](config, Movie)).toBeUndefined();
+  //       expect(Config[option](config, Starship)).toBe(true);
+  //       expect(Config[option](config, Human)).toBe(true);
+  //     });
+  //   });
 
-//     // TODO: this test should be done in the parameter block class by a method that places a decorator on top of the parameter
-//     it('will get the defaultValue from the directive if both directiveName and directiveArgName is passed', () => {
-//       config.defaultValues = [['Movie.[friends];Droid.[friends]', '[]', ['parameter'], 'constraint', 'min']];
-//       expect(Config.defaultValues(config, Droid, friends, ['parameter'])).toEqual(
-//         expect.arrayContaining(['[]', 'constraint', 'min'])
-//       );
-//       expect(Config.defaultValues(config, Droid, friend, ['parameter'])).toBeUndefined();
-//     });
-//   });
+  //
 
-//   describe('Config.deprecated(...): returns `@deprecated` if the TypeName or FieldName is specified using a TypeFieldNamePattern', () => {
-//     config.deprecated = [
-//       // ['Droid;', ['default_factory']],
-//       ['@*TypeNames-[Droid,Starship,Human];', ['named_factory']],
-//       // ['Movie.[title];', ['named_factory_parameter_for_union_types']],
-//       // ['Movie.@*FieldNames-[title];', ['default_factory_parameter']],
-//     ];
+  //   describe('Config.defaultValue(...): returns a tuple containing: `[defaultValue, directiveName, directiveArgName]`', () => {
+  //     it('config.defaultValue: defaults to `undefined`', () => {
+  //       expect(config.defaultValues).toBeUndefined();
+  //     });
 
-//     const defaultDecorator = '@deprecated\n';
+  //     it('can set the defaultValues for fields of Graphql Types using TypeFieldNamePatterns', () => {
+  //       config.defaultValues = [['Movie.[friends];Droid.[friends]', '[]', ['parameter']]];
 
-//     it('deprecates when appliesOn is `default_factory`', () => {
-//       expect(Config.deprecated(config, Droid, undefined, ['default_factory'])).toBe(defaultDecorator);
-//     });
-//   });
+  //       expect(Config.defaultValues(config, Droid, friends, ['parameter'])).toEqual(
+  //         expect.arrayContaining(['[]', undefined, undefined])
+  //       );
+  //       expect(Config.defaultValues(config, Droid, friend, ['parameter'])).toBeUndefined();
+  //       expect(Config.defaultValues(config, Starship, friends, ['parameter'])).toBeUndefined();
+  //       expect(Config.defaultValues(config, Human, friends, ['parameter'])).toBeUndefined();
+  //       expect(Config.defaultValues(config, Movie, friends, ['parameter'])).toEqual(
+  //         expect.arrayContaining(['[]', undefined, undefined])
+  //       );
+  //       expect(Config.defaultValues(config, Movie, friend, ['parameter'])).toBeUndefined();
+  //     });
 
-//   describe.skip('Config.escapeDartKeywords(...): returns ', () => {
-//     // config.deprecated = [];
-//   });
+  //     // TODO: this test should be done in the parameter block class by a method that places a decorator on top of the parameter
+  //     it('will get the defaultValue from the directive if both directiveName and directiveArgName is passed', () => {
+  //       config.defaultValues = [['Movie.[friends];Droid.[friends]', '[]', ['parameter'], 'constraint', 'min']];
+  //       expect(Config.defaultValues(config, Droid, friends, ['parameter'])).toEqual(
+  //         expect.arrayContaining(['[]', 'constraint', 'min'])
+  //       );
+  //       expect(Config.defaultValues(config, Droid, friend, ['parameter'])).toBeUndefined();
+  //     });
+  //   });
 
-//   describe.skip('Config.final(...): returns ', () => {
-//     // config.deprecated = [];
-//   });
+  //   describe('Config.deprecated(...): returns `@deprecated` if the TypeName or FieldName is specified using a TypeFieldNamePattern', () => {
+  //     config.deprecated = [
+  //       // ['Droid;', ['default_factory']],
+  //       ['@*TypeNames-[Droid,Starship,Human];', ['named_factory']],
+  //       // ['Movie.[title];', ['named_factory_parameter_for_union_types']],
+  //       // ['Movie.@*FieldNames-[title];', ['default_factory_parameter']],
+  //     ];
 
-//   describe.skip('Config.fromJsonToJson(...): returns ', () => {
-//     // config.deprecated = [];
-//   });
+  //     const defaultDecorator = '@deprecated\n';
 
-//   describe.skip('Config.ignoreTypes(...): returns ', () => {
-//     // config.deprecated = [];
-//   });
+  //     it('deprecates when appliesOn is `default_factory`', () => {
+  //       expect(Config.deprecated(config, Droid, undefined, ['default_factory'])).toBe(defaultDecorator);
+  //     });
+  //   });
 
-//   describe.skip('Config.mergeInputs(...): returns ', () => {
-//     // config.deprecated = [];
-//   });
+  //   describe.skip('Config.escapeDartKeywords(...): returns ', () => {
+  //     // config.deprecated = [];
+  //   });
 
-//   describe.skip('Config.mutableInputs(...): returns ', () => {
-//     // config.deprecated = [];
-//   });
+  //   describe.skip('Config.final(...): returns ', () => {
+  //     // config.deprecated = [];
+  //   });
 
-//   describe.skip('Config.unionClass(...): returns ', () => {
-//     // config.deprecated = [];
-//   });
+  //   describe.skip('Config.fromJsonToJson(...): returns ', () => {
+  //     // config.deprecated = [];
+  //   });
 
-//   describe.skip('Config.(...): returns ', () => {
-//     // config.deprecated = [];
-//   });
-// });
+  //   describe.skip('Config.ignoreTypes(...): returns ', () => {
+  //     // config.deprecated = [];
+  //   });
+
+  //   describe.skip('Config.mergeInputs(...): returns ', () => {
+  //     // config.deprecated = [];
+  //   });
+
+  //   describe.skip('Config.mutableInputs(...): returns ', () => {
+  //     // config.deprecated = [];
+  //   });
+
+  //   describe.skip('Config.unionClass(...): returns ', () => {
+  //     // config.deprecated = [];
+  //   });
+
+  //   describe.skip('Config.(...): returns ', () => {
+  //     // config.deprecated = [];
+  //   });
+});
 // TODO: ... to here ^
 
 // TODO: Delete these old tests ...v

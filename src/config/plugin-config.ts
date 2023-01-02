@@ -6,6 +6,7 @@ import {
   FieldDefinitionNode,
   InputValueDefinitionNode,
 } from 'graphql';
+import { Pattern, TypeName } from './pattern';
 
 //#region PluginConfig
 /**
@@ -32,6 +33,7 @@ export type FlutterFreezedPluginConfig = {
    * ## Usage:
    * ```ts filename='codegen.ts'
    * import type { CodegenConfig } from '@graphql-codegen/cli';
+import { TypeNames } from '../../.history/src/config/type-field-name_20221205061035';
    *
    * const config: CodegenConfig = {
    *   // ...
@@ -55,7 +57,7 @@ export type FlutterFreezedPluginConfig = {
 
   /**
    * @name copyWith
-   * @type {(boolean | TypeNamePatterns | TypeNamePatterns[])}
+   * @type {(boolean | TypeName[])}
    * @default undefined
    * @see {@link url Freezed copyWith helper method usage}
    * @summary enables Freezed copyWith helper method
@@ -63,7 +65,7 @@ export type FlutterFreezedPluginConfig = {
    *
    * If a boolean `value` is set, the plugin will generate immutable Freezed models using the `@Freezed(copyWith: value)` instead.
    *
-   * You can also set this option to `true` for one or more GraphQL Types by passing a string/array of [`TypeNamePatterns`]()
+   * You can also set this option to `true` for one or more GraphQL Types using any of these Pattern builders for TypeNames: `Pattern.forTypeNames`, `Pattern.forAllTypeNames` and `Pattern.forAllTypeNamesExcludeTypeNames`
    * @exampleMarkdown
    * ## Usage:
    * ```ts filename='codegen.ts'
@@ -77,10 +79,8 @@ export type FlutterFreezedPluginConfig = {
    *         'flutter-freezed': {
    *           // ...
    *           copyWith: true,
-   *           // OR: a string of TypeNamePatterns
-   *           copyWith: 'Droid;Starship;',
-   *           // OR: a list of TypeNamePatterns
-   *           copyWith: ['Droid;' 'Starship;'],
+   *           // OR: enable for the following TypeNames
+   *           copyWith: [Droid, Starship],
    *         },
    *       },
    *     },
@@ -90,7 +90,7 @@ export type FlutterFreezedPluginConfig = {
    * ```
    */
 
-  copyWith?: boolean | TypeNamePatterns | TypeNamePatterns[];
+  copyWith?: boolean | Pattern;
 
   /**
    * @name customScalars
@@ -114,7 +114,7 @@ export type FlutterFreezedPluginConfig = {
    *           // ...
    *           customScalars: {
    *             jsonb: 'Map<String, dynamic>',
-   *             timestamptz: 'DateTime',
+   *             timestamp: 'DateTime',
    *             UUID: 'String',
    *           },
    *         },
@@ -129,7 +129,7 @@ export type FlutterFreezedPluginConfig = {
 
   /**
    * @name defaultValues
-   * @type {([typeFieldName: TypeFieldNamePatterns, value: string, appliesOn: AppliesOnParameters[], directiveName?: string, directiveArgName?: string][])}
+   * @type {([pattern: Pattern, value: string, appliesOn: AppliesOnParameters[], directiveName?: string, directiveArgName?: string][])}
    * @summary set the default value for a field.
    * @description This will annotate the generated parameter with a `@Default(value: defaultValue)` decorator.
    *
@@ -152,9 +152,9 @@ export type FlutterFreezedPluginConfig = {
    *         'flutter-freezed': {
    *           // ...
    *           defaultValues: [
-   *             ['MovieCharacter.[appearsIn]', `Episode.jedi`, ['default_factory_parameter']],
+   *             [Pattern.forFieldNamesOfTypeName(MovieCharacter, appearsIn), `Episode.jedi`, ['default_factory_parameter']],
    *             // default value from directive. See Graphql Constraints: url
-   *             ['@*TypeNames.[age]', `18`, ['parameter'], 'constraint', min],
+   *             [Pattern.forFieldNamesOfAllTypeNames([age]), `18`, ['parameter'], 'constraint', min],
    *           ],
    *         },
    *       },
@@ -165,7 +165,7 @@ export type FlutterFreezedPluginConfig = {
    * ```
    */
   defaultValues?: [
-    typeFieldName: TypeFieldNamePatterns,
+    pattern: Pattern,
     value: string, // use backticks for string values
     appliesOn: AppliesOnParameters[],
     directiveName?: string,
@@ -174,7 +174,7 @@ export type FlutterFreezedPluginConfig = {
 
   /**
    * @name deprecated
-   * @type {([typeFieldName: TypeFieldNamePatterns, appliesOn: (AppliesOnFactory | AppliesOnParameters)[]][])}
+   * @type {([pattern: Pattern, appliesOn: (AppliesOnFactory | AppliesOnParameters)[]][])}
    * @default undefined
    * @summary a list of Graphql Types(factory constructors) or fields(parameters) to be marked as deprecated.
    * @description Using the TypeFieldNamePatterns, you can mark one or more fields as deprecated.
@@ -209,7 +209,7 @@ export type FlutterFreezedPluginConfig = {
    * export default config;
    * ```
    */
-  deprecated?: [typeFieldName: TypeFieldNamePatterns, appliesOn: (AppliesOnFactory | AppliesOnParameters)[]][];
+  deprecated?: [pattern: Pattern, appliesOn: (AppliesOnFactory | AppliesOnParameters)[]][];
 
   /**
    * @name equal
@@ -230,10 +230,8 @@ export type FlutterFreezedPluginConfig = {
    *         'flutter-freezed': {
    *           // ...
    *           equal: false,
-   *           // OR: a comma-separated string of `GraphQL Type Names`
-   *           equal: 'Starship,Droid,Human',
-   *           // OR a list of `GraphQL Type Names`
-   *           equal: ['Starship', 'Droid', 'Human'],
+   *           // OR: enable for the following TypeNames
+   *           equal: [Droid, Starship]
    *         },
    *       },
    *     },
@@ -242,7 +240,7 @@ export type FlutterFreezedPluginConfig = {
    * export default config;
    * ```
    */
-  equal?: boolean | TypeNamePatterns | TypeNamePatterns[];
+  equal?: boolean | Pattern;
 
   /**
    * @name escapeDartKeywords
@@ -293,13 +291,7 @@ export type FlutterFreezedPluginConfig = {
    */
   escapeDartKeywords?:
     | boolean
-    | [
-        typeFieldName: TypeFieldNamePatterns,
-        prefix?: string,
-        suffix?: string,
-        casing?: DartIdentifierCasing,
-        appliesOn?: AppliesOn[]
-      ][];
+    | [pattern: Pattern, prefix?: string, suffix?: string, casing?: DartIdentifierCasing, appliesOn?: AppliesOn[]][];
 
   /**
    * @name final
@@ -334,7 +326,7 @@ export type FlutterFreezedPluginConfig = {
    * export default config;
    * ```
    */
-  final?: [typeFieldName: TypeFieldNamePatterns, appliesOn: AppliesOnParameters[]][];
+  final?: [pattern: Pattern, appliesOn: AppliesOnParameters[]][];
 
   /**
    *
@@ -411,12 +403,7 @@ export type FlutterFreezedPluginConfig = {
    */
   fromJsonToJson?:
     | boolean
-    | [
-        typeFieldName: TypeFieldNamePatterns,
-        classOrFunctionName: string,
-        useClassConverter?: boolean,
-        appliesOn?: AppliesOnParameters[]
-      ][];
+    | [pattern: Pattern, classOrFunctionName: string, useClassConverter?: boolean, appliesOn?: AppliesOnParameters[]][];
 
   /**
    * @name ignoreTypes
@@ -444,7 +431,7 @@ export type FlutterFreezedPluginConfig = {
    * export default config;
    * ```
    */
-  ignoreTypes?: TypeNamePatterns[];
+  ignoreTypes?: Pattern;
 
   /**
    * @name immutable
@@ -476,7 +463,7 @@ export type FlutterFreezedPluginConfig = {
    * export default config;
    * ```
    */
-  immutable?: boolean | TypeNamePatterns | TypeNamePatterns[];
+  immutable?: boolean | Pattern;
 
   /**
    * @name makeCollectionsUnmodifiable
@@ -508,7 +495,7 @@ export type FlutterFreezedPluginConfig = {
    * export default config;
    * ```
    */
-  makeCollectionsUnmodifiable?: boolean | TypeNamePatterns | TypeNamePatterns[];
+  makeCollectionsUnmodifiable?: boolean | Pattern;
 
   /**
    * @name mergeInputs
@@ -525,7 +512,7 @@ export type FlutterFreezedPluginConfig = {
    *      mergeInputs: ["Create$Input", "Update$Input", "Delete$Input"]
    * ```
    */
-  mergeInputs?: [typeName: TypeNamePatterns, mergeWithTypeNames: TypeNamePatterns[]][];
+  mergeInputs?: [pattern: Pattern, mergeWithTypeNames: Pattern];
 
   /**
    * @name mutableInputs
@@ -557,7 +544,7 @@ export type FlutterFreezedPluginConfig = {
    * export default config;
    * ```
    */
-  mutableInputs?: boolean | TypeNamePatterns | TypeNamePatterns[];
+  mutableInputs?: boolean | Pattern;
 
   /**
    * @name privateEmptyConstructor
@@ -589,7 +576,7 @@ export type FlutterFreezedPluginConfig = {
    * export default config;
    * ```
    */
-  privateEmptyConstructor?: boolean | TypeNamePatterns | TypeNamePatterns[];
+  privateEmptyConstructor?: boolean | Pattern;
 
   /**
    * @name unionClass
@@ -613,11 +600,11 @@ export type FlutterFreezedPluginConfig = {
    *               'SearchResult', // <-- unionTypeName
    *               'namedConstructor', // <-- unionKey
    *               'FreezedUnionCase.pascal', // <-- unionValueCase
-   *               { // <-- unionValuesNameMap
-   *                 Droid: 'special droid',
-   *                 Human: 'astronaut',
-   *                 Starship: 'space_Shuttle',
-   *               },
+   *               [ // <-- unionValuesNameMap
+   *                [ Droid, 'special droid'],
+   *                [ Human, 'astronaut'],
+   *                [ Starship, 'space_Shuttle'],
+   *               ],
    *             ],
    *           ],
    *         },
@@ -632,7 +619,7 @@ export type FlutterFreezedPluginConfig = {
     /**
      * The name of the Graphql Union Type (or in the case of merged types, the base type on which other types are merged with)
      */
-    unionTypeName: TypeNamePatterns | string,
+    unionTypeName: Pattern | string,
 
     /**
      * in a fromJSON/toJson encoding a response/object({key:value}), you can specify what name should be used as the key ?
@@ -647,97 +634,13 @@ export type FlutterFreezedPluginConfig = {
     /**
      * just as the unionKey changes the key used, this changes the value for each union/sealed factories
      */
-    unionValuesNameMap?: Record<TypeNamePatterns, string>
+    unionValuesNameMap?: [typeName: TypeName, unionValueKey: string][]
   ][];
 };
 
 //#endregion
 
 //#region type alias
-export type StringOr<T> = string | T;
-/**
- * @name TypeNamePatterns
- * @see {@link url TypeFieldNamePatterns}
- * @description A compact string of patterns used in the config for granular configuration for each Graphql Type.
- *
- * > Unlike [`TypeFieldNamePatterns`]() which is a compact string of **Graphql Types and its fields**, [`TypeNamePatterns`]() is just a compact string of **only Graphql Types**
- *
- * The string can contain one or more patterns, each pattern ends with a semi-colon (`;`).
- *
- * To apply an option to all Graphql Types, use the allTypeNames (`@*TypeNames`) token.
- *
- * Wherever you use the allTypeNames, know very well that you can make some exceptions. After all, to every rule, there is an exception.
- *
- * A **square bracket** (`[]`) is used to specify what should be included and a **negated square bracket** (`-[]`) is used to specify what should be excluded.
- *
- * Manually typing out a pattern may be prone to typos resulting in invalid patterns therefore the [`TypeFieldName`]() class exposes some builder methods which you can use in your plugin config file.
- *
- * ## Available Builder Methods and the patterns they make
- * ```ts
- * const typeFieldName = TypeFieldName.buildTypeNames('Droid, Starship, Human');
- * console.log(typeFieldName); // "Droid;Starship;Human;"
- *
- * const typeFieldName = TypeFieldName.buildAllTypeNames();
- * console.log(typeFieldName); // "@*TypeNames';
- *
- * let typeFieldName = TypeFieldName.buildAllTypeNamesExcludeTypeNames('Droid, Starship');
- * console.log(typeFieldName); // "@*TypeNames-['Droid,Starship]';"
- * ```
- *
- */
-export type TypeNamePatterns = string;
-
-/**
- * @name TypeFieldNamePatterns
- * @see {@link url TypeNamePatterns}
- * @description A compact string of patterns used in the config for granular configuration for each Graphql Type and/or its fieldNames
- *
- * > Unlike [`TypeNamePatterns`]() which is just a compact string of **only Graphql Types**, [`TypeFieldNamePatterns`]() is a compact string of **Graphql Types and its fields**
- *
- *  The string can contain one or more patterns, each pattern ends with a semi-colon (`;`).
- *
- * A dot (`.`) is used to separate the TypeName from the FieldNames in each pattern.
- *
- * To apply an option to all Graphql Types or all fields, use the allTypeNames (`@*TypeNames`) and allFieldNames (`@*FieldNames`) tokens respectively.
- *
- * Wherever you use the allTypeNames and the allFieldNames, know very well that you can make some exceptions. After all, to every rule, there is an exception.
- *
- * A **square bracket** (`[]`) is used to specify what should be included and a **negated square bracket** (`-[]`) is used to specify what should be excluded.
- *
- * Manually typing out a pattern may be prone to typos resulting in invalid patterns therefore the [`TypeFieldName`]() class exposes some builder methods which you can use in your plugin config file.
- *
- * ## Available Builder Methods and the patterns they make
- * ```ts
- * const typeFieldName = TypeFieldName.buildFieldNamesOfTypeName('Droid', 'id, name');
- * console.log(typeFieldName); // "Droid.[id,name,friends];"
- *
- * const typeFieldName = TypeFieldName.buildAllFieldNamesOfTypeName('Droid');
- * console.log(typeFieldName); // "Droid.@*FieldNames;"
- *
- * const typeFieldName = TypeFieldName.buildAllFieldNamesExcludeFieldNamesOfTypeName('Droid', 'id, name');
- * console.log(typeFieldName); // "Droid.@*FieldNames-[id,name];"
- *
- * const typeFieldName = TypeFieldName.buildFieldNamesOfAllTypeNames('id, name');
- * console.log(typeFieldName); // "@*TypeNames.[id,name];"
- *
- * const typeFieldName = TypeFieldName.buildAllFieldNamesOfAllTypeNames();
- * console.log(typeFieldName); // "@*TypeNames.@*FieldNames;"
- *
- * const typeFieldName = TypeFieldName.buildAllFieldNamesExcludeFieldNamesOfAllTypeNames('id, name');
- * console.log(typeFieldName); // "@*TypeNames.@*FieldNames-[id,name];"
- *
- * const typeFieldName = TypeFieldName.buildFieldNamesOfAllTypeNamesExcludeTypeNames('Droid, Starship', 'id, name');
- * console.log(typeFieldName); // "@*TypeNames-[Droid,Starship].[id,name];"
- *
- * const typeFieldName = TypeFieldName.buildAllFieldNamesOfAllTypeNamesExcludeTypeNames('Droid Starship', 'id, name');
- * console.log(typeFieldName); // "@*TypeNames-[Droid,Starship].@*FieldNames;"
- *
- * const typeFieldName = TypeFieldName.buildAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames('Droid Starship', 'id, name');
- * console.log(typeFieldName); // "@*TypeNames-[Droid,Starship].@*FieldNames-[id,name];"
- * ```
- *
- */
-export type TypeFieldNamePatterns = string;
 
 /**
  * @name ApplyDecoratorOn
@@ -968,7 +871,7 @@ export const defaultFreezedPluginConfig: FlutterFreezedPluginConfig = {
   escapeDartKeywords: true,
   final: undefined,
   fromJsonToJson: true,
-  ignoreTypes: [],
+  ignoreTypes: undefined,
   immutable: true,
   makeCollectionsUnmodifiable: undefined,
   mergeInputs: undefined,

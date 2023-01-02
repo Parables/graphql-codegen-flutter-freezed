@@ -1219,3 +1219,33 @@ describe('attemptMatchAndConfigure: runs through the matchList and attempt to ma
   });
 });
 //#endregion
+
+//#region helper methods
+describe('Pattern helper methods:', () => {
+  const pattern1 = Pattern.forTypeNames([Droid, Movie]);
+  const pattern2 = Pattern.forAllFieldNamesExcludeFieldNamesOfAllTypeNames([id, title]);
+
+  const expected = { value: pattern1.value + pattern2.value } as Pattern;
+
+  describe('Pattern.compose: takes a list of Patterns and joins them into one single valid pattern:', () => {
+    it('throws an error if an empty array is passed as a parameter', () => {
+      expect(() => Pattern.compose([])).toThrow();
+    });
+
+    it('returns a new valid pattern', () => {
+      console.log(expected.value);
+      expect(Pattern.compose([pattern1, pattern2]).value).toBe(expected.value);
+    });
+  });
+
+  describe('Pattern.split: splits a pattern into individual patterns', () => {
+    it('returns a list of patterns', () => {
+      expect(Pattern.split(expected)).toMatchObject([
+        Pattern.forTypeNames(Droid),
+        Pattern.forTypeNames(Movie),
+        pattern2,
+      ]);
+    });
+  });
+});
+//#endregion
