@@ -214,18 +214,51 @@ export class Config {
   //   return value;
   // };
 
-  public static findLastConfiguration = (patterns: Pattern[], ...args: (TypeName | FieldName)[]) => {
-    let lastIndex: number;
+  static findLastConfiguration = (patterns: Pattern[], ...args: (TypeName | FieldName)[]) => {
+    const result: Record<string, number> = {};
+    const key = args.map(arg => arg.value).join('.');
+    const [typeName, fieldName] = key.split('.');
+
+    const isConfiguredGlobally = (_key: string, typeName: string, fieldName: string) => {
+      if (
+        _key === TypeName.fromAllTypeNames().value ||
+        (typeName && _key === `${typeName}.${FieldName.fromAllFieldNames().value}`) ||
+        (fieldName && _key === `${TypeName.fromAllTypeNames()}.${fieldName}`) ||
+        _key === `${TypeName.fromAllTypeNames()}.${FieldName.fromAllFieldNames()}`
+      ) {
+        return true;
+      }
+
+      return false;
+    };
 
     patterns.forEach((pattern, index) => {
       Pattern.split(pattern).forEach(pattern => {
-        const { shouldBeConfigured } = Pattern.attemptMatchAndConfigure(pattern, ...args);
+        const { shouldBeConfigured, args: _args } = Pattern.attemptMatchAndConfigure(pattern, ...args);
+        const _key = _args.map(arg => arg.value).join('.');
+        const value = shouldBeConfigured ? index : undefined;
 
-        lastIndex = shouldBeConfigured ? index : undefined;
+        /*         if (_key === TypeName.fromAllTypeNames().value) {
+          result[key] = value;
+        } else if (typeName && _key === `${typeName}.${FieldName.fromAllFieldNames().value}`) {
+          result[key] = value;
+        } else if (fieldName && _key === `${TypeName.fromAllTypeNames()}.${fieldName}`) {
+          result[key] = value;
+        } else if (_key === `${TypeName.fromAllTypeNames()}.${FieldName.fromAllFieldNames()}`) {
+          result[key] = value;
+        } else {
+          result[_key] = value;
+        } */
+
+        if (isConfiguredGlobally(_key, typeName, fieldName) || _key === key) {
+          result[key] = value;
+        } else {
+          result[_key] = value;
+        }
       });
     });
 
-    return lastIndex;
+    return result;
   };
 
   public static create = (...config: Partial<FlutterFreezedPluginConfig>[]): FlutterFreezedPluginConfig => {

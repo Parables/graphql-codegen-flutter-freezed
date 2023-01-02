@@ -45,6 +45,8 @@ export class TypeName {
     return '@*TypeNames';
   }
 
+  static fromAllTypeNames = (): TypeName => new TypeName(TypeName.allTypeNames);
+
   static fromString = (value: string) => {
     if (value === undefined || value.length < 1) {
       throw new Error('TypeName is the name of a GraphQL Type and it cannot be empty');
@@ -84,6 +86,8 @@ export class FieldName {
   static get allFieldNames(): string {
     return '@*FieldNames';
   }
+
+  static fromAllFieldNames = (): FieldName => new FieldName(FieldName.allFieldNames);
 
   static fromString = (value: string) => {
     if (value === undefined || value.length < 1) {
@@ -240,10 +244,10 @@ export class Pattern {
       const foundTypeNamePattern = result.groups.typeName;
 
       if (foundTypeNamePattern === typeNamePattern.value) {
-        return Pattern.resetMatchAndConfigure(regexp, true, true);
+        return Pattern.resetMatchAndConfigure(regexp, true, true, typeName);
       }
     }
-    return Pattern.resetMatchAndConfigure(regexp, false, false);
+    return Pattern.resetMatchAndConfigure(regexp, false, false, typeName);
   };
   //#endregion
 
@@ -258,9 +262,9 @@ export class Pattern {
 
     if (regexp.test(pattern.value)) {
       resetIndex(regexp);
-      return Pattern.resetMatchAndConfigure(regexp, true, true);
+      return Pattern.resetMatchAndConfigure(regexp, true, true, TypeName.fromAllTypeNames());
     }
-    return Pattern.resetMatchAndConfigure(regexp, false, false);
+    return Pattern.resetMatchAndConfigure(regexp, false, false, TypeName.fromAllTypeNames());
   };
   //#endregion
 
@@ -289,10 +293,10 @@ export class Pattern {
       const foundTypeNames = strToList(result.groups.typeNames);
 
       if (foundTypeNames.find(_typeName => _typeName === typeName.value)) {
-        return Pattern.resetMatchAndConfigure(regexp, true, false);
+        return Pattern.resetMatchAndConfigure(regexp, true, false, typeName);
       }
     }
-    return Pattern.resetMatchAndConfigure(regexp, false, true);
+    return Pattern.resetMatchAndConfigure(regexp, false, true, typeName);
   };
   //#endregion
 
@@ -343,10 +347,10 @@ export class Pattern {
       const foundFieldNames = strToList(result.groups.fieldNames);
 
       if (foundTypeName === typeName.value && foundFieldNames.find(_fieldName => _fieldName === fieldName.value)) {
-        return Pattern.resetMatchAndConfigure(regexp, true, true);
+        return Pattern.resetMatchAndConfigure(regexp, true, true, typeName, fieldName);
       }
     }
-    return Pattern.resetMatchAndConfigure(regexp, false, false);
+    return Pattern.resetMatchAndConfigure(regexp, false, false, typeName, fieldName);
   };
   //#endregion
 
@@ -375,7 +379,7 @@ export class Pattern {
       expandedPattern = [...(expandedPattern ?? []), foundTypeName];
     }
     const matchFound = expandedPattern.includes(typeName.value);
-    return Pattern.resetMatchAndConfigure(regexp, matchFound, matchFound);
+    return Pattern.resetMatchAndConfigure(regexp, matchFound, matchFound, typeName, FieldName.fromAllFieldNames());
   };
   //#endregion
 
@@ -443,7 +447,7 @@ export class Pattern {
 
     const shouldConfigure = expandedPattern['typeNames'].includes(typeName.value) && !matchFound;
 
-    return Pattern.resetMatchAndConfigure(regexp, matchFound, shouldConfigure);
+    return Pattern.resetMatchAndConfigure(regexp, matchFound, shouldConfigure, typeName, fieldName);
   };
   //#endregion
 
@@ -472,10 +476,10 @@ export class Pattern {
       const foundFieldNames = strToList(result.groups.fieldNames);
 
       if (foundFieldNames.find(_fieldName => _fieldName === fieldName.value)) {
-        return Pattern.resetMatchAndConfigure(regexp, true, true);
+        return Pattern.resetMatchAndConfigure(regexp, true, true, TypeName.fromAllTypeNames(), fieldName);
       }
     }
-    return Pattern.resetMatchAndConfigure(regexp, false, false);
+    return Pattern.resetMatchAndConfigure(regexp, false, false, TypeName.fromAllTypeNames(), fieldName);
   };
   //#endregion
 
@@ -491,7 +495,13 @@ export class Pattern {
     resetIndex(regexp);
 
     const matchFound = regexp.test(pattern.value);
-    return Pattern.resetMatchAndConfigure(regexp, matchFound, matchFound);
+    return Pattern.resetMatchAndConfigure(
+      regexp,
+      matchFound,
+      matchFound,
+      TypeName.fromAllTypeNames(),
+      FieldName.fromAllFieldNames()
+    );
   };
   //#endregion
 
@@ -524,7 +534,7 @@ export class Pattern {
     }
 
     const matchFound = expandedPattern.includes(fieldName.value);
-    return Pattern.resetMatchAndConfigure(regexp, matchFound, !matchFound);
+    return Pattern.resetMatchAndConfigure(regexp, matchFound, !matchFound, TypeName.fromAllTypeNames(), fieldName);
   };
   //#endregion
 
@@ -575,7 +585,7 @@ export class Pattern {
     const matchFound = expandedPattern?.['excludes'].includes(`${typeName.value}.${fieldName.value}`);
     const shouldConfigure = expandedPattern?.['fieldNames'].includes(fieldName.value) && !matchFound;
 
-    return Pattern.resetMatchAndConfigure(regexp, matchFound, shouldConfigure);
+    return Pattern.resetMatchAndConfigure(regexp, matchFound, shouldConfigure, typeName, fieldName);
   };
   //#endregion
 
@@ -608,7 +618,7 @@ export class Pattern {
     }
 
     const matchFound = expandedPattern.includes(typeName.value);
-    return Pattern.resetMatchAndConfigure(regexp, matchFound, !matchFound);
+    return Pattern.resetMatchAndConfigure(regexp, matchFound, !matchFound, typeName, FieldName.fromAllFieldNames());
   };
   //#endregion
 
@@ -658,7 +668,7 @@ export class Pattern {
     }
     const matchFound = expandedPattern.includes(`${typeName.value}.${fieldName.value}`);
 
-    return Pattern.resetMatchAndConfigure(regexp, matchFound, !matchFound);
+    return Pattern.resetMatchAndConfigure(regexp, matchFound, !matchFound, typeName, fieldName);
   };
   //#endregion
 
@@ -676,7 +686,7 @@ export class Pattern {
       baseName: string,
       pattern: Pattern,
       ...args: (TypeName | FieldName)[]
-    ): { matchFound: boolean; shouldBeConfigured: boolean } | undefined =>
+    ): ReturnType<typeof Pattern.resetMatchAndConfigure> | undefined =>
       Pattern[`matchAndConfigure${baseName}`](pattern, ...args);
 
     const matchList: string[] = Pattern.getMatchList();
@@ -718,9 +728,14 @@ export class Pattern {
       .map(regexpForName => regexpForName.slice(9))
       .reverse(); // runs more specific patterns first(in asc order)
 
-  static resetMatchAndConfigure = (regexp: RegExp, matchFound: boolean, shouldBeConfigured: boolean) => {
+  static resetMatchAndConfigure = (
+    regexp: RegExp,
+    matchFound: boolean,
+    shouldBeConfigured: boolean,
+    ...args: (TypeName | FieldName)[]
+  ) => {
     resetIndex(regexp);
-    return { matchFound, shouldBeConfigured };
+    return { matchFound, shouldBeConfigured, args };
   };
   //#endregion
 }
