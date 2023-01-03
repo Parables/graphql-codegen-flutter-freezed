@@ -1,5 +1,5 @@
 import { DART_SCALARS, defaultFreezedPluginConfig, FlutterFreezedPluginConfig } from './plugin-config';
-import { FieldName, Pattern, TypeName } from './pattern';
+import { FieldName, Pattern, TypeName } from './pattern-new';
 
 export class Config {
   static camelCasedEnums = (config: FlutterFreezedPluginConfig) => {
@@ -214,51 +214,66 @@ export class Config {
   //   return value;
   // };
 
-  static findLastConfiguration = (patterns: Pattern[], ...args: (TypeName | FieldName)[]) => {
-    const result: Record<string, number> = {};
-    const key = args.map(arg => arg.value).join('.');
-    const [typeName, fieldName] = key.split('.');
+  // static findLastConfiguration = (patterns: Pattern[], ...args: (TypeName | FieldName)[]) => {
+  //   const result: Record<string, number> = {};
+  //   const key = args.map(arg => arg.value).join('.');
+  //   const [typeName, fieldName] = key.split('.');
 
-    const isConfiguredGlobally = (_key: string, typeName: string, fieldName: string) => {
-      if (
-        _key === TypeName.fromAllTypeNames().value ||
-        (typeName && _key === `${typeName}.${FieldName.fromAllFieldNames().value}`) ||
-        (fieldName && _key === `${TypeName.fromAllTypeNames()}.${fieldName}`) ||
-        _key === `${TypeName.fromAllTypeNames()}.${FieldName.fromAllFieldNames()}`
-      ) {
-        return true;
-      }
+  //   const isConfiguredGlobally = (_key: string, typeName: string, fieldName: string) => {
+  //     if (
+  //       _key === TypeName.fromAllTypeNames().value ||
+  //       (typeName && _key === `${typeName}.${FieldName.fromAllFieldNames().value}`) ||
+  //       (fieldName && _key === `${TypeName.fromAllTypeNames()}.${fieldName}`) ||
+  //       _key === `${TypeName.fromAllTypeNames()}.${FieldName.fromAllFieldNames()}`
+  //     ) {
+  //       return true;
+  //     }
 
-      return false;
-    };
+  //     return false;
+  //   };
+
+  //   patterns.forEach((pattern, index) => {
+  //     Pattern.split(pattern).forEach(pattern => {
+  //       const { shouldBeConfigured, args: _args } = Pattern.attemptMatchAndConfigure(pattern, ...args);
+  //       const _key = _args.map(arg => arg.value).join('.');
+  //       const value = shouldBeConfigured ? index : undefined;
+
+  //       /*         if (_key === TypeName.fromAllTypeNames().value) {
+  //         result[key] = value;
+  //       } else if (typeName && _key === `${typeName}.${FieldName.fromAllFieldNames().value}`) {
+  //         result[key] = value;
+  //       } else if (fieldName && _key === `${TypeName.fromAllTypeNames()}.${fieldName}`) {
+  //         result[key] = value;
+  //       } else if (_key === `${TypeName.fromAllTypeNames()}.${FieldName.fromAllFieldNames()}`) {
+  //         result[key] = value;
+  //       } else {
+  //         result[_key] = value;
+  //       } */
+
+  //       if (isConfiguredGlobally(_key, typeName, fieldName) || _key === key) {
+  //         result[key] = value;
+  //       } else {
+  //         result[_key] = value;
+  //       }
+  //     });
+  //   });
+
+  //   return result;
+  // };
+
+  static findLastConfiguration = (patterns: Pattern[], typeName: TypeName, fieldName?: FieldName) => {
+    const key = fieldName === undefined ? typeName.value : `${typeName.value}.${fieldName.value}`;
+
+    let lastIndex: number;
 
     patterns.forEach((pattern, index) => {
       Pattern.split(pattern).forEach(pattern => {
-        const { shouldBeConfigured, args: _args } = Pattern.attemptMatchAndConfigure(pattern, ...args);
-        const _key = _args.map(arg => arg.value).join('.');
-        const value = shouldBeConfigured ? index : undefined;
-
-        /*         if (_key === TypeName.fromAllTypeNames().value) {
-          result[key] = value;
-        } else if (typeName && _key === `${typeName}.${FieldName.fromAllFieldNames().value}`) {
-          result[key] = value;
-        } else if (fieldName && _key === `${TypeName.fromAllTypeNames()}.${fieldName}`) {
-          result[key] = value;
-        } else if (_key === `${TypeName.fromAllTypeNames()}.${FieldName.fromAllFieldNames()}`) {
-          result[key] = value;
-        } else {
-          result[_key] = value;
-        } */
-
-        if (isConfiguredGlobally(_key, typeName, fieldName) || _key === key) {
-          result[key] = value;
-        } else {
-          result[_key] = value;
-        }
+        const result = Pattern.attemptMatchAndConfigure(pattern, typeName, fieldName);
+        lastIndex = result[key]?.shouldBeConfigured ? index : undefined;
       });
     });
 
-    return result;
+    return lastIndex;
   };
 
   public static create = (...config: Partial<FlutterFreezedPluginConfig>[]): FlutterFreezedPluginConfig => {

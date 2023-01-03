@@ -1,4 +1,4 @@
-import { strToList, arrayWrap, resetIndex } from '../utils';
+import { arrayWrap, resetIndex, strToList } from '../utils';
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 export function frozen(target: Function): void {
@@ -232,44 +232,24 @@ export class Pattern {
 
   static regexpForTypeNames = /\b(?!TypeNames|FieldNames\b)(?<typeName>\w+;)/gim; // TODO: fix this: regexp.test('@*TypeName;') returns true which shouldn't happen
 
-  /*   static matchAndConfigureTypeNames = (pattern: Pattern, typeName: TypeName) => {
-    const regexp = Pattern.regexpForTypeNames;
-    resetIndex(regexp);
-
-    const typeNamePattern = Pattern.fromString(typeName.value);
-
-    let result: RegExpExecArray | null;
-    const found: Record<string, {matchFound: true, shouldBeConfigured}>
-
-    while ((result = regexp.exec(pattern.value)) !== null) {
-      const foundTypeNamePattern = result.groups.typeName;
-
-      if (foundTypeNamePattern === typeNamePattern.value) {
-        return Pattern.resetMatchAndConfigure(regexp, true, true, typeName);
-      }
-    }
-    return Pattern.resetMatchAndConfigure(regexp, false, false, typeName);
-  }; */
-
   static matchAndConfigureTypeNames = (pattern: Pattern, typeName: TypeName): MatchAndConfigure => {
     const regexp = Pattern.regexpForTypeNames;
     resetIndex(regexp);
-
-    const typeNamePattern = Pattern.fromString(typeName.value);
 
     let result: RegExpExecArray | null;
 
     const matchAndConfigure: MatchAndConfigure = {};
 
     while ((result = regexp.exec(pattern.value)) !== null) {
-      const foundTypeNamePattern = result.groups.typeName;
+      const _typeName = result.groups.typeName.replace(';', '');
 
-      const matchFound = foundTypeNamePattern === typeNamePattern.value;
+      const matchFound = _typeName === typeName.value;
       const shouldBeConfigured = matchFound;
 
-      matchAndConfigure[foundTypeNamePattern] = { matchFound, shouldBeConfigured };
+      matchAndConfigure[_typeName] = { matchFound, shouldBeConfigured };
     }
 
+    resetIndex(regexp);
     return matchAndConfigure;
   };
   //#endregion
@@ -290,95 +270,112 @@ export class Pattern {
 
     matchAndConfigure[TypeName.fromAllTypeNames().value] = { matchFound, shouldBeConfigured };
 
+    resetIndex(regexp);
     return matchAndConfigure;
   };
   //#endregion
 
-  // //#region `'@*TypeNames-[excludeTypeNames];'`
-  // static forAllTypeNamesExcludeTypeNames = (typeNames: TypeNames): Pattern => {
-  //   typeNames = arrayWrap(typeNames);
+  //#region `'@*TypeNames-[excludeTypeNames];'`
+  static forAllTypeNamesExcludeTypeNames = (typeNames: TypeNames): Pattern => {
+    typeNames = arrayWrap(typeNames);
 
-  //   if (typeNames.length < 1) {
-  //     throw new Error('Pattern cannot be created... No TypeNames were excluded');
-  //   }
+    if (typeNames.length < 1) {
+      throw new Error('Pattern cannot be created... No TypeNames were excluded');
+    }
 
-  //   const _typeNames = typeNames.map(typeName => typeName.value).join();
+    const _typeNames = typeNames.map(typeName => typeName.value).join();
 
-  //   return Pattern.fromString(`${TypeName.allTypeNames}-[${_typeNames}];`);
-  // };
+    return Pattern.fromString(`${TypeName.allTypeNames}-[${_typeNames}];`);
+  };
 
-  // static regexpForAllTypeNamesExcludeTypeNames = /@\*TypeNames-\[\s*(?<typeNames>(\w+,?\s*)*)\];/gim;
+  static regexpForAllTypeNamesExcludeTypeNames = /@\*TypeNames-\[\s*(?<typeNames>(\w+,?\s*)*)\];/gim;
 
-  // static matchAndConfigureAllTypeNamesExcludeTypeNames = (pattern: Pattern, typeName: TypeName) => {
-  //   const regexp = Pattern.regexpForAllTypeNamesExcludeTypeNames;
-  //   resetIndex(regexp);
+  static matchAndConfigureAllTypeNamesExcludeTypeNames = (pattern: Pattern, typeName: TypeName): MatchAndConfigure => {
+    const regexp = Pattern.regexpForAllTypeNamesExcludeTypeNames;
+    resetIndex(regexp);
 
-  //   let result: RegExpExecArray | null;
+    let result: RegExpExecArray | null;
 
-  //   while ((result = regexp.exec(pattern.value)) !== null) {
-  //     const foundTypeNames = strToList(result.groups.typeNames);
+    const matchAndConfigure: MatchAndConfigure = {};
 
-  //     if (foundTypeNames.find(_typeName => _typeName === typeName.value)) {
-  //       return Pattern.resetMatchAndConfigure(regexp, true, false, typeName);
-  //     }
-  //   }
-  //   return Pattern.resetMatchAndConfigure(regexp, false, true, typeName);
-  // };
-  // //#endregion
+    while ((result = regexp.exec(pattern.value)) !== null) {
+      const foundTypeNames = strToList(result.groups.typeNames);
 
-  // //#region `'TypeName.[fieldNames];'`
-  // static forFieldNamesOfTypeName = (data: [typeNames: TypeNames, fieldNames: FieldNames][]): Pattern => {
-  //   const expandedPattern: Record<string, FieldName[]> = {};
+      const matchFound = foundTypeNames.find(_typeName => _typeName === typeName.value) !== undefined;
+      const shouldBeConfigured = !matchFound;
 
-  //   if (data.length < 1) {
-  //     throw new Error('Pattern cannot be created... an empty array was passed as parameter');
-  //   }
+      matchAndConfigure[typeName.value] = { matchFound, shouldBeConfigured };
+    }
+    resetIndex(regexp);
+    return matchAndConfigure;
+  };
+  //#endregion
 
-  //   data.forEach(([typeNames, fieldNames]) => {
-  //     const _typeNames = arrayWrap(typeNames);
-  //     const _fieldNames = arrayWrap(fieldNames);
+  //#region `'TypeName.[fieldNames];'`
+  static forFieldNamesOfTypeName = (data: [typeNames: TypeNames, fieldNames: FieldNames][]): Pattern => {
+    const expandedPattern: Record<string, FieldName[]> = {};
 
-  //     if (_typeNames.length < 1) {
-  //       throw new Error('Pattern cannot be created... No TypeNames were specified');
-  //     } else if (_fieldNames.length < 1) {
-  //       throw new Error('Pattern cannot be created... No FieldNames were specified');
-  //     }
+    if (data.length < 1) {
+      throw new Error('Pattern cannot be created... an empty array was passed as parameter');
+    }
 
-  //     _typeNames.forEach(typeName => {
-  //       expandedPattern[typeName.value] = [...(expandedPattern[typeName.value] ?? []), ..._fieldNames];
-  //     });
-  //   });
+    data.forEach(([typeNames, fieldNames]) => {
+      const _typeNames = arrayWrap(typeNames);
+      const _fieldNames = arrayWrap(fieldNames);
 
-  //   return Pattern.fromString(
-  //     Object.keys(expandedPattern)
-  //       .map(_typeName => {
-  //         const _fieldNames = expandedPattern[_typeName].map(fieldName => fieldName.value).join();
-  //         return `${_typeName}.[${_fieldNames}];`;
-  //       })
-  //       .join('')
-  //   );
-  // };
+      if (_typeNames.length < 1) {
+        throw new Error('Pattern cannot be created... No TypeNames were specified');
+      } else if (_fieldNames.length < 1) {
+        throw new Error('Pattern cannot be created... No FieldNames were specified');
+      }
 
-  // static regexpForFieldNamesOfTypeName =
-  //   /(?<typeName>\w+\s*)(?<!\s*@\s*\*\s*TypeNames\s*)\.\[\s*(?<fieldNames>(\w+,?\s*)*)\];/gim;
+      _typeNames.forEach(typeName => {
+        expandedPattern[typeName.value] = [...(expandedPattern[typeName.value] ?? []), ..._fieldNames];
+      });
+    });
 
-  // static matchAndConfigureFieldNamesOfTypeName = (pattern: Pattern, typeName: TypeName, fieldName: FieldName) => {
-  //   const regexp = Pattern.regexpForFieldNamesOfTypeName;
-  //   resetIndex(regexp);
+    return Pattern.fromString(
+      Object.keys(expandedPattern)
+        .map(_typeName => {
+          const _fieldNames = expandedPattern[_typeName].map(fieldName => fieldName.value).join();
+          return `${_typeName}.[${_fieldNames}];`;
+        })
+        .join('')
+    );
+  };
 
-  //   let result: RegExpExecArray | null;
+  static regexpForFieldNamesOfTypeName =
+    /(?<typeName>\w+\s*)(?<!\s*@\s*\*\s*TypeNames\s*)\.\[\s*(?<fieldNames>(\w+,?\s*)*)\];/gim;
 
-  //   while ((result = regexp.exec(pattern.value)) !== null) {
-  //     const foundTypeName = result.groups.typeName;
-  //     const foundFieldNames = strToList(result.groups.fieldNames);
+  static matchAndConfigureFieldNamesOfTypeName = (
+    pattern: Pattern,
+    typeName: TypeName,
+    fieldName: FieldName
+  ): MatchAndConfigure => {
+    const regexp = Pattern.regexpForFieldNamesOfTypeName;
+    resetIndex(regexp);
 
-  //     if (foundTypeName === typeName.value && foundFieldNames.find(_fieldName => _fieldName === fieldName.value)) {
-  //       return Pattern.resetMatchAndConfigure(regexp, true, true, typeName, fieldName);
-  //     }
-  //   }
-  //   return Pattern.resetMatchAndConfigure(regexp, false, false, typeName, fieldName);
-  // };
-  // //#endregion
+    let result: RegExpExecArray | null;
+
+    const matchAndConfigure: MatchAndConfigure = {};
+
+    while ((result = regexp.exec(pattern.value)) !== null) {
+      const foundTypeName = result.groups.typeName;
+      const foundFieldNames = strToList(result.groups.fieldNames);
+
+      foundFieldNames.forEach(_fieldName => {
+        const key = `${foundTypeName}.${_fieldName}`;
+
+        const matchFound = key === `${typeName.value}.${fieldName.value}`;
+        const shouldBeConfigured = matchFound;
+
+        matchAndConfigure[key] = { matchFound, shouldBeConfigured };
+      });
+    }
+    resetIndex(regexp);
+    return matchAndConfigure;
+  };
+  //#endregion
 
   // //#region `'TypeName.@*FieldNames;'`
   // static forAllFieldNamesOfTypeName = (typeNames: TypeNames): Pattern => {
@@ -698,70 +695,131 @@ export class Pattern {
   // };
   // //#endregion
 
-  // // #region attemptMatchAndConfigure
-  // static attemptMatchAndConfigure = (pattern: Pattern, ...args: (TypeName | FieldName)[]) => {
-  //   if (pattern.value.split(';').filter(_pattern => _pattern.length > 0).length !== 1) {
-  //     throw new Error(
-  //       'attemptMatchAndConfigure can only handle one pattern at a time... use the `splitPatterns(...)` helper function to split your patterns into a list and loop over the list calling the `attemptMatchAndConfigure(...)`  for each single pattern'
-  //     );
-  //   }
+  // #region attemptMatchAndConfigure
+  static attemptMatchAndConfigure = (pattern: Pattern, typeName: TypeName, fieldName?: FieldName) => {
+    if (pattern.value.split(';').filter(_pattern => _pattern.length > 0).length !== 1) {
+      throw new Error(
+        'attemptMatchAndConfigure can only handle one pattern at a time... use the `splitPatterns(...)` helper function to split your patterns into a list and loop over the list calling the `attemptMatchAndConfigure(...)`  for each single pattern'
+      );
+    }
 
-  //   const regexpFor = (baseName: string): RegExp => Pattern[`regexpFor${baseName}`];
+    const regexpFor = (baseName: string): RegExp => Pattern[`regexpFor${baseName}`];
 
-  //   const matchAndConfigure = (
-  //     baseName: string,
-  //     pattern: Pattern,
-  //     ...args: (TypeName | FieldName)[]
-  //   ): ReturnType<typeof Pattern.resetMatchAndConfigure> | undefined =>
-  //     Pattern[`matchAndConfigure${baseName}`](pattern, ...args);
+    const matchAndConfigure = (
+      baseName: string,
+      pattern: Pattern,
+      ...args: (TypeName | FieldName)[]
+    ): MatchAndConfigure | undefined => Pattern[`matchAndConfigure${baseName}`](pattern, ...args);
 
-  //   const matchList: string[] = Pattern.getMatchList();
-  //   for (let i = 0; i < matchList.length; i++) {
-  //     const baseName = matchList[i];
+    const matchList: string[] = Pattern.getMatchList();
+    for (let i = 0; i < matchList.length; i++) {
+      const baseName = matchList[i];
 
-  //     if (regexpFor(baseName).test(pattern.value)) {
-  //       return matchAndConfigure(baseName, pattern, ...args);
-  //     }
-  //   }
+      if (regexpFor(baseName).test(pattern.value)) {
+        if (baseName === 'AllTypeNames' || baseName === 'AllFieldNamesOfAllTypeNames') {
+          const result = matchAndConfigure(baseName, pattern);
 
-  //   return undefined;
-  // };
-  // //#endregion
+          // interpret the result for global patterns
+          if (baseName === 'AllTypeNames' || baseName === 'AllFieldNamesOfAllTypeNames') {
+            return Pattern.interpretGlobalPatters(baseName, { ...result }, typeName, fieldName);
+          }
 
-  // //#region composePatterns
-  // static compose = (data: Pattern[]): Pattern => {
-  //   if (data.length < 1) {
-  //     throw new Error('Pattern cannot be created... an empty array was passed as parameter');
-  //   }
+          return result;
+        } else if (
+          typeName &&
+          (baseName === 'TypeNames' ||
+            baseName === 'AllTypeNamesExcludeTypeNames' ||
+            baseName === 'AllFieldNamesOfTypeName' ||
+            baseName === 'AllFieldNamesOfAllTypeNamesExcludeTypeNames')
+        ) {
+          const result = matchAndConfigure(baseName, pattern, typeName);
 
-  //   return Pattern.fromString(data.map(pattern => pattern.value).join(''));
-  // };
-  // //#endregion
+          // interpret the result for global patterns
+          if (baseName === 'AllFieldNamesOfTypeName' || baseName === 'AllFieldNamesOfAllTypeNamesExcludeTypeNames') {
+            return Pattern.interpretGlobalPatters(baseName, { ...result }, typeName, fieldName);
+          }
 
-  // //#region split
-  // static split = (pattern: Pattern): Pattern[] => {
-  //   return pattern.value
-  //     .split(';')
-  //     .filter(_pattern => _pattern.length > 0)
-  //     .map(_pattern => Pattern.fromString(_pattern));
-  // };
-  // //#endregion
+          return result;
+        } else if (
+          fieldName &&
+          (baseName === 'FieldNamesOfAllTypeNames' || baseName === 'AllFieldNamesExcludeFieldNamesOfAllTypeNames')
+        ) {
+          const result = matchAndConfigure(baseName, pattern, fieldName);
 
-  // //#region helper methods
-  // static getMatchList = () =>
-  //   Object.getOwnPropertyNames(Pattern)
-  //     .filter(property => Pattern[property] instanceof RegExp)
-  //     .map(regexpForName => regexpForName.slice(9))
-  //     .reverse(); // runs more specific patterns first(in asc order)
+          // interpret the result for global patterns
+          if (baseName === 'FieldNamesOfAllTypeNames' || baseName === 'AllFieldNamesExcludeFieldNamesOfAllTypeNames') {
+            return Pattern.interpretGlobalPatters(baseName, { ...result }, typeName, fieldName);
+          }
 
-  // static resetMatchAndConfigure = (regexp: RegExp) => {
-  //   resetIndex(regexp);
-  //   return { matchFound, shouldBeConfigured, args };
-  // };
-  // //#endregion
+          return result;
+        } else if (typeName && fieldName) {
+          return matchAndConfigure(baseName, pattern, typeName, fieldName);
+        }
+      }
+    }
+
+    return undefined;
+  };
+  //#endregion
+
+  static interpretGlobalPatters = (
+    baseName: string,
+    result: MatchAndConfigure,
+    typeName: TypeName,
+    fieldName?: FieldName
+  ): MatchAndConfigure => {
+    // interpret the result for global patterns
+    if (baseName === 'AllTypeNames') {
+      const key = typeName.value;
+      const globalKey = TypeName.fromAllTypeNames().value;
+      result[key] = result[globalKey];
+    } else if (baseName === 'AllFieldNamesOfAllTypeNames') {
+      const key = `${typeName.value}.${fieldName.value}`;
+      const globalKey = TypeName.fromAllTypeNames().value;
+      result[key] = result[globalKey];
+    } else if (baseName === 'AllFieldNamesOfTypeName' || baseName === 'AllFieldNamesOfAllTypeNamesExcludeTypeNames') {
+      const key = `${typeName.value}.${fieldName.value}`;
+      const globalKey = `${typeName.value}.${FieldName.fromAllFieldNames().value}`;
+      result[key] = result[globalKey];
+    } else if (baseName === 'FieldNamesOfAllTypeNames' || baseName === 'AllFieldNamesExcludeFieldNamesOfAllTypeNames') {
+      const key = `${typeName.value}.${fieldName.value}`;
+      const globalKey = `${TypeName.fromAllTypeNames().value}.${fieldName.value}`;
+      result[key] = result[globalKey];
+    }
+
+    return result;
+  };
+
+  //#region composePatterns
+  static compose = (data: Pattern[]): Pattern => {
+    if (data.length < 1) {
+      throw new Error('Pattern cannot be created... an empty array was passed as parameter');
+    }
+
+    return Pattern.fromString(data.map(pattern => pattern.value).join(''));
+  };
+  //#endregion
+
+  //#region split
+  static split = (pattern: Pattern): Pattern[] => {
+    return pattern.value
+      .split(';')
+      .filter(_pattern => _pattern.length > 0)
+      .map(_pattern => Pattern.fromString(_pattern));
+  };
+  //#endregion
+
+  //#region helper methods
+  static getMatchList = () =>
+    Object.getOwnPropertyNames(Pattern)
+      .filter(property => Pattern[property] instanceof RegExp)
+      .map(regexpForName => regexpForName.slice(9))
+      .reverse(); // runs more specific patterns first(in asc order)
+
+  //#endregion
 }
 
-type MatchAndConfigure = Record<string, { matchFound: boolean; shouldBeConfigured: boolean }>;
+export type MatchAndConfigure = Record<string, { matchFound: boolean; shouldBeConfigured: boolean }>;
 
 // type MatchAndConfigure =
 //   | 'matchAndConfigureTypeNames'
