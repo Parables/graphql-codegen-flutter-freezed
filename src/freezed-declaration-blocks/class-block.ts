@@ -1,12 +1,11 @@
 import { indent } from '@graphql-codegen/visitor-plugin-common';
-import { camelCase } from 'change-case-all';
 import { Kind } from 'graphql';
 import { Config } from '../config/config-value';
 import { FlutterFreezedPluginConfig, NodeType } from '../config/plugin-config';
-import { TypeName } from '../config/type-field-name';
 import { buildComment } from '.';
 import { BlockName } from './block-name';
 import { FactoryBlock } from './factory-block';
+import { TypeName } from 'src/config/pattern-new';
 
 export class ClassBlock {
   public static build(config: FlutterFreezedPluginConfig, node: NodeType): string {
@@ -35,7 +34,7 @@ export class ClassBlock {
   public static buildHeader = (config: FlutterFreezedPluginConfig, typeName: TypeName): string => {
     const className = BlockName.asClassName(config, typeName);
 
-    const privateEmptyConstructor = Config.privateEmptyConstructor(config, typeName)
+    const privateEmptyConstructor = Config.privateEmptyConstructor(/* config, typeName */)
       ? indent(`const ${className}._();\n\n`)
       : '';
 
@@ -45,55 +44,32 @@ export class ClassBlock {
   public static buildBody = (config: FlutterFreezedPluginConfig, node: NodeType): string => {
     const typeName = TypeName.fromString(node.name.value);
 
-    const mergeWithTypeNames = Config.mergeInputs(config, typeName);
+    let body = '';
 
-    if (node.kind === Kind.UNION_TYPE_DEFINITION) {
-      return (
-        node.types
-          ?.map(value => {
-            const namedConstructor = value.name.value;
-            return FactoryBlock.serializeNamedFactory(typeName, namedConstructor, [
-              'factory',
-              'named_factory',
-              'named_factory_for_union_types',
-            ]);
-          })
-          .join('') ?? ''
-      );
-    } else if (node.kind === Kind.OBJECT_TYPE_DEFINITION && mergeWithTypeNames.length > 0) {
-      return [FactoryBlock.serializeFactory(typeName, ['factory', 'default_factory'])]
-        .concat(
-          mergeWithTypeNames.map(mergeWithTypeName => {
-            let namedConstructor = undefined;
-            let separator = undefined;
-
-            if (mergeWithTypeName.includes('$')) {
-              separator = '$';
-            } else if (mergeWithTypeName.includes(typeName.value)) {
-              separator = mergeWithTypeName;
-            }
-
-            if (separator) {
-              namedConstructor = camelCase(mergeWithTypeName.split(separator).join('_'));
-            } else {
-              namedConstructor = camelCase(mergeWithTypeName);
-            }
-
-            return FactoryBlock.serializeNamedFactory(typeName, namedConstructor, [
-              'factory',
-              'named_factory',
-              'named_factory_for_merged_types',
-            ]);
-          })
-        )
+    if (node.kind === Kind.OBJECT_TYPE_DEFINITION) {
+      body += FactoryBlock.serializeFactory(typeName, ['factory', 'default_factory']);
+    } else if (node.kind === Kind.UNION_TYPE_DEFINITION) {
+      body += (node.types ?? [])
+        .map(value => {
+          const namedConstructor = value.name.value;
+          return FactoryBlock.serializeNamedFactory(typeName, namedConstructor, [
+            'factory',
+            'named_factory',
+            'named_factory_for_union_types',
+          ]);
+        })
         .join('');
     }
-    return '';
+
+    // const mergeWithTypeNames = Config.mergeInputs(/* config, typeName */);
+    // TODO: Handle mergeInputs: TODO: Rename to mergeWith
+
+    return body;
   };
 
   public static buildFooter = (config: FlutterFreezedPluginConfig, typeName: TypeName): string => {
     const blockName = BlockName.asClassName(config, typeName);
-    const fromJsonToJson = Config.fromJsonToJson
+    const fromJsonToJson = Config.fromJsonToJson();
 
     if (fromJsonToJson) {
       return indent(`factory ${blockName}.fromJson(Map<String, dynamic> json) => _$${blockName}FromJson(json);\n}\n\n`);

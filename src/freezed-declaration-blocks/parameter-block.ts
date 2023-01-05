@@ -1,5 +1,10 @@
 import { indent } from '@graphql-codegen/visitor-plugin-common';
 import { ListTypeNode, NamedTypeNode, NonNullTypeNode, TypeNode } from 'graphql';
+import { Config } from '../config/config-value';
+import { FieldName, TypeName } from '../config/pattern-new';
+import { AppliesOnParameters, FieldType, FlutterFreezedPluginConfig, NodeType } from '../config/plugin-config';
+import { BlockName } from './block-name';
+import { buildComment } from './index';
 
 export class ParameterBlock {
   public static build(
@@ -32,15 +37,14 @@ export class ParameterBlock {
     appliesOn: AppliesOnParameters[]
   ): string => {
     const typeName = TypeName.fromString(node.name.value);
-    const fieldName = TypeName.fromString(field.name.value);
+    const fieldName = FieldName.fromString(field.name.value);
 
     const required = this.isNonNullType(field.type) ? 'required ' : '';
-    const markedFinal = false; //TODO: Config.final(config, typeName, fieldName, appliesOn);
-    const final = markedFinal ? 'final ' : '';
-    const type = this.parameterType(config, field.type);
+    const final = Config.final() ? 'final ' : '';
+    const dartType = this.parameterType(config, field.type);
     const name = BlockName.asParameterName(config, typeName, fieldName);
 
-    return indent(`${required}${final}${type} ${name},\n`, 2);
+    return indent(`${required}${final}${dartType} ${name},\n`, 2);
   };
 
   public static parameterType = (config: FlutterFreezedPluginConfig, type: TypeNode, parentType?: TypeNode): string => {

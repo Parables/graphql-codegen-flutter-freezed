@@ -1,7 +1,7 @@
 import { transformSchemaAST } from '@graphql-codegen/schema-ast';
 import { starWarsSchema } from './schema';
-import { appliesOnBlock, arrayWrap, dartCasing, nodeIsObjectType, NodeRepository } from '../src/utils';
-import { defaultFreezedPluginConfig, APPLIES_ON_PARAMETERS, ObjectType } from '../src/config/plugin-config';
+import { appliesOnBlock, arrayWrap, dartCasing, nodeIsObjectType } from '../src/utils';
+import { defaultFreezedPluginConfig, APPLIES_ON_PARAMETERS } from '../src/config/plugin-config';
 
 const {
   ast: { definitions: nodes },
@@ -37,19 +37,4 @@ test('method: dartCasing() => ', () => {
   expect(dartCasing('Camel_ case- -- - ME', 'camelCase')).toBe('camelCaseMe');
   expect(dartCasing('pascal-- --case _ ME', 'PascalCase')).toBe('PascalCaseMe');
   expect(dartCasing('lE-AvE mE A-l_o_n-e')).toBe('lE-AvE mE A-l_o_n-e');
-});
-
-describe('NodeRepository can store and retrieve Object Types', () => {
-  const nodeRepository = new NodeRepository();
-  it('returns node or undefined', () => {
-    expect(nodeRepository.get('Human')).toBeUndefined();
-
-    const objNode = nodeRepository.register(nodes[9] as ObjectType);
-    expect(nodeRepository.get('Human')).toBe(objNode);
-
-    expect(() => nodeRepository.register(nodes[11] as ObjectType)).toThrow(
-      'Node is not an ObjectTypeDefinitionNode or InputObjectTypeDefinitionNode'
-    );
-    expect(nodeRepository.get('SearchResult')).toBeUndefined();
-  });
 });

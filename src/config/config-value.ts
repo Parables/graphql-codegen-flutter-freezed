@@ -99,8 +99,8 @@ export class Config {
       return true;
     };
 
-  static ignoreTypes = (/* config: FlutterFreezedPluginConfig, typeName: TypeName */) => {
-    return undefined;
+  static ignoreTypes = (/* config: FlutterFreezedPluginConfig, typeName: TypeName */): string[] => {
+    return [];
   };
 
   static immutable = (/* config: FlutterFreezedPluginConfig, typeName?: TypeName */) => {
@@ -112,7 +112,7 @@ export class Config {
   };
 
   static mergeInputs = (/* config: FlutterFreezedPluginConfig, typeName: TypeName */) => {
-    return undefined;
+    return [];
   };
 
   static mutableInputs = (/* config: FlutterFreezedPluginConfig, typeName?: TypeName */) => {

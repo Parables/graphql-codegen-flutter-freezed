@@ -1,5 +1,12 @@
+import { indentMultiline } from '@graphql-codegen/visitor-plugin-common';
+import { EnumTypeDefinitionNode, EnumValueDefinitionNode } from 'graphql';
+import { TypeName, FieldName } from '../config/pattern-new';
+import { FlutterFreezedPluginConfig } from '../config/plugin-config';
+import { buildComment } from '.';
+import { BlockName } from './block-name';
+
 export class EnumBlock {
-  public static build(config: FlutterFreezedPluginConfig, node: NodeType): string {
+  public static build(config: FlutterFreezedPluginConfig, node: EnumTypeDefinitionNode): string {
     const typeName = TypeName.fromString(node.name.value);
 
     let block = '';
@@ -28,19 +35,18 @@ export class EnumBlock {
   };
 
   public static buildBody = (config: FlutterFreezedPluginConfig, node: EnumTypeDefinitionNode): string => {
-    const typeName = TypeName.fromConfig(config, node.name.value);
-    return (
-      node.values
-        ?.map((enumValue: EnumValueDefinitionNode) => {
-          const fieldName = FieldName.fromConfig(config, enumValue.name.value);
-          const blockName = BlockName.asEnumValueName(config, typeName, fieldName);
+    const typeName = TypeName.fromString(node.name.value);
+    return (node.values ?? [])
+      ?.map((enumValue: EnumValueDefinitionNode) => {
+        const fieldName = FieldName.fromString(enumValue.name.value);
+        const blockName = BlockName.asEnumValueName(config, typeName, fieldName);
 
-          const decorators = buildBlockDecorators(config, enumValue, ['enum_value'] as AppliesOnEnumValue[]);
+        // const decorators = buildBlockDecorators(config, enumValue, ['enum_value'] as AppliesOnEnumValue[]);
 
-          return indentMultiline(`${decorators}${buildComment(enumValue)}${blockName},\n`);
-        })
-        .join('') ?? ''
-    );
+        // return indentMultiline(`${decorators}${buildComment(enumValue)}${blockName},\n`);
+        return indentMultiline(`${buildComment(enumValue)}${blockName},\n`);
+      })
+      .join('');
   };
 
   public static buildFooter = (): string => {

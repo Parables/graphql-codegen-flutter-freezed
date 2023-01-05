@@ -1,3 +1,5 @@
+> get-graphql-schema https://demo.saleor.io/graphql/ > schema.graphql
+
 @name Pattern
 
 @description A compact string of patterns used in the config for granular configuration for each Graphql Type and/or its fieldNames

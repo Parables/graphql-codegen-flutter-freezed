@@ -1,4 +1,18 @@
 import { indent } from '@graphql-codegen/visitor-plugin-common';
+import { Config } from '../config/config-value';
+import { TypeName } from '../config/pattern-new';
+import {
+  FlutterFreezedPluginConfig,
+  ObjectType,
+  AppliesOnFactory,
+  AppliesOnParameters,
+  AppliesOnDefaultFactory,
+  AppliesOnNamedFactory,
+} from '../config/plugin-config';
+import { NodeRepository } from './node-repository';
+import { buildComment } from './index';
+import { BlockName } from './block-name';
+import { ParameterBlock } from './parameter-block';
 
 export class FactoryBlock {
   public static build(
@@ -30,7 +44,7 @@ export class FactoryBlock {
   };
 
   public static buildHeader = (config: FlutterFreezedPluginConfig, typeName: TypeName, namedConstructor?: string) => {
-    const immutable = Config.immutable(config, typeName);
+    const immutable = Config.immutable(/* config, typeName */);
     const constFactory = immutable ? indent('const factory') : indent('factory');
 
     if (namedConstructor && namedConstructor?.length > 0) {
@@ -69,9 +83,9 @@ export class FactoryBlock {
     namedConstructor: string
   ) => {
     const typeName = TypeName.fromString(namedConstructor);
-    const prefix = appliesOn.includes('default_factory') ? '_' : '';
+    const _ = appliesOn.includes('default_factory') ? '_' : '';
     const factoryFooterName = BlockName.asClassName(config, typeName);
-    return indent(`}) = ${prefix}${factoryFooterName};\n\n`);
+    return indent(`}) = ${_}${factoryFooterName};\n\n`);
   };
 
   //#endregion

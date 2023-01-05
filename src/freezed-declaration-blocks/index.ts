@@ -1,5 +1,11 @@
 import { snakeCase } from 'change-case-all';
 import { Kind, EnumValueDefinitionNode } from 'graphql';
+import { Config } from '../config/config-value';
+import { FlutterFreezedPluginConfig, NodeType } from '../config/plugin-config';
+import { nodeIsObjectType } from '../utils';
+import { ClassBlock } from './class-block';
+import { EnumBlock } from './enum-block';
+import { NodeRepository } from './node-repository';
 
 //#region Step 01. Start Here
 /**
@@ -31,7 +37,7 @@ export const buildImportStatements = (fileName: string) => {
  */
 export const buildBlock = (config: FlutterFreezedPluginConfig, node: NodeType, nodeRepository: NodeRepository) => {
   // ignore these...
-  if (['Query', 'Mutation', 'Subscription', ...(config?.ignoreTypes ?? [])].includes(node.name.value)) {
+  if (['Query', 'Mutation', 'Subscription', ...Config.ignoreTypes()].includes(node.name.value)) {
     return '';
   }
 

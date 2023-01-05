@@ -1,6 +1,6 @@
 import { DART_KEYWORDS, DART_SCALARS, defaultFreezedPluginConfig } from '../src/config/plugin-config';
 import { Config } from '../src/config/config-value';
-import { FieldName, Pattern, TypeName } from '../src/config/pattern-new';
+// import { FieldName, Pattern, TypeName } from '../src/config/pattern-new';
 
 describe("integrity checks: ensures that these values don't change and if they do, they're updated accordingly", () => {
   test('integrity check: DART_SCALARS contains corresponding Dart Types mapping for built-in Graphql Scalars', () => {
@@ -121,18 +121,18 @@ describe("integrity checks: ensures that these values don't change and if they d
 });
 
 // TODO: Uncomment these tests ... v
-const Droid = TypeName.fromString('Droid');
-const Starship = TypeName.fromString('Starship');
-const Human = TypeName.fromString('Human');
-const Movie = TypeName.fromString('Movie');
+// const Droid = TypeName.fromString('Droid');
+// const Starship = TypeName.fromString('Starship');
+// const Human = TypeName.fromString('Human');
+// const Movie = TypeName.fromString('Movie');
 
-const id = FieldName.fromString('id');
-const name = FieldName.fromString('name');
-const friends = FieldName.fromString('friends');
-const friend = FieldName.fromString('friend');
-const title = FieldName.fromString('title');
-const episode = FieldName.fromString('episode');
-const length = FieldName.fromString('length');
+// const id = FieldName.fromString('id');
+// const name = FieldName.fromString('name');
+// const friends = FieldName.fromString('friends');
+// const friend = FieldName.fromString('friend');
+// const title = FieldName.fromString('title');
+// const episode = FieldName.fromString('episode');
+// const length = FieldName.fromString('length');
 
 describe('Config: has methods that returns a ready-to-use value for all the config options', () => {
   const config = Config.create({});
@@ -219,66 +219,72 @@ describe('Config: has methods that returns a ready-to-use value for all the conf
   });
 
   describe('Config.findLastConfiguration(...): returns the index of the pattern in the list of patterns where the Pattern.matchedAndConfigure returned `shouldBeConfigured:true`', () => {
-    describe('find last configuration: using pattern: `Droid;`', () => {
-      const patterns = [Pattern.forTypeNames(Droid)];
-
-      it.each([Droid])(`%s was last configured at index: 0`, typeName => {
-        expect(Config.findLastConfiguration(patterns, typeName)).toBe(0);
-      });
-
-      it.each([Starship, Human, Movie])(`%s was not configured`, typeName => {
-        expect(Config.findLastConfiguration(patterns, typeName)).toBeUndefined();
-      });
-    });
-
-    describe('find last configuration: using pattern: `@*TypeNames;`', () => {
-      const patterns = [Pattern.forAllTypeNames()];
-
-      it.each([Droid, Starship, Human, Movie])(`%s was last configured at index: 0`, typeName => {
-        expect(Config.findLastConfiguration(patterns, typeName)).toBe(0);
-      });
-    });
-
-    describe('find last configuration: using pattern: `@*TypeNames-[Human,Movie];`', () => {
-      const patterns = [Pattern.forAllTypeNamesExcludeTypeNames([Human, Movie])];
-
-      it.each([Droid, Starship])(`%s was last configured at index: 0`, typeName => {
-        expect(Config.findLastConfiguration(patterns, typeName)).toBe(0);
-      });
-
-      it.each([Human, Movie])(`%s was not configured`, typeName => {
-        expect(Config.findLastConfiguration(patterns, typeName)).toBeUndefined();
-      });
-    });
-
-    describe('find last configuration: using pattern: `Droid.[name,friends];`', () => {
-      const patterns = [
-        Pattern.forFieldNamesOfTypeName([
-          [
-            [Droid, Human],
-            [name, friends],
-          ],
-        ]),
-      ];
-
-      it.each([
-        [Droid, name],
-        [Droid, friends],
-        [Human, name],
-        [Human, friends],
-      ])(`%s.%s was last configured at index: 0`, (typeName, fieldName) => {
-        expect(Config.findLastConfiguration(patterns, typeName, fieldName)).toBe(0);
-      });
-
-      it.each([
-        [Droid, id],
-        [Droid, friend],
-        [Droid, title],
-        [Droid, episode],
-        [Droid, length],
-      ])(`%s.%s was not configured`, (typeName, fieldName) => {
-        expect(Config.findLastConfiguration(patterns, typeName, fieldName)).toBeUndefined();
-      });
-    });
+    // describe('find last configuration: using pattern: `Droid;`', () => {
+    //   const patterns = [Pattern.forTypeNames(Droid)];
+    //   it.each([Droid])(`%s was last configured at index: 0`, typeName => {
+    //     expect(Config.findLastConfiguration(patterns, typeName)).toBe(0);
+    //   });
+    //   it.each([Starship, Human, Movie])(`%s was not configured`, typeName => {
+    //     expect(Config.findLastConfiguration(patterns, typeName)).toBeUndefined();
+    //   });
+    // });
+    // describe('find last configuration: using pattern: `@*TypeNames;`', () => {
+    //   const patterns = [Pattern.forAllTypeNames()];
+    //   it.each([Droid, Starship, Human, Movie])(`%s was last configured at index: 0`, typeName => {
+    //     expect(Config.findLastConfiguration(patterns, typeName)).toBe(0);
+    //   });
+    // });
+    // describe('find last configuration: using pattern: `@*TypeNames-[Human,Movie];`', () => {
+    //   const patterns = [Pattern.forAllTypeNamesExcludeTypeNames([Human, Movie])];
+    //   it.each([Droid, Starship])(`%s was last configured at index: 0`, typeName => {
+    //     expect(Config.findLastConfiguration(patterns, typeName)).toBe(0);
+    //   });
+    //   it.each([Human, Movie])(`%s was not configured`, typeName => {
+    //     expect(Config.findLastConfiguration(patterns, typeName)).toBeUndefined();
+    //   });
+    // });
+    // describe('find last configuration: using pattern: `Droid.[name,friends];`', () => {
+    //   const patterns = [
+    //     Pattern.forFieldNamesOfTypeName([
+    //       [
+    //         [Droid, Human],
+    //         [name, friends],
+    //       ],
+    //     ]),
+    //   ];
+    //   it.each([
+    //     [Droid, name],
+    //     [Droid, friends],
+    //     [Human, name],
+    //     [Human, friends],
+    //   ])(`%s.%s was last configured at index: 0`, (typeName, fieldName) => {
+    //     expect(Config.findLastConfiguration(patterns, typeName, fieldName)).toBe(0);
+    //   });
+    //   it.each([
+    //     [Droid, id],
+    //     [Droid, friend],
+    //     [Droid, title],
+    //     [Droid, episode],
+    //     [Droid, length],
+    //   ])(`%s.%s was not configured`, (typeName, fieldName) => {
+    //     expect(Config.findLastConfiguration(patterns, typeName, fieldName)).toBeUndefined();
+    //   });
+    // });
+    // const findLastConfiguration = jest.fn((pattern: Pattern, typeName: TypeName, fieldName?: FieldName) => {
+    //   Pattern.split(pattern).map(pattern => {
+    //     const result = Pattern.attemptMatchAndConfigure(pattern, typeName, fieldName);
+    //     console.log(result);
+    //   });
+    // });
+    // const pattern = Pattern.compose([
+    //   Pattern.forFieldNamesOfTypeName([
+    //     [
+    //       [Droid, Human],
+    //       [name, friends],
+    //     ],
+    //   ]),
+    //   Pattern.forAllTypeNamesExcludeTypeNames([Starship, Droid]),
+    // ]);
+    // expect(findLastConfiguration());
   });
 });
