@@ -60,7 +60,7 @@ export const fullDemoConfig: FlutterFreezedPluginConfig = mergeConfig({
     UUID: 'String',
   },
   globalFreezedConfig: {
-    mergeInputs: ['Create$Input', 'Upsert$Input', 'Delete$Input'],
+    mergeTypes: ['Create$Input', 'Upsert$Input', 'Delete$Input'],
     customDecorators: {
       '@JsonSerializable(explicitToJson: true)': {
         applyOn: ['class'],
@@ -71,7 +71,7 @@ export const fullDemoConfig: FlutterFreezedPluginConfig = mergeConfig({
   typeSpecificFreezedConfig: {
     Base: {
       config: {
-        mergeInputs: ['$AInput', '$BInput', 'BaseCInput', 'CreateMovieInput'],
+        mergeTypes: ['$AInput', '$BInput', 'BaseCInput', 'CreateMovieInput'],
       },
     },
     Starship: {

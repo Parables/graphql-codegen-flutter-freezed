@@ -111,7 +111,7 @@ export class Config {
     return undefined;
   };
 
-  static mergeInputs = (/* config: FlutterFreezedPluginConfig, typeName: TypeName */) => {
+  static mergeTypes = (/* config: FlutterFreezedPluginConfig, typeName: TypeName */) => {
     return [];
   };
 

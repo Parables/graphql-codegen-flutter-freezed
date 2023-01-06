@@ -112,7 +112,7 @@ describe("integrity checks: ensures that these values don't change and if they d
       ignoreTypes: undefined,
       immutable: true,
       makeCollectionsUnmodifiable: undefined,
-      mergeInputs: undefined,
+      mergeTypes: undefined,
       mutableInputs: true,
       privateEmptyConstructor: true,
       unionClass: undefined,

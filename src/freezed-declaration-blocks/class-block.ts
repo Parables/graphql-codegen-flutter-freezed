@@ -5,7 +5,7 @@ import { FlutterFreezedPluginConfig, NodeType } from '../config/plugin-config';
 import { buildComment } from '.';
 import { BlockName } from './block-name';
 import { FactoryBlock } from './factory-block';
-import { TypeName } from 'src/config/pattern-new';
+import { TypeName } from '../config/pattern-new';
 
 export class ClassBlock {
   public static build(config: FlutterFreezedPluginConfig, node: NodeType): string {
@@ -15,7 +15,7 @@ export class ClassBlock {
 
     block += buildComment(node);
 
-    block += this.buildDecorators();
+    block += this.buildDecorators(config, node);
 
     block += this.buildHeader(config, typeName);
 
@@ -26,9 +26,73 @@ export class ClassBlock {
     return block;
   }
 
-  //#region Step 03.02. Build Class Block
-  public static buildDecorators = (): string => {
-    return '';
+  public static buildDecorators = (config: FlutterFreezedPluginConfig, node: NodeType): string => {
+    const freezedDecorator = ClassBlock.buildFreezedDecorator(config, node);
+    // TODO: consider implementing custom decorators
+    return [freezedDecorator].join('');
+  };
+
+  static buildFreezedDecorator = (config: FlutterFreezedPluginConfig, node: NodeType): string => {
+    // this is the start of the pipeline of decisions to determine which Freezed decorator to use
+    return ClassBlock.decorateAsUnfreezed(config, node);
+  };
+
+  static decorateAsUnfreezed = (config: FlutterFreezedPluginConfig, node: NodeType) => {
+    const typeName = TypeName.fromString(node.name.value);
+    const immutable = Config.immutable();
+    const mutableInputs = Config.mutableInputs();
+    const mutable = !immutable || (node.kind === Kind.INPUT_OBJECT_TYPE_DEFINITION && mutableInputs);
+
+    return mutable ? '@unfreezed\n' : ClassBlock.decorateAsFreezed(config, typeName);
+  };
+
+  static decorateAsFreezed = (config: FlutterFreezedPluginConfig, typeName: TypeName): string => {
+    const { isCustomized, copyWith, equal, makeCollectionsUnmodifiable, unionKey, unionValueCase } =
+      this.isCustomizedFreezed(config, typeName);
+    if (isCustomized) {
+      let atFreezed = '@Freezed(\n';
+
+      if (copyWith !== undefined) {
+        atFreezed += indent(`copyWith: ${copyWith},\n`);
+      }
+
+      if (equal !== undefined) {
+        atFreezed += indent(`equal: ${equal},\n`);
+      }
+
+      if (makeCollectionsUnmodifiable !== undefined) {
+        atFreezed += indent(`makeCollectionsUnmodifiable: ${makeCollectionsUnmodifiable},\n`);
+      }
+
+      if (unionKey !== undefined) {
+        atFreezed += indent(`unionKey: ${unionKey},\n`);
+      }
+
+      if (unionValueCase !== undefined) {
+        atFreezed += indent(`unionValueCase: '${unionValueCase}',\n`);
+      }
+
+      atFreezed += ')\n';
+
+      return atFreezed;
+    }
+    // else fallback to the normal `@freezed` decorator
+    return '@freezed\n';
+  };
+
+  static isCustomizedFreezed = (config: FlutterFreezedPluginConfig, typeName: TypeName) => {
+    const copyWith = Config.copyWith(config);
+    const equal = Config.equal();
+    const makeCollectionsUnmodifiable = Config.makeCollectionsUnmodifiable();
+    const unionKey = Config.unionKey();
+    const unionValueCase = Config.unionValueCase();
+    const isCustomized =
+      copyWith !== undefined ||
+      equal !== undefined ||
+      makeCollectionsUnmodifiable !== undefined ||
+      unionKey !== undefined ||
+      unionValueCase !== undefined;
+    return { copyWith, equal, makeCollectionsUnmodifiable, unionKey, unionValueCase, isCustomized };
   };
 
   public static buildHeader = (config: FlutterFreezedPluginConfig, typeName: TypeName): string => {
@@ -61,8 +125,8 @@ export class ClassBlock {
         .join('');
     }
 
-    // const mergeWithTypeNames = Config.mergeInputs(/* config, typeName */);
-    // TODO: Handle mergeInputs: TODO: Rename to mergeWith
+    // const mergeWithTypeNames = Config.mergeTypes(/* config, typeName */);
+    // TODO: Handle mergeTypes: TODO: Rename to mergeWith
 
     return body;
   };
@@ -76,6 +140,4 @@ export class ClassBlock {
     }
     return '}\n\n';
   };
-
-  //#endregion
 }

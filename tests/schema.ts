@@ -9,6 +9,7 @@ export const enumSchema = buildSchema(/* GraphQL */ `
     void
     IN
     in
+    String
     ELSE
     else
     SWITCH
@@ -20,7 +21,15 @@ export const enumSchema = buildSchema(/* GraphQL */ `
 
 export const baseSchema = buildSchema(/* GraphQL */ `
   type PersonType {
+    # I am a single line comment
+    # There is nothing stopping you from using more of me
     id: String
+    """
+    I am a multi line comment
+
+    Use me when you have a really long comment to write
+    like this one
+    """
     name: String!
   }
 `);
@@ -108,6 +117,20 @@ export const starWarsSchema = buildSchema(/* GraphQL */ `
     phoneNumber
   }
 
+  """
+   it can start here
+  Anything here
+
+  too is a multi-line
+
+
+  comment which should
+
+  bw handled appropriately
+
+
+  and end here
+  """
   type Movie {
     id: ID!
     title: String!

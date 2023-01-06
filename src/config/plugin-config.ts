@@ -532,8 +532,8 @@ export type FlutterFreezedPluginConfig = {
   makeCollectionsUnmodifiable?: boolean | TypeNamePattern;
 
   /**
-   * @name mergeInputs
-   * @description merge InputTypes as a named factory constructor inside a class generated for a GraphQL ObjectType.
+   * @name mergeTypes
+   * @description merges other GraphQL Types as a named factory constructor inside a class generated for the target GraphQL ObjectType.
    * @default undefined
    *
    * @exampleMarkdown
@@ -543,10 +543,10 @@ export type FlutterFreezedPluginConfig = {
    *     plugins:
    *       - flutter-freezed
    *     config:
-   *      mergeInputs: ["Create$Input", "Update$Input", "Delete$Input"]
+   *      mergeTypes: ["Create$Input", "Update$Input", "Delete$Input"]
    * ```
    */
-  mergeInputs?: [target: TypeNamePattern, mergeWith: TypeNamePattern];
+  mergeTypes?: [target: TypeNamePattern, mergeWith: TypeNamePattern];
 
   /**
    * @name mutableInputs
@@ -908,7 +908,7 @@ export const defaultFreezedPluginConfig: FlutterFreezedPluginConfig = {
   ignoreTypes: undefined,
   immutable: true,
   makeCollectionsUnmodifiable: undefined,
-  mergeInputs: undefined,
+  mergeTypes: undefined,
   mutableInputs: true,
   privateEmptyConstructor: true,
   unionClass: undefined,

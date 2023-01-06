@@ -1,9 +1,9 @@
-import { indentMultiline } from '@graphql-codegen/visitor-plugin-common';
 import { EnumTypeDefinitionNode, EnumValueDefinitionNode } from 'graphql';
 import { TypeName, FieldName } from '../config/pattern-new';
 import { FlutterFreezedPluginConfig } from '../config/plugin-config';
 import { buildComment } from '.';
 import { BlockName } from './block-name';
+import { indent } from '@graphql-codegen/visitor-plugin-common';
 
 export class EnumBlock {
   public static build(config: FlutterFreezedPluginConfig, node: EnumTypeDefinitionNode): string {
@@ -44,7 +44,7 @@ export class EnumBlock {
         // const decorators = buildBlockDecorators(config, enumValue, ['enum_value'] as AppliesOnEnumValue[]);
 
         // return indentMultiline(`${decorators}${buildComment(enumValue)}${blockName},\n`);
-        return indentMultiline(`${buildComment(enumValue)}${blockName},\n`);
+        return indent(`${buildComment(enumValue)}${blockName},\n`);
       })
       .join('');
   };

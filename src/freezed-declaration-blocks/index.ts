@@ -51,7 +51,6 @@ export const buildBlock = (config: FlutterFreezedPluginConfig, node: NodeType, n
 
 export const buildComment = (node?: NodeType | EnumValueDefinitionNode): string => {
   const comment = node?.description?.value;
-  console.log('🚀 ~ file: index.ts:54 ~ buildComment ~ comment', comment);
 
   return comment && comment?.length > 0 // TODO: Test this
     ? `${comment

@@ -1,5 +1,5 @@
 import { camelCase } from 'change-case-all';
-import { FieldName, TypeName } from 'src/config/pattern-new';
+import { FieldName, TypeName } from '../config/pattern-new';
 import { Config } from '../config/config-value';
 import {
   DART_KEYWORDS,
