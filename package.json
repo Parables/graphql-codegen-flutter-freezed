@@ -20,7 +20,7 @@
   ],
   "scripts": {
     "type-check": "tsc --noEmit",
-    "test": "jest --verbose --watch --coverage",
+    "test": "jest --all --verbose --watch --coverage",
     "build": "run-p build:*",
     "build:main": "tsc -p tsconfig.main.json",
     "build:module": "tsc -p tsconfig.module.json",

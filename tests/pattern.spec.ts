@@ -1,4 +1,4 @@
-import { TypeName, Pattern, FieldName } from '../src/config/pattern-new';
+import { TypeName, FieldName, TypeNamePattern, FieldNamePattern, Pattern } from '../src/config/pattern-new';
 
 //#region helper functions
 
@@ -79,160 +79,205 @@ const validPatterns = arrayIndexed([
 //#endregion
 
 //#region integrity checks
-describe.skip('integrity checks: ensures that the following are not modified accidentally', () => {
-  // // Hard coded for integrity purposes. Update this if more Regexp are added
-  // const expectedCount = 12;
-  // const definedBuilders = Object.getOwnPropertyNames(Pattern).filter(
-  //   method => method.startsWith('for') && typeof Pattern[method] === 'function'
-  // );
-  // const definedRegexps = Object.getOwnPropertyNames(Pattern).filter(property => Pattern[property] instanceof RegExp);
-  // const definedMatchAndConfigureMethods = Object.getOwnPropertyNames(Pattern).filter(
-  //   method => method.startsWith('matchAndConfigure') && typeof Pattern[method] === 'function'
-  // );
-  // // hard-coded baseNames
-  // const baseNames = [
-  //   'TypeNames',
-  //   'AllTypeNames',
-  //   'AllTypeNamesExcludeTypeNames',
-  //   'FieldNamesOfTypeName',
-  //   'AllFieldNamesOfTypeName',
-  //   'AllFieldNamesExcludeFieldNamesOfTypeName',
-  //   'FieldNamesOfAllTypeNames',
-  //   'AllFieldNamesOfAllTypeNames',
-  //   'AllFieldNamesExcludeFieldNamesOfAllTypeNames',
-  //   'FieldNamesOfAllTypeNamesExcludeTypeNames',
-  //   'AllFieldNamesOfAllTypeNamesExcludeTypeNames',
-  //   'AllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames',
-  // ];
-  // // dynamically generated baseNames
-  // const matchList: string[] = Pattern.getMatchList();
-  // describe('pattern builders:', () => {
-  //   it(`all ${expectedCount} pattern builders are accounted for`, () => {
-  //     expect(definedBuilders.length).toBe(expectedCount);
-  //   });
-  //   it(`all ${expectedCount} pattern builders are  defined in order`, () => {
-  //     expect(definedBuilders).toMatchObject(baseNames.map(baseName => `for${baseName}`));
-  //   });
-  // });
-  // describe('Regular Expressions:', () => {
-  //   it(`all ${expectedCount} Regular Expressions are accounted for`, () => {
-  //     expect(definedRegexps.length).toBe(expectedCount);
-  //   });
-  //   it(`all ${expectedCount} Regular Expression are  defined in order`, () => {
-  //     expect(definedRegexps).toMatchObject(baseNames.map(baseName => `regexpFor${baseName}`));
-  //   });
-  // });
-  // describe('matchAndConfigure Methods:', () => {
-  //   it(`all ${expectedCount} matchAndConfigure methods are accounted for and defined in order`, () => {
-  //     expect(definedMatchAndConfigureMethods.length).toBe(expectedCount);
-  //   });
-  //   it(`all ${expectedCount} matchAndConfigure methods are  defined in order`, () => {
-  //     expect(definedMatchAndConfigureMethods).toMatchObject(baseNames.map(baseName => `matchAndConfigure${baseName}`));
-  //   });
-  // });
-  // describe('baseNames(hard-coded) vrs matchList(dynamically-generated):', () => {
-  //   it('baseNames is equal to matchList', () => {
-  //     expect(baseNames.reverse()).toMatchObject(matchList);
-  //   });
-  // });
-  // describe(`TypeName, FieldName and Pattern: Value Objects that ensures that the value set is valid and can only be set using special methods that initialize the class with a valid value `, () => {
-  //   describe('throws an error if value is an empty string', () => {
-  //     it('TypeName.fromString: throws when TypeName is created from an empty string', () => {
-  //       expect(() => TypeName.fromString('')).toThrow();
-  //     });
-  //     it('FieldName.fromString: throws when FieldName is created from an empty string', () => {
-  //       expect(() => FieldName.fromString('')).toThrow();
-  //     });
-  //     it('Pattern.forTypeNames: throws when it receives an empty array as parameter', () => {
-  //       expect(() => Pattern.forTypeNames([])).toThrow();
-  //     });
-  //     it('Pattern.forAllTypeNamesExcludeTypeNames: throws when it receives an empty array as parameter', () => {
-  //       expect(() => Pattern.forAllTypeNamesExcludeTypeNames([])).toThrow();
-  //     });
-  //     it('Pattern.forAllFieldNamesOfTypeName: throws when it receives an empty array as parameter', () => {
-  //       expect(() => Pattern.forAllFieldNamesOfTypeName([])).toThrow();
-  //     });
-  //     it('Pattern.forAllFieldNamesExcludeFieldNamesOfTypeName: throws when it receives an empty array as parameter', () => {
-  //       expect(() => Pattern.forAllFieldNamesExcludeFieldNamesOfTypeName([])).toThrow();
-  //       expect(() => Pattern.forAllFieldNamesExcludeFieldNamesOfTypeName([[Droid, []]])).toThrow();
-  //       expect(() => Pattern.forAllFieldNamesExcludeFieldNamesOfTypeName([[[], id]])).toThrow();
-  //       expect(() => Pattern.forAllFieldNamesExcludeFieldNamesOfTypeName([[[], []]])).toThrow();
-  //     });
-  //     it('Pattern.forFieldNamesOfAllTypeNamesExcludeTypeNames: throws when it receives an empty array as parameter', () => {
-  //       expect(() => Pattern.forFieldNamesOfAllTypeNamesExcludeTypeNames([], [id])).toThrow();
-  //       expect(() => Pattern.forFieldNamesOfAllTypeNamesExcludeTypeNames([Droid], [])).toThrow();
-  //       expect(() => Pattern.forFieldNamesOfAllTypeNamesExcludeTypeNames([], [])).toThrow();
-  //     });
-  //     it('Pattern.forAllFieldNamesOfAllTypeNamesExcludeTypeNames: throws when it receives an empty array as parameter', () => {
-  //       expect(() => Pattern.forAllFieldNamesOfAllTypeNamesExcludeTypeNames([])).toThrow();
-  //     });
-  //     it('Pattern.forFieldNamesOfTypeName: throws when it receives an empty array as parameter', () => {
-  //       expect(() => Pattern.forFieldNamesOfTypeName([])).toThrow();
-  //       expect(() => Pattern.forFieldNamesOfTypeName([[Droid, []]])).toThrow();
-  //       expect(() => Pattern.forFieldNamesOfTypeName([[[], id]])).toThrow();
-  //       expect(() => Pattern.forFieldNamesOfTypeName([[[], []]])).toThrow();
-  //     });
-  //     it('Pattern.forAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames: throws when it receives an empty array as parameter', () => {
-  //       expect(() => Pattern.forAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames([], [id])).toThrow();
-  //       expect(() => Pattern.forAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames([Droid], [])).toThrow();
-  //       expect(() => Pattern.forAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames([], [])).toThrow();
-  //     });
-  //   });
-  //   describe.each([
-  //     ',',
-  //     '.',
-  //     '/',
-  //     '<',
-  //     '>',
-  //     '?',
-  //     ':',
-  //     "'",
-  //     '"',
-  //     '[',
-  //     ']',
-  //     '{',
-  //     '}',
-  //     '\\',
-  //     '|',
-  //     '+',
-  //     '=',
-  //     '`',
-  //     '~',
-  //     '!',
-  //     '@',
-  //     '#',
-  //     '$',
-  //     '%',
-  //     '^',
-  //     '&',
-  //     '*',
-  //     '(',
-  //     ')',
-  //     // '_', // underscore is a valid character
-  //     '-',
-  //     '+',
-  //     '=',
-  //     'space ',
-  //     'tab\t',
-  //     'newline\n',
-  //   ])('throws an error if value is not AlphaNumeric', invalidCharacter => {
-  //     const invalidName = `Invalid${invalidCharacter}Name`;
-  //     it(`TypeName throws an error when the name contains: ${invalidCharacter}`, () => {
-  //       expect(() => TypeName.fromString(invalidName)).toThrow();
-  //     });
-  //     it(`FieldName throws an error when the name contains: ${invalidCharacter}`, () => {
-  //       expect(() => FieldName.fromString(invalidName)).toThrow();
-  //     });
-  //   });
-  // });
+describe('integrity checks: ensures that the following are not modified accidentally', () => {
+  // Hard coded for integrity purposes. Update this if more Regexp are added
+  const expectedTypeNamePatternCount = 3;
+  const expectedFieldNamePatternCount = 9;
+  const expectedCount = expectedTypeNamePatternCount + expectedFieldNamePatternCount;
+
+  const definedTypeNamePatternBuilders = Object.getOwnPropertyNames(TypeNamePattern).filter(
+    method => method.startsWith('for') && typeof TypeNamePattern[method] === 'function'
+  );
+
+  const definedFieldNamePatternBuilders = Object.getOwnPropertyNames(FieldNamePattern).filter(
+    method => method.startsWith('for') && typeof FieldNamePattern[method] === 'function'
+  );
+
+  const definedBuilders = definedTypeNamePatternBuilders.concat(definedFieldNamePatternBuilders);
+
+  const definedTypeNamePatternRegexps = Object.getOwnPropertyNames(TypeNamePattern).filter(
+    property => TypeNamePattern[property] instanceof RegExp
+  );
+
+  const definedFieldNamePatternRegexps = Object.getOwnPropertyNames(FieldNamePattern).filter(
+    property => FieldNamePattern[property] instanceof RegExp
+  );
+
+  const definedRegExps = definedTypeNamePatternRegexps.concat(definedFieldNamePatternRegexps);
+
+  const definedTypeNamePatternMatchAndConfigureMethods = Object.getOwnPropertyNames(TypeNamePattern).filter(
+    method => method.startsWith('matchAndConfigure') && typeof TypeNamePattern[method] === 'function'
+  );
+
+  const definedFieldNamePatternMatchAndConfigureMethods = Object.getOwnPropertyNames(FieldNamePattern).filter(
+    method => method.startsWith('matchAndConfigure') && typeof FieldNamePattern[method] === 'function'
+  );
+
+  const definedMatchAndConfigureMethods = definedTypeNamePatternMatchAndConfigureMethods.concat(
+    definedFieldNamePatternMatchAndConfigureMethods
+  );
+
+  // hard-coded baseNames
+  const baseNames = [
+    'TypeNames',
+    'AllTypeNames',
+    'AllTypeNamesExcludeTypeNames',
+    'FieldNamesOfTypeName',
+    'AllFieldNamesOfTypeName',
+    'AllFieldNamesExcludeFieldNamesOfTypeName',
+    'FieldNamesOfAllTypeNames',
+    'AllFieldNamesOfAllTypeNames',
+    'AllFieldNamesExcludeFieldNamesOfAllTypeNames',
+    'FieldNamesOfAllTypeNamesExcludeTypeNames',
+    'AllFieldNamesOfAllTypeNamesExcludeTypeNames',
+    'AllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames',
+  ];
+  // dynamically generated baseNames
+  const matchList: string[] = Pattern.getMatchList();
+  describe('pattern builders:', () => {
+    it(`all ${expectedCount} pattern builders are accounted for`, () => {
+      expect(definedBuilders.length).toBe(expectedCount);
+    });
+    it(`all ${expectedCount} pattern builders are  defined in order`, () => {
+      expect(definedBuilders).toMatchObject(baseNames.map(baseName => `for${baseName}`));
+    });
+  });
+  describe('Regular Expressions:', () => {
+    it(`all ${expectedCount} Regular Expressions are accounted for`, () => {
+      expect(definedRegExps.length).toBe(expectedCount);
+    });
+    it(`all ${expectedCount} Regular Expression are  defined in order`, () => {
+      expect(definedRegExps).toMatchObject(baseNames.map(baseName => `regexpFor${baseName}`));
+    });
+  });
+  describe('matchAndConfigure Methods:', () => {
+    it(`all ${expectedCount} matchAndConfigure methods are accounted for and defined in order`, () => {
+      expect(definedMatchAndConfigureMethods.length).toBe(expectedCount);
+    });
+    it(`all ${expectedCount} matchAndConfigure methods are  defined in order`, () => {
+      expect(definedMatchAndConfigureMethods).toMatchObject(baseNames.map(baseName => `matchAndConfigure${baseName}`));
+    });
+  });
+  describe('baseNames(hard-coded) vrs matchList(dynamically-generated):', () => {
+    it('baseNames is equal to matchList', () => {
+      expect(baseNames.reverse()).toMatchObject(matchList);
+    });
+  });
+
+  describe(`TypeName, FieldName and Pattern: Value Objects that ensures that the value set is valid and can only be set using special methods that initialize the class with a valid value `, () => {
+    describe('throws an error if value is an empty string', () => {
+      it('TypeName.fromString: throws when TypeName is created from an empty string', () => {
+        expect(() => TypeName.fromString('')).toThrow();
+      });
+
+      it('FieldName.fromString: throws when FieldName is created from an empty string', () => {
+        expect(() => FieldName.fromString('')).toThrow();
+      });
+
+      it('TypeNamePattern.forTypeNames: throws when it receives an empty array as parameter', () => {
+        expect(() => TypeNamePattern.forTypeNames([])).toThrow();
+      });
+
+      it('TypeNamePattern.forAllTypeNamesExcludeTypeNames: throws when it receives an empty array as parameter', () => {
+        expect(() => TypeNamePattern.forAllTypeNamesExcludeTypeNames([])).toThrow();
+      });
+
+      it('FieldPattern.forAllFieldNamesOfTypeName: throws when it receives an empty array as parameter', () => {
+        expect(() => FieldNamePattern.forAllFieldNamesOfTypeName([])).toThrow();
+      });
+
+      it('FieldNamePattern.forAllFieldNamesExcludeFieldNamesOfTypeName: throws when it receives an empty array as parameter', () => {
+        expect(() => FieldNamePattern.forAllFieldNamesExcludeFieldNamesOfTypeName([])).toThrow();
+        expect(() => FieldNamePattern.forAllFieldNamesExcludeFieldNamesOfTypeName([[Droid, []]])).toThrow();
+        expect(() => FieldNamePattern.forAllFieldNamesExcludeFieldNamesOfTypeName([[[], id]])).toThrow();
+        expect(() => FieldNamePattern.forAllFieldNamesExcludeFieldNamesOfTypeName([[[], []]])).toThrow();
+      });
+
+      it('FieldNamePattern.forFieldNamesOfAllTypeNamesExcludeTypeNames: throws when it receives an empty array as parameter', () => {
+        expect(() => FieldNamePattern.forFieldNamesOfAllTypeNamesExcludeTypeNames([], [id])).toThrow();
+        expect(() => FieldNamePattern.forFieldNamesOfAllTypeNamesExcludeTypeNames([Droid], [])).toThrow();
+        expect(() => FieldNamePattern.forFieldNamesOfAllTypeNamesExcludeTypeNames([], [])).toThrow();
+      });
+
+      it('FieldNamePattern.forAllFieldNamesOfAllTypeNamesExcludeTypeNames: throws when it receives an empty array as parameter', () => {
+        expect(() => FieldNamePattern.forAllFieldNamesOfAllTypeNamesExcludeTypeNames([])).toThrow();
+      });
+
+      it('FieldNamePattern.forFieldNamesOfTypeName: throws when it receives an empty array as parameter', () => {
+        expect(() => FieldNamePattern.forFieldNamesOfTypeName([])).toThrow();
+        expect(() => FieldNamePattern.forFieldNamesOfTypeName([[Droid, []]])).toThrow();
+        expect(() => FieldNamePattern.forFieldNamesOfTypeName([[[], id]])).toThrow();
+        expect(() => FieldNamePattern.forFieldNamesOfTypeName([[[], []]])).toThrow();
+      });
+
+      it('FieldNamePattern.forAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames: throws when it receives an empty array as parameter', () => {
+        expect(() =>
+          FieldNamePattern.forAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames([], [id])
+        ).toThrow();
+        expect(() =>
+          FieldNamePattern.forAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames([Droid], [])
+        ).toThrow();
+        expect(() =>
+          FieldNamePattern.forAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames([], [])
+        ).toThrow();
+      });
+    });
+
+    describe.each([
+      ',',
+      '.',
+      '/',
+      '<',
+      '>',
+      '?',
+      ':',
+      "'",
+      '"',
+      '[',
+      ']',
+      '{',
+      '}',
+      '\\',
+      '|',
+      '+',
+      '=',
+      '`',
+      '~',
+      '!',
+      '@',
+      '#',
+      '$',
+      '%',
+      '^',
+      '&',
+      '*',
+      '(',
+      ')',
+      // '_', // underscore is a valid character
+      '-',
+      '+',
+      '=',
+      'space ',
+      'tab\t',
+      'newline\n',
+    ])('throws an error if value is not AlphaNumeric', invalidCharacter => {
+      const invalidName = `Invalid${invalidCharacter}Name`;
+      it(`TypeName and FieldName throws an error when the name contains: ${invalidCharacter}`, () => {
+        expect(() => TypeName.fromString(invalidName)).toThrow();
+        expect(() => FieldName.fromString(invalidName)).toThrow();
+      });
+    });
+  });
 });
 //#endregion
 
 //#region builders, RegExp and matchers
+
+//#region TypeNamePattern
 //#region `'TypeName;AnotherTypeName;'`
 describe('Configuring specific Graphql Types:', () => {
   const [patternIndex, expectedPattern] = validPatterns[0];
-  const pattern = Pattern.forTypeNames([Droid, Starship]);
+  const pattern = TypeNamePattern.forTypeNames([Droid, Starship]);
 
   describe('Pattern.forTypeNames:', () => {
     it('builds the expected pattern', () => {
@@ -241,7 +286,7 @@ describe('Configuring specific Graphql Types:', () => {
   });
 
   describe('Pattern.regexpForTypeNames:', () => {
-    const regexpForTypeNames = Pattern.regexpForTypeNames;
+    const regexpForTypeNames = TypeNamePattern.regexpForTypeNames;
 
     test('integrity check: the RegExp is not modified accidentally', () => {
       expect(regexpForTypeNames.source).toBe(/\b(?!TypeNames|FieldNames\b)(?<typeName>\w+;)/gim.source);
@@ -255,7 +300,7 @@ describe('Configuring specific Graphql Types:', () => {
       '%s will match and it will be configured because it was specified in the pattern',
       typeName => {
         const key = typeName.value;
-        const result = Pattern.matchAndConfigureTypeNames(pattern, typeName);
+        const result = TypeNamePattern.matchAndConfigureTypeNames(pattern, typeName);
 
         it(`will match because '${typeName.value}' was specified in the pattern`, () => {
           expect(result[key]?.matchFound).toBe(true);
@@ -271,7 +316,7 @@ describe('Configuring specific Graphql Types:', () => {
       '%s will not match neither will it be configured because it was not specified in the pattern',
       typeName => {
         const key = typeName.value;
-        const result = Pattern.matchAndConfigureTypeNames(pattern, typeName);
+        const result = TypeNamePattern.matchAndConfigureTypeNames(pattern, typeName);
 
         it(`will not match because '${typeName.value}' was not specified in the pattern`, () => {
           expect(result[key]?.matchFound).toBeUndefined();
@@ -289,7 +334,7 @@ describe('Configuring specific Graphql Types:', () => {
 //#region `'@*TypeNames;'`
 describe('Configuring all Graphql Types:', () => {
   const [patternIndex, expectedPattern] = validPatterns[1];
-  const pattern = Pattern.forAllTypeNames();
+  const pattern = TypeNamePattern.forAllTypeNames();
 
   describe('Patterns.forAllTypeNames:', () => {
     it('builds the expected pattern', () => {
@@ -298,7 +343,7 @@ describe('Configuring all Graphql Types:', () => {
   });
 
   describe('Pattern.regexpForAllTypeNames:', () => {
-    const regexpForAllTypeNames = Pattern.regexpForAllTypeNames;
+    const regexpForAllTypeNames = TypeNamePattern.regexpForAllTypeNames;
 
     test('integrity check: the RegExp is not modified accidentally', () => {
       expect(regexpForAllTypeNames.source).toBe(/(?<allTypeNames>@\*TypeNames;)/gim.source);
@@ -312,11 +357,7 @@ describe('Configuring all Graphql Types:', () => {
       `will match and it will be configured: using pattern: '${expectedPattern}'`,
       typeName => {
         const key = typeName.value;
-        const result = Pattern.interpretGlobalPatters(
-          'AllTypeNames',
-          Pattern.matchAndConfigureAllTypeNames(pattern),
-          typeName
-        );
+        const result = TypeNamePattern.matchAndConfigureAllTypeNames(pattern, typeName);
 
         it(`will match because ${pattern} includes '${typeName.value}'`, () => {
           expect(result[key]?.matchFound).toBe(true);
@@ -334,7 +375,7 @@ describe('Configuring all Graphql Types:', () => {
 //#region `'@*TypeNames-[excludeTypeNames];'`
 describe('Configuring all Graphql Types except those specified in the exclusion list of TypeNames:', () => {
   const [patternIndex, expectedPattern] = validPatterns[2];
-  const pattern = Pattern.forAllTypeNamesExcludeTypeNames([Droid, Starship]);
+  const pattern = TypeNamePattern.forAllTypeNamesExcludeTypeNames([Droid, Starship]);
 
   describe('Pattern.forAllTypeNamesExcludeTypeNames:', () => {
     it('builds the expected pattern', () => {
@@ -343,7 +384,7 @@ describe('Configuring all Graphql Types except those specified in the exclusion 
   });
 
   describe('Pattern.regexpForAllTypeNamesExcludeTypeNames:', () => {
-    const regexpForAllTypeNamesExcludeTypeNames = Pattern.regexpForAllTypeNamesExcludeTypeNames;
+    const regexpForAllTypeNamesExcludeTypeNames = TypeNamePattern.regexpForAllTypeNamesExcludeTypeNames;
 
     test('integrity check: the RegExp is not modified accidentally', () => {
       expect(regexpForAllTypeNamesExcludeTypeNames.source).toBe(
@@ -359,7 +400,7 @@ describe('Configuring all Graphql Types except those specified in the exclusion 
       `%s will match but it will not be configured: using pattern: '${expectedPattern}'`,
       typeName => {
         const key = typeName.value;
-        const result = Pattern.matchAndConfigureAllTypeNamesExcludeTypeNames(pattern, typeName);
+        const result = TypeNamePattern.matchAndConfigureAllTypeNamesExcludeTypeNames(pattern, typeName);
         it(`will match because '${typeName.value}' was specified in the pattern`, () => {
           expect(result[key]?.matchFound).toBe(true);
         });
@@ -374,7 +415,7 @@ describe('Configuring all Graphql Types except those specified in the exclusion 
       `%s will not match but it will be configured: using pattern: '${expectedPattern}'`,
       typeName => {
         const key = typeName.value;
-        const result = Pattern.matchAndConfigureAllTypeNamesExcludeTypeNames(pattern, typeName);
+        const result = TypeNamePattern.matchAndConfigureAllTypeNamesExcludeTypeNames(pattern, typeName);
         it(`will not match because '${typeName.value}' was not specified in the pattern`, () => {
           expect(result[key]?.matchFound).toBe(false);
         });
@@ -387,12 +428,14 @@ describe('Configuring all Graphql Types except those specified in the exclusion 
   });
 });
 //#endregion
+//#endregion
 
+//#region FieldNamePattern
 //#region `'TypeName.[fieldNames];'`
 describe('Configuring specific fields of a specific Graphql Type:', () => {
   const [patternIndex, expectedPattern] = validPatterns[3];
 
-  const pattern = Pattern.forFieldNamesOfTypeName([
+  const pattern = FieldNamePattern.forFieldNamesOfTypeName([
     [Droid, [id, name, friends]], // individual
     [Human, [id, name, title]], // individual
     [Starship, [name, length]], // individual
@@ -406,7 +449,7 @@ describe('Configuring specific fields of a specific Graphql Type:', () => {
 
       it('2. shared: where the first tuple element is a list of TypeNames and the second is a list of FieldNames common to all the TypeNames in the first element', () => {
         expect(
-          Pattern.forFieldNamesOfTypeName([
+          FieldNamePattern.forFieldNamesOfTypeName([
             [[Droid, Human], id], // shared
             [[Droid, Human, Starship], [name]], // shared
             [Starship, [length]], //shared,just with nobody
@@ -418,7 +461,7 @@ describe('Configuring specific fields of a specific Graphql Type:', () => {
 
       it('3. combined: where the first tuple element is a single/list of TypeNames and the second is a list of FieldNames common to only/all of the TypeNames in the first element', () => {
         expect(
-          Pattern.forFieldNamesOfTypeName([
+          FieldNamePattern.forFieldNamesOfTypeName([
             [Droid, [id, name, friends]], // individual
             [Human, id], // individual
             [[Human, Starship], [name]], // shared
@@ -431,7 +474,7 @@ describe('Configuring specific fields of a specific Graphql Type:', () => {
   });
 
   describe('Pattern.regexpForFieldNamesOfTypeName:', () => {
-    const regexpForFieldNamesOfTypeName = Pattern.regexpForFieldNamesOfTypeName;
+    const regexpForFieldNamesOfTypeName = FieldNamePattern.regexpForFieldNamesOfTypeName;
 
     test('integrity check: the RegExp is not modified accidentally', () => {
       expect(regexpForFieldNamesOfTypeName.source).toBe(
@@ -456,7 +499,7 @@ describe('Configuring specific fields of a specific Graphql Type:', () => {
       [Starship, length],
     ])(`%s.%s will match and it will be configured: using pattern: '${expectedPattern}'`, (typeName, fieldName) => {
       const key = `${typeName.value}.${fieldName.value}`;
-      const result = Pattern.matchAndConfigureFieldNamesOfTypeName(pattern, typeName, fieldName);
+      const result = FieldNamePattern.matchAndConfigureFieldNamesOfTypeName(pattern, typeName, fieldName);
 
       it(`will match because when expanded, '${typeName.value}.${fieldName.value}' was specified in the pattern`, () => {
         expect(result[key]?.matchFound).toBe(true);
@@ -495,7 +538,7 @@ describe('Configuring specific fields of a specific Graphql Type:', () => {
       `%s.%s will not match neither will it be configured: using pattern: '${expectedPattern}'`,
       (typeName, fieldName) => {
         const key = `${typeName.value}.${fieldName.value}`;
-        const result = Pattern.matchAndConfigureFieldNamesOfTypeName(pattern, typeName, fieldName);
+        const result = FieldNamePattern.matchAndConfigureFieldNamesOfTypeName(pattern, typeName, fieldName);
 
         it(`will not match because when expanded, '${typeName.value}.${fieldName.value}' was not specified in the pattern`, () => {
           expect(result[key]?.matchFound).toBeUndefined();
@@ -513,7 +556,7 @@ describe('Configuring specific fields of a specific Graphql Type:', () => {
 //#region `'TypeName.@*FieldNames;'`
 describe('Configuring all fields of a specific Graphql Type:', () => {
   const [patternIndex, expectedPattern] = validPatterns[4];
-  const pattern = Pattern.forAllFieldNamesOfTypeName([Droid, Movie]);
+  const pattern = FieldNamePattern.forAllFieldNamesOfTypeName([Droid, Movie]);
 
   describe('Pattern.forAllFieldNamesOfTypeName:', () => {
     it('builds the expected pattern for each TypeName in a list of TypeNames:', () => {
@@ -522,7 +565,7 @@ describe('Configuring all fields of a specific Graphql Type:', () => {
   });
 
   describe('Pattern.regexpForAllFieldNamesOfTypeName:', () => {
-    const regexpForAllFieldNamesOfTypeName = Pattern.regexpForAllFieldNamesOfTypeName;
+    const regexpForAllFieldNamesOfTypeName = FieldNamePattern.regexpForAllFieldNamesOfTypeName;
 
     test('integrity check: the RegExp is not modified accidentally', () => {
       expect(regexpForAllFieldNamesOfTypeName.source).toBe(
@@ -534,27 +577,57 @@ describe('Configuring all fields of a specific Graphql Type:', () => {
   });
 
   describe(`Pattern.matchAndConfigureAllFieldNamesOfTypeName: using pattern: '${expectedPattern}'`, () => {
-    describe.each([Droid, Movie])(
-      `%s will match and it will be configured: using pattern: '${expectedPattern}'`,
-      typeName => {
-        const key = `${typeName.value}.${FieldName.fromAllFieldNames().value}`;
-        const result = Pattern.matchAndConfigureAllFieldNamesOfTypeName(pattern, typeName);
+    describe.each([
+      [Droid, id],
+      [Droid, name],
+      [Droid, friends],
+      [Droid, friend],
+      [Droid, title],
+      [Droid, episode],
+      [Droid, length],
 
-        it(`will match because '${typeName.value}' was specified in the pattern`, () => {
-          expect(result[key]?.matchFound).toBe(true);
-        });
+      [Movie, id],
+      [Movie, name],
+      [Movie, friends],
+      [Movie, friend],
+      [Movie, title],
+      [Movie, episode],
+      [Movie, length],
+    ])(`%s will match and it will be configured: using pattern: '${expectedPattern}'`, (typeName, fieldName) => {
+      const key = `${typeName.value}.${fieldName.value}`;
+      const result = FieldNamePattern.matchAndConfigureAllFieldNamesOfTypeName(pattern, typeName, fieldName);
 
-        it(`will be configured because '${typeName.value}' was specified in the pattern`, () => {
-          expect(result[key]?.shouldBeConfigured).toBe(true);
-        });
-      }
-    );
+      it(`will match because '${typeName.value}' was specified in the pattern and the pattern includes '${typeName.value}.${fieldName.value}'`, () => {
+        expect(result[key]?.matchFound).toBe(true);
+      });
 
-    describe.each([Starship, Human])(
+      it(`will be configured because '${typeName.value}' was specified in the pattern and the pattern includes '${typeName.value}.${fieldName.value}'`, () => {
+        expect(result[key]?.shouldBeConfigured).toBe(true);
+      });
+    });
+
+    describe.each([
+      // Starship, Human
+      [Starship, id],
+      [Starship, name],
+      [Starship, friends],
+      [Starship, friend],
+      [Starship, title],
+      [Starship, episode],
+      [Starship, length],
+
+      [Human, id],
+      [Human, name],
+      [Human, friends],
+      [Human, friend],
+      [Human, title],
+      [Human, episode],
+      [Human, length],
+    ])(
       `%s will not match neither will it be configured: using pattern: '${expectedPattern}'`,
-      typeName => {
-        const key = `${typeName.value}.${FieldName.fromAllFieldNames().value}`;
-        const result = Pattern.matchAndConfigureAllFieldNamesOfTypeName(pattern, typeName);
+      (typeName, fieldName) => {
+        const key = `${typeName.value}.${fieldName.value}`;
+        const result = FieldNamePattern.matchAndConfigureAllFieldNamesOfTypeName(pattern, typeName, fieldName);
 
         it(`will not match because '${typeName.value}' was not specified in the pattern`, () => {
           expect(result[key]?.matchFound).toBeUndefined();
@@ -572,7 +645,7 @@ describe('Configuring all fields of a specific Graphql Type:', () => {
 //#region `'TypeName.@*FieldNames-[excludeFieldNames];'`
 describe('Configuring all fields except those specified in the exclusion list of FieldNames for a specific GraphQL Type:', () => {
   const [patternIndex, expectedPattern] = validPatterns[5];
-  const pattern = Pattern.forAllFieldNamesExcludeFieldNamesOfTypeName([
+  const pattern = FieldNamePattern.forAllFieldNamesExcludeFieldNamesOfTypeName([
     [Droid, [id, name, friends]], // individual
     [Human, [id, name, title]], // individual
     [Starship, [name, length]], // individual
@@ -585,7 +658,7 @@ describe('Configuring all fields except those specified in the exclusion list of
 
       it('2. shared: where the first tuple element is a list of TypeNames and the second is a list of FieldNames common to all the TypeNames in the first element', () => {
         expect(
-          Pattern.forAllFieldNamesExcludeFieldNamesOfTypeName([
+          FieldNamePattern.forAllFieldNamesExcludeFieldNamesOfTypeName([
             [[Droid, Human], id], // shared
             [[Droid, Human, Starship], [name]], // shared
             [Starship, [length]], //shared,just with nobody
@@ -597,7 +670,7 @@ describe('Configuring all fields except those specified in the exclusion list of
 
       it('3. combined: where the first tuple element is a single/list of TypeNames and the second is a list of FieldNames common to only/all of the TypeNames in the first element', () => {
         expect(
-          Pattern.forAllFieldNamesExcludeFieldNamesOfTypeName([
+          FieldNamePattern.forAllFieldNamesExcludeFieldNamesOfTypeName([
             [Droid, [id, name, friends]], // individual
             [Human, id], // individual
             [[Human, Starship], [name]], // shared
@@ -610,7 +683,8 @@ describe('Configuring all fields except those specified in the exclusion list of
   });
 
   describe('Pattern.regexpForAllFieldNamesExcludeFieldNamesOfTypeName:', () => {
-    const regexpForAllFieldNamesExcludeFieldNamesOfTypeName = Pattern.regexpForAllFieldNamesExcludeFieldNamesOfTypeName;
+    const regexpForAllFieldNamesExcludeFieldNamesOfTypeName =
+      FieldNamePattern.regexpForAllFieldNamesExcludeFieldNamesOfTypeName;
 
     test('integrity check: the RegExp is not modified accidentally', () => {
       expect(regexpForAllFieldNamesExcludeFieldNamesOfTypeName.source).toBe(
@@ -635,7 +709,11 @@ describe('Configuring all fields except those specified in the exclusion list of
       [Starship, length],
     ])(`%s.%s will match but it will not be configured: using pattern: '${expectedPattern}'`, (typeName, fieldName) => {
       const key = `${typeName.value}.${fieldName.value}`;
-      const result = Pattern.matchAndConfigureAllFieldNamesExcludeFieldNamesOfTypeName(pattern, typeName, fieldName);
+      const result = FieldNamePattern.matchAndConfigureAllFieldNamesExcludeFieldNamesOfTypeName(
+        pattern,
+        typeName,
+        fieldName
+      );
       it(`will match because when expanded, '${typeName.value}.${fieldName.value}' was specified in the pattern`, () => {
         expect(result[key]?.matchFound).toBe(true);
       });
@@ -663,14 +741,18 @@ describe('Configuring all fields except those specified in the exclusion list of
       [Human, length],
     ])(`%s.%s will not match but it will be configured: using pattern: '${expectedPattern}'`, (typeName, fieldName) => {
       const key = `${typeName.value}.${fieldName.value}`;
-      const result = Pattern.matchAndConfigureAllFieldNamesExcludeFieldNamesOfTypeName(pattern, typeName, fieldName);
+      const result = FieldNamePattern.matchAndConfigureAllFieldNamesExcludeFieldNamesOfTypeName(
+        pattern,
+        typeName,
+        fieldName
+      );
 
       it(`will not match because when expanded, '${typeName.value}.${fieldName.value}' was not specified in the pattern`, () => {
-        expect(result[key]?.matchFound).toBeUndefined(); // undefined
+        expect(result[key]?.matchFound).toBe(false);
       });
 
       it(`will be configured because when expanded, the pattern includes '${typeName.value}.${fieldName.value}'`, () => {
-        expect(result[key]?.shouldBeConfigured).toBe(true); // true
+        expect(result[key]?.shouldBeConfigured).toBe(true);
       });
     });
 
@@ -686,7 +768,11 @@ describe('Configuring all fields except those specified in the exclusion list of
       `%s.%s will not match neither will it be configured using pattern: '${expectedPattern}'`,
       (typeName, fieldName) => {
         const key = `${typeName.value}.${fieldName.value}`;
-        const result = Pattern.matchAndConfigureAllFieldNamesExcludeFieldNamesOfTypeName(pattern, typeName, fieldName);
+        const result = FieldNamePattern.matchAndConfigureAllFieldNamesExcludeFieldNamesOfTypeName(
+          pattern,
+          typeName,
+          fieldName
+        );
 
         it(`will match because when expanded, '${typeName.value}.${fieldName.value}' was not specified in the pattern`, () => {
           expect(result[key]?.matchFound).toBeUndefined();
@@ -701,460 +787,585 @@ describe('Configuring all fields except those specified in the exclusion list of
 });
 //#endregion
 
-// //#region `'@*TypeNames.[fieldNames];'`
-// describe('Configuring specific fields for all Graphql Types:', () => {
-//   const [patternIndex, expectedPattern] = validPatterns[6];
-//   const pattern = Pattern.forFieldNamesOfAllTypeNames([id, name, friends]);
-
-//   describe('Pattern.forFieldNamesOfAllTypeNames:', () => {
-//     describe('builds the expected pattern for the list of FieldNames:', () => {
-//       expect(pattern.value).toBe(expectedPattern);
-//     });
-//   });
-
-//   describe('Pattern.regexpForFieldNamesOfAllTypeNames:', () => {
-//     const regexpForFieldNamesOfAllTypeNames = Pattern.regexpForFieldNamesOfAllTypeNames;
-
-//     test('integrity check: the RegExp is not modified accidentally', () => {
-//       expect(regexpForFieldNamesOfAllTypeNames.source).toBe(
-//         /@\*TypeNames\.\[\s*(?<fieldNames>(\w+,?\s*)*)\];/gim.source
-//       );
-//     });
-
-//     testRegexpAgainstPatterns(regexpForFieldNamesOfAllTypeNames, patternIndex);
-//   });
-
-//   describe(`Pattern.matchAndConfigureFieldNamesOfAllTypeNames: using pattern: '${expectedPattern}'`, () => {
-//     describe.each([id, name, friends])(
-//       `%s will match and it will be configured: using pattern: '${expectedPattern}'`,
-//       fieldName => {
-//         const { matchFound, shouldBeConfigured } = Pattern.matchAndConfigureFieldNamesOfAllTypeNames(
-//           pattern,
-//           fieldName
-//         );
-//         it(`will match because '${fieldName.value}' was specified in the pattern`, () => {
-//           expect(matchFound).toBe(true);
-//         });
-
-//         it(`will not be configured because '${fieldName.value}' was specified in the pattern`, () => {
-//           expect(shouldBeConfigured).toBe(true);
-//         });
-//       }
-//     );
-
-//     describe.each([friend, title, episode, length])(
-//       `%s will not match neither will it be configured: using pattern: '${expectedPattern}'`,
-//       fieldName => {
-//         const { matchFound, shouldBeConfigured } = Pattern.matchAndConfigureFieldNamesOfAllTypeNames(
-//           pattern,
-//           fieldName
-//         );
-
-//         it(`will not match because '${fieldName.value}' was not specified in the pattern`, () => {
-//           expect(matchFound).toBe(false);
-//         });
-
-//         it(`will not not be configured because '${fieldName.value}' was not specified in the pattern`, () => {
-//           expect(shouldBeConfigured).toBe(false);
-//         });
-//       }
-//     );
-//   });
-// });
-// //#endregion
-
-// //#region `'@*TypeNames.@*FieldNames;'`
-// describe('Configuring all fields for all Graphql Types:', () => {
-//   const [patternIndex, expectedPattern] = validPatterns[7];
-//   const invalidPattern = '@*TypeNames@*FieldNames;'; // missing a dot
-//   const pattern = Pattern.forAllFieldNamesOfAllTypeNames();
-
-//   describe('Pattern.forAllFieldNamesOfAllTypeNames:', () => {
-//     describe('builds the expected pattern:', () => {
-//       expect(pattern.value).toBe(expectedPattern);
-//     });
-//   });
-
-//   describe('Pattern.regexpForAllFieldNamesOfAllTypeNames:', () => {
-//     const regexpForAllFieldNamesOfAllTypeNames = Pattern.regexpForAllFieldNamesOfAllTypeNames;
-
-//     test('integrity check: the RegExp is not modified accidentally', () => {
-//       expect(regexpForAllFieldNamesOfAllTypeNames.source).toBe(/@\*TypeNames\.@\*FieldNames;/gim.source);
-//     });
-
-//     testRegexpAgainstPatterns(regexpForAllFieldNamesOfAllTypeNames, patternIndex);
-//   });
-
-//   describe(`Pattern.matchAndConfigureAllFieldNamesOfAllTypeNames: using pattern: '${expectedPattern}'`, () => {
-//     const matchAndConfigureAllFieldNamesOfAllTypeNames = Pattern.matchAndConfigureAllFieldNamesOfAllTypeNames;
-
-//     describe(`will match and it will be configured: using pattern: '${expectedPattern}'`, () => {
-//       const { matchFound, shouldBeConfigured } = matchAndConfigureAllFieldNamesOfAllTypeNames(pattern);
-
-//       it(`will match because ${expectedPattern} is a valid pattern`, () => {
-//         expect(matchFound).toBe(true);
-//       });
-
-//       it(`will be configured because ${expectedPattern} is a valid pattern`, () => {
-//         expect(shouldBeConfigured).toBe(true);
-//       });
-//     });
-
-//     describe(`will not match neither will it be configured: using pattern: '${invalidPattern}'`, () => {
-//       const { matchFound, shouldBeConfigured } = matchAndConfigureAllFieldNamesOfAllTypeNames({
-//         value: invalidPattern,
-//       } as Pattern);
-//       it(`will not match because ${invalidPattern} is an invalid pattern`, () => {
-//         expect(matchFound).toBe(false);
-//       });
-
-//       it(`will not be configured because ${invalidPattern} is an invalid pattern`, () => {
-//         expect(shouldBeConfigured).toBe(false);
-//       });
-//     });
-//   });
-// });
-// //#endregion
-
-// //#region `'@*TypeNames.@*FieldNames-[excludeFieldNames];'`
-// describe('Configuring all fields except those specified in the exclusion list of FieldNames for all GraphQL Types:', () => {
-//   const [patternIndex, expectedPattern] = validPatterns[8];
-//   const pattern = Pattern.forAllFieldNamesExcludeFieldNamesOfAllTypeNames([id, name, friends]);
-
-//   describe('Pattern.forAllFieldNamesExcludeFieldNamesOfAllTypeNames:', () => {
-//     describe('builds the expected pattern:', () => {
-//       expect(pattern.value).toBe(expectedPattern);
-//     });
-//   });
-
-//   describe('Pattern.regexpForAllFieldNamesExcludeFieldNamesOfAllTypeNames:', () => {
-//     const regexpForAllFieldNamesExcludeFieldNamesOfAllTypeNames =
-//       Pattern.regexpForAllFieldNamesExcludeFieldNamesOfAllTypeNames;
-
-//     test('integrity check: the RegExp is not modified accidentally', () => {
-//       expect(regexpForAllFieldNamesExcludeFieldNamesOfAllTypeNames.source).toBe(
-//         /@\*TypeNames\.@\*FieldNames-\[\s*(?<fieldNames>(\w+,?\s*)*)\];/gim.source
-//       );
-//     });
-
-//     testRegexpAgainstPatterns(regexpForAllFieldNamesExcludeFieldNamesOfAllTypeNames, patternIndex);
-//   });
-
-//   describe(`Pattern.matchAndConfigureAllFieldNamesExcludeFieldNamesOfAllTypeNames: using pattern: '${expectedPattern}'`, () => {
-//     describe.each([id, name, friends])(
-//       '%s will match but it will not be configured because it was specified in the exclusion list of FieldNames',
-//       fieldName => {
-//         const { matchFound, shouldBeConfigured } =
-//           Pattern.matchAndConfigureAllFieldNamesExcludeFieldNamesOfAllTypeNames(pattern, fieldName);
-
-//         it(`it will match because '${fieldName.value}' was specified in the pattern`, () => {
-//           expect(matchFound).toBe(true);
-//         });
-
-//         it(`it will not be configured because the pattern excludes '${fieldName.value}'`, () => {
-//           expect(shouldBeConfigured).toBe(false);
-//         });
-//       }
-//     );
-
-//     describe.each([friend, title, episode, length])(
-//       '%s will not match but it will be configured because it was not specified in the exclusion list of FieldNames',
-//       fieldName => {
-//         const { matchFound, shouldBeConfigured } =
-//           Pattern.matchAndConfigureAllFieldNamesExcludeFieldNamesOfAllTypeNames(pattern, fieldName);
-
-//         it(`it will not match because '${fieldName.value}' was not specified in the pattern`, () => {
-//           expect(matchFound).toBe(false);
-//         });
-
-//         it(`it will be configured because the pattern includes '${fieldName.value}'`, () => {
-//           expect(shouldBeConfigured).toBe(true);
-//         });
-//       }
-//     );
-//   });
-// });
-// //#endregion
-
-// //#region `'@*TypeNames-[excludeTypeNames].[fieldNames];'`
-// describe('Configuring specific fields of all GraphQL Types except those specified in the exclusion list of TypeNames:', () => {
-//   const [patternIndex, expectedPattern] = validPatterns[9];
-//   const pattern = Pattern.forFieldNamesOfAllTypeNamesExcludeTypeNames([Droid, Human], [id, name, friends]);
-
-//   describe('Pattern.forFieldNamesOfAllTypeNamesExcludeTypeNames:', () => {
-//     describe('builds the expected pattern for the list of FieldNames:', () => {
-//       expect(pattern.value).toBe(expectedPattern);
-//     });
-//   });
-
-//   describe('Pattern.regexpForFieldNamesOfAllTypeNamesExcludeTypeNames:', () => {
-//     const regexpForFieldNamesOfAllTypeNamesExcludeTypeNames = Pattern.regexpForFieldNamesOfAllTypeNamesExcludeTypeNames;
-
-//     test('integrity check: the RegExp is not modified accidentally', () => {
-//       expect(regexpForFieldNamesOfAllTypeNamesExcludeTypeNames.source).toBe(
-//         /@\*TypeNames-\[\s*(?<typeNames>(\w+,?\s*)*)\]\.\[\s*(?<fieldNames>(\w+,?\s*)*)\];/gim.source
-//       );
-//     });
-
-//     testRegexpAgainstPatterns(regexpForFieldNamesOfAllTypeNamesExcludeTypeNames, patternIndex);
-//   });
-
-//   describe(`Pattern.matchAndConfigureFieldNamesOfAllTypeNamesExcludeTypeNames: using pattern: '${expectedPattern}'`, () => {
-//     describe.each([
-//       [Droid, id],
-//       [Droid, name],
-//       [Droid, friends],
-
-//       [Human, id],
-//       [Human, name],
-//       [Human, friends],
-//     ])(`%s.%s will match but it will not be configured: using pattern: '${pattern}'`, (typeName, fieldName) => {
-//       const { matchFound, shouldBeConfigured } = Pattern.matchAndConfigureFieldNamesOfAllTypeNamesExcludeTypeNames(
-//         pattern,
-//         typeName,
-//         fieldName
-//       );
-//       it(`will match because when expanded, '${typeName.value}.${fieldName.value}' was specified in the pattern`, () => {
-//         expect(matchFound).toBe(true);
-//       });
-
-//       it(`will not be configured because when expanded, the pattern excludes '${typeName.value}.${fieldName.value}'`, () => {
-//         expect(shouldBeConfigured).toBe(false);
-//       });
-//     });
-
-//     describe.each([
-//       [Starship, id],
-//       [Starship, name],
-//       [Starship, friends],
-
-//       [Movie, id],
-//       [Movie, name],
-//       [Movie, friends],
-//     ])(
-//       `%s.%s will not match but it will it be configured: using pattern: '${expectedPattern}'`,
-//       (typeName, fieldName) => {
-//         const { matchFound, shouldBeConfigured } = Pattern.matchAndConfigureFieldNamesOfAllTypeNamesExcludeTypeNames(
-//           pattern,
-//           typeName,
-//           fieldName
-//         );
-
-//         it(`will not match because when expanded, '${typeName.value}.${fieldName.value}' was not specified in the pattern`, () => {
-//           expect(matchFound).toBe(false);
-//         });
-
-//         it(`will be configured because when expanded, the pattern includes '${typeName.value}.${fieldName.value}'`, () => {
-//           expect(shouldBeConfigured).toBe(true);
-//         });
-//       }
-//     );
-
-//     describe.each([
-//       [Droid, friend],
-//       [Droid, title],
-//       [Droid, episode],
-//       [Droid, length],
-
-//       [Starship, friend],
-//       [Starship, title],
-//       [Starship, episode],
-//       [Starship, length],
-
-//       [Human, friend],
-//       [Human, title],
-//       [Human, episode],
-//       [Human, length],
-
-//       [Movie, friend],
-//       [Movie, title],
-//       [Movie, episode],
-//       [Movie, length],
-//     ])(
-//       `%s.%s will not match but it will it be configured: using pattern: '${expectedPattern}'`,
-//       (typeName, fieldName) => {
-//         const { matchFound, shouldBeConfigured } = Pattern.matchAndConfigureFieldNamesOfAllTypeNamesExcludeTypeNames(
-//           pattern,
-//           typeName,
-//           fieldName
-//         );
-
-//         it(`will not match because when expanded, '${typeName.value}.${fieldName.value}' was not specified in the pattern`, () => {
-//           expect(matchFound).toBe(false);
-//         });
-
-//         it(`will be not configured because when expanded, '${typeName.value}.${fieldName.value}' was not specified in the pattern`, () => {
-//           expect(shouldBeConfigured).toBe(false);
-//         });
-//       }
-//     );
-//   });
-// });
-// //#endregion
-
-// //#region `'@*TypeNames-[excludeTypeNames].@*FieldNames;'`
-// describe('Configuring all fields of all GraphQL Types except those specified in the exclusion list of TypeNames:', () => {
-//   const [patternIndex, expectedPattern] = validPatterns[10];
-//   const pattern = Pattern.forAllFieldNamesOfAllTypeNamesExcludeTypeNames([Droid, Human]);
-
-//   describe('Pattern.forAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames:', () => {
-//     describe('builds the expected pattern for the list of FieldNames:', () => {
-//       expect(pattern.value).toBe(expectedPattern);
-//     });
-//   });
-
-//   describe('Pattern.regexpForAllFieldNamesOfAllTypeNamesExcludeTypeNames:', () => {
-//     const regexpForAllFieldNamesOfAllTypeNamesExcludeTypeNames =
-//       Pattern.regexpForAllFieldNamesOfAllTypeNamesExcludeTypeNames;
-
-//     test('integrity check: the RegExp is not modified accidentally', () => {
-//       expect(regexpForAllFieldNamesOfAllTypeNamesExcludeTypeNames.source).toBe(
-//         /@\*TypeNames-\[\s*(?<typeNames>(\w+,?\s*)*)\]\.@\*FieldNames;/gim.source
-//       );
-//     });
-
-//     testRegexpAgainstPatterns(regexpForAllFieldNamesOfAllTypeNamesExcludeTypeNames, patternIndex);
-//   });
-
-//   describe(`Pattern.matchAndConfigureAllFieldNamesOfAllTypeNamesExcludeTypeNames: using pattern: '${expectedPattern}'`, () => {
-//     describe.each([Droid, Human])(
-//       `%s will match but it will not be configured: using pattern: '${expectedPattern}'`,
-//       typeName => {
-//         const { matchFound, shouldBeConfigured } = Pattern.matchAndConfigureAllFieldNamesOfAllTypeNamesExcludeTypeNames(
-//           pattern,
-//           typeName
-//         );
-
-//         it(`will match because '${typeName.value}' was specified in the pattern`, () => {
-//           expect(matchFound).toBe(true);
-//         });
-
-//         it(`will not be configured match because the pattern excludes '${typeName.value}'`, () => {
-//           expect(shouldBeConfigured).toBe(false);
-//         });
-//       }
-//     );
-
-//     describe.each([Starship, Movie])(
-//       `%s will not match but it will be configured: using pattern: '${expectedPattern}'`,
-//       typeName => {
-//         const { matchFound, shouldBeConfigured } = Pattern.matchAndConfigureAllFieldNamesOfAllTypeNamesExcludeTypeNames(
-//           pattern,
-//           typeName
-//         );
-
-//         it(`will not match because '${typeName.value}' was not specified in the pattern`, () => {
-//           expect(matchFound).toBe(false);
-//         });
-
-//         it(`will be configured match because the pattern includes '${typeName.value}'`, () => {
-//           expect(shouldBeConfigured).toBe(true);
-//         });
-//       }
-//     );
-//   });
-// });
-// //#endregion
-
-// //#region `'@*TypeNames-[excludeTypeNames].@*FieldNames-[excludeFieldNames];'`
-// describe('Configuring all fields except those specified in the exclusion list of FieldNames of all GraphQL Types except those specified in the exclusion list of TypeNames:', () => {
-//   const [patternIndex, expectedPattern] = validPatterns[11];
-//   const pattern = Pattern.forAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames(
-//     [Droid, Human],
-//     [id, name, friends]
-//   );
-
-//   describe('Pattern.forAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames:', () => {
-//     describe('builds the expected pattern for the list of FieldNames:', () => {
-//       expect(pattern.value).toBe(expectedPattern);
-//     });
-//   });
-
-//   describe('Pattern.regexpForAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames:', () => {
-//     const regexpForAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames =
-//       Pattern.regexpForAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames;
-
-//     test('integrity check: the RegExp is not modified accidentally', () => {
-//       expect(regexpForAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames.source).toBe(
-//         /@\*TypeNames-\[\s*(?<typeNames>(\w+,?\s*)*)\]\.@\*FieldNames-\[\s*(?<fieldNames>(\w+,?\s*)*)\];/gim.source
-//       );
-//     });
-
-//     testRegexpAgainstPatterns(regexpForAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames, patternIndex);
-//   });
-
-//   describe(`Pattern.matchAndConfigureAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames: using pattern: '${expectedPattern}'`, () => {
-//     describe.each([
-//       [Droid, id],
-//       [Droid, name],
-//       [Droid, friends],
-
-//       [Human, id],
-//       [Human, name],
-//       [Human, friends],
-//     ])(`%s.%s will match but it will not be configured: using pattern: '${expectedPattern}'`, (typeName, fieldName) => {
-//       const { matchFound, shouldBeConfigured } =
-//         Pattern.matchAndConfigureAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames(
-//           pattern,
-//           typeName,
-//           fieldName
-//         );
-
-//       it(`will match because when expanded, '${typeName.value}.${fieldName.value}' was specified in the pattern`, () => {
-//         expect(matchFound).toBe(true);
-//       });
-
-//       it(`will not be configured because when expanded, the pattern excludes '${typeName.value}.${fieldName.value}'`, () => {
-//         expect(shouldBeConfigured).toBe(false);
-//       });
-//     });
-
-//     describe.each([
-//       [Droid, friend],
-//       [Droid, title],
-//       [Droid, episode],
-//       [Droid, length],
-
-//       [Starship, id],
-//       [Starship, name],
-//       [Starship, friends],
-//       [Starship, friend],
-//       [Starship, title],
-//       [Starship, episode],
-//       [Starship, length],
-
-//       [Human, friend],
-//       [Human, title],
-//       [Human, episode],
-//       [Human, length],
-
-//       [Movie, id],
-//       [Movie, name],
-//       [Movie, friends],
-//       [Movie, friend],
-//       [Movie, title],
-//       [Movie, episode],
-//       [Movie, length],
-//     ])(`%s.%s will not match but it will be configured: using pattern: ${expectedPattern}`, (typeName, fieldName) => {
-//       const { matchFound, shouldBeConfigured } =
-//         Pattern.matchAndConfigureAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames(
-//           pattern,
-//           typeName,
-//           fieldName
-//         );
-
-//       it(`will not match because when expanded, '${typeName.value}.${fieldName.value}' was not specified in the pattern`, () => {
-//         expect(matchFound).toBe(false);
-//       });
-
-//       it(`will be configured because when expanded, the pattern includes '${typeName.value}.${fieldName.value}'`, () => {
-//         expect(shouldBeConfigured).toBe(true);
-//       });
-//     });
-//   });
-// });
-// //#endregion
-// //#endregion
+//#region `'@*TypeNames.[fieldNames];'`
+describe('Configuring specific fields for all Graphql Types:', () => {
+  const [patternIndex, expectedPattern] = validPatterns[6];
+  const pattern = FieldNamePattern.forFieldNamesOfAllTypeNames([id, name, friends]);
+
+  describe('Pattern.forFieldNamesOfAllTypeNames:', () => {
+    describe('builds the expected pattern for the list of FieldNames:', () => {
+      expect(pattern.value).toBe(expectedPattern);
+    });
+  });
+
+  describe('Pattern.regexpForFieldNamesOfAllTypeNames:', () => {
+    const regexpForFieldNamesOfAllTypeNames = FieldNamePattern.regexpForFieldNamesOfAllTypeNames;
+
+    test('integrity check: the RegExp is not modified accidentally', () => {
+      expect(regexpForFieldNamesOfAllTypeNames.source).toBe(
+        /@\*TypeNames\.\[\s*(?<fieldNames>(\w+,?\s*)*)\];/gim.source
+      );
+    });
+
+    testRegexpAgainstPatterns(regexpForFieldNamesOfAllTypeNames, patternIndex);
+  });
+
+  describe(`Pattern.matchAndConfigureFieldNamesOfAllTypeNames: using pattern: '${expectedPattern}'`, () => {
+    describe.each([
+      [Droid, id],
+      [Droid, name],
+      [Droid, friends],
+
+      [Starship, id],
+      [Starship, name],
+      [Starship, friends],
+
+      [Human, id],
+      [Human, name],
+      [Human, friends],
+
+      [Movie, id],
+      [Movie, name],
+      [Movie, friends],
+    ])(`%s.%s will match and it will be configured: using pattern: '${expectedPattern}'`, (typeName, fieldName) => {
+      const key = `${typeName.value}.${fieldName.value}`;
+      const result = FieldNamePattern.matchAndConfigureFieldNamesOfAllTypeNames(pattern, typeName, fieldName);
+
+      it(`will match because '${fieldName.value}' was specified in the pattern`, () => {
+        expect(result[key]?.matchFound).toBe(true);
+      });
+
+      it(`will be configured because '${fieldName.value}' was specified in the pattern`, () => {
+        expect(result[key]?.shouldBeConfigured).toBe(true);
+      });
+    });
+
+    describe.each([
+      [Droid, friend],
+      [Droid, title],
+      [Droid, episode],
+      [Droid, length],
+
+      [Starship, friend],
+      [Starship, title],
+      [Starship, episode],
+      [Starship, length],
+
+      [Human, friend],
+      [Human, title],
+      [Human, episode],
+      [Human, length],
+
+      [Movie, friend],
+      [Movie, title],
+      [Movie, episode],
+      [Movie, length],
+    ])(
+      `%s will not match neither will it be configured: using pattern: '${expectedPattern}'`,
+      (typeName, fieldName) => {
+        const key = `${typeName.value}.${fieldName.value}`;
+        const result = FieldNamePattern.matchAndConfigureFieldNamesOfAllTypeNames(pattern, typeName, fieldName);
+
+        it(`will not match because '${fieldName.value}' was not specified in the pattern`, () => {
+          expect(result[key]?.matchFound).toBeUndefined();
+        });
+
+        it(`will not not be configured because '${fieldName.value}' was not specified in the pattern`, () => {
+          expect(result[key]?.shouldBeConfigured).toBeUndefined();
+        });
+      }
+    );
+  });
+});
+//#endregion
+
+//#region `'@*TypeNames.@*FieldNames;'`
+describe('Configuring all fields for all Graphql Types:', () => {
+  const [patternIndex, expectedPattern] = validPatterns[7];
+  const pattern = FieldNamePattern.forAllFieldNamesOfAllTypeNames();
+
+  describe('Pattern.forAllFieldNamesOfAllTypeNames:', () => {
+    describe('builds the expected pattern:', () => {
+      expect(pattern.value).toBe(expectedPattern);
+    });
+  });
+
+  describe('Pattern.regexpForAllFieldNamesOfAllTypeNames:', () => {
+    const regexpForAllFieldNamesOfAllTypeNames = FieldNamePattern.regexpForAllFieldNamesOfAllTypeNames;
+
+    test('integrity check: the RegExp is not modified accidentally', () => {
+      expect(regexpForAllFieldNamesOfAllTypeNames.source).toBe(/@\*TypeNames\.@\*FieldNames;/gim.source);
+    });
+
+    testRegexpAgainstPatterns(regexpForAllFieldNamesOfAllTypeNames, patternIndex);
+  });
+
+  describe(`Pattern.matchAndConfigureAllFieldNamesOfAllTypeNames: using pattern: '${expectedPattern}'`, () => {
+    describe.each([
+      [Droid, id],
+      [Droid, name],
+      [Droid, friends],
+      [Droid, friend],
+      [Droid, title],
+      [Droid, episode],
+      [Droid, length],
+
+      [Starship, id],
+      [Starship, name],
+      [Starship, friends],
+      [Starship, friend],
+      [Starship, title],
+      [Starship, episode],
+      [Starship, length],
+
+      [Human, id],
+      [Human, name],
+      [Human, friends],
+      [Human, friend],
+      [Human, title],
+      [Human, episode],
+      [Human, length],
+
+      [Movie, id],
+      [Movie, name],
+      [Movie, friends],
+      [Movie, friend],
+      [Movie, title],
+      [Movie, episode],
+      [Movie, length],
+    ])(`will match and it will be configured: using pattern: '${expectedPattern}'`, (typeName, fieldName) => {
+      const key = `${typeName.value}.${fieldName.value}`;
+      const result = FieldNamePattern.matchAndConfigureAllFieldNamesOfAllTypeNames(pattern, typeName, fieldName);
+
+      it(`will match because ${pattern} includes '${typeName.value}.${fieldName.value}'`, () => {
+        expect(result[key]?.matchFound).toBe(true);
+      });
+
+      it(`will be configured because ${pattern} includes '${typeName.value}.${fieldName.value}'`, () => {
+        expect(result[key]?.shouldBeConfigured).toBe(true);
+      });
+    });
+  });
+});
+//#endregion
+
+//#region `'@*TypeNames.@*FieldNames-[excludeFieldNames];'`
+describe('Configuring all fields except those specified in the exclusion list of FieldNames for all GraphQL Types:', () => {
+  const [patternIndex, expectedPattern] = validPatterns[8];
+  const pattern = FieldNamePattern.forAllFieldNamesExcludeFieldNamesOfAllTypeNames([id, name, friends]);
+
+  describe('Pattern.forAllFieldNamesExcludeFieldNamesOfAllTypeNames:', () => {
+    describe('builds the expected pattern:', () => {
+      expect(pattern.value).toBe(expectedPattern);
+    });
+  });
+
+  describe('Pattern.regexpForAllFieldNamesExcludeFieldNamesOfAllTypeNames:', () => {
+    const regexpForAllFieldNamesExcludeFieldNamesOfAllTypeNames =
+      FieldNamePattern.regexpForAllFieldNamesExcludeFieldNamesOfAllTypeNames;
+
+    test('integrity check: the RegExp is not modified accidentally', () => {
+      expect(regexpForAllFieldNamesExcludeFieldNamesOfAllTypeNames.source).toBe(
+        /@\*TypeNames\.@\*FieldNames-\[\s*(?<fieldNames>(\w+,?\s*)*)\];/gim.source
+      );
+    });
+
+    testRegexpAgainstPatterns(regexpForAllFieldNamesExcludeFieldNamesOfAllTypeNames, patternIndex);
+  });
+
+  describe(`Pattern.matchAndConfigureAllFieldNamesExcludeFieldNamesOfAllTypeNames: using pattern: '${expectedPattern}'`, () => {
+    describe.each([
+      [Droid, id],
+      [Droid, name],
+      [Droid, friends],
+
+      [Starship, id],
+      [Starship, name],
+      [Starship, friends],
+
+      [Human, id],
+      [Human, name],
+      [Human, friends],
+
+      [Movie, id],
+      [Movie, name],
+      [Movie, friends],
+    ])(`%s.%s will match but it will not be configured: using pattern: '${expectedPattern}'`, (typeName, fieldName) => {
+      const key = `${typeName.value}.${fieldName.value}`;
+      const result = FieldNamePattern.matchAndConfigureAllFieldNamesExcludeFieldNamesOfAllTypeNames(
+        pattern,
+        typeName,
+        fieldName
+      );
+
+      it(`it will match because '${fieldName.value}' was specified in the exclusion list of FieldNames`, () => {
+        expect(result[key]?.matchFound).toBe(true);
+      });
+
+      it(`it will not be configured because the pattern excludes '${fieldName.value}'`, () => {
+        expect(result[key]?.shouldBeConfigured).toBe(false);
+      });
+    });
+
+    describe.each([
+      [Droid, friend],
+      [Droid, title],
+      [Droid, episode],
+      [Droid, length],
+
+      [Starship, friend],
+      [Starship, title],
+      [Starship, episode],
+      [Starship, length],
+
+      [Human, friend],
+      [Human, title],
+      [Human, episode],
+      [Human, length],
+
+      [Movie, friend],
+      [Movie, title],
+      [Movie, episode],
+      [Movie, length],
+    ])(
+      '%s will not match but it will be configured because it was not specified in the exclusion list of FieldNames',
+      (typeName, fieldName) => {
+        const key = `${typeName.value}.${fieldName.value}`;
+        const result = FieldNamePattern.matchAndConfigureAllFieldNamesExcludeFieldNamesOfAllTypeNames(
+          pattern,
+          typeName,
+          fieldName
+        );
+
+        it(`it will not match because '${fieldName.value}' was not specified in the pattern`, () => {
+          expect(result[key]?.matchFound).toBe(false);
+        });
+
+        it(`it will be configured because the pattern includes '${fieldName.value}'`, () => {
+          expect(result[key]?.shouldBeConfigured).toBe(true);
+        });
+      }
+    );
+  });
+});
+//#endregion
+
+//#region `'@*TypeNames-[excludeTypeNames].[fieldNames];'`
+describe('Configuring specific fields of all GraphQL Types except those specified in the exclusion list of TypeNames:', () => {
+  const [patternIndex, expectedPattern] = validPatterns[9];
+  const pattern = FieldNamePattern.forFieldNamesOfAllTypeNamesExcludeTypeNames([Droid, Human], [id, name, friends]);
+
+  describe('Pattern.forFieldNamesOfAllTypeNamesExcludeTypeNames:', () => {
+    describe('builds the expected pattern for the list of FieldNames:', () => {
+      expect(pattern.value).toBe(expectedPattern);
+    });
+  });
+
+  describe('Pattern.regexpForFieldNamesOfAllTypeNamesExcludeTypeNames:', () => {
+    const regexpForFieldNamesOfAllTypeNamesExcludeTypeNames =
+      FieldNamePattern.regexpForFieldNamesOfAllTypeNamesExcludeTypeNames;
+
+    test('integrity check: the RegExp is not modified accidentally', () => {
+      expect(regexpForFieldNamesOfAllTypeNamesExcludeTypeNames.source).toBe(
+        /@\*TypeNames-\[\s*(?<typeNames>(\w+,?\s*)*)\]\.\[\s*(?<fieldNames>(\w+,?\s*)*)\];/gim.source
+      );
+    });
+
+    testRegexpAgainstPatterns(regexpForFieldNamesOfAllTypeNamesExcludeTypeNames, patternIndex);
+  });
+
+  describe(`Pattern.matchAndConfigureFieldNamesOfAllTypeNamesExcludeTypeNames: using pattern: '${expectedPattern}'`, () => {
+    describe.each([
+      [Droid, id],
+      [Droid, name],
+      [Droid, friends],
+
+      [Human, id],
+      [Human, name],
+      [Human, friends],
+    ])(`%s.%s will match but it will not be configured: using pattern: '${pattern}'`, (typeName, fieldName) => {
+      const key = `${typeName.value}.${fieldName.value}`;
+      const result = FieldNamePattern.matchAndConfigureFieldNamesOfAllTypeNamesExcludeTypeNames(
+        pattern,
+        typeName,
+        fieldName
+      );
+
+      it(`will match because when expanded, '${typeName.value}.${fieldName.value}' was specified in the pattern`, () => {
+        expect(result[key]?.matchFound).toBe(true);
+      });
+
+      it(`will not be configured because when expanded, the pattern excludes '${typeName.value}.${fieldName.value}'`, () => {
+        expect(result[key]?.shouldBeConfigured).toBe(false);
+      });
+    });
+
+    describe.each([
+      [Starship, id],
+      [Starship, name],
+      [Starship, friends],
+
+      [Movie, id],
+      [Movie, name],
+      [Movie, friends],
+    ])(
+      `%s.%s will not match but it will it be configured: using pattern: '${expectedPattern}'`,
+      (typeName, fieldName) => {
+        const key = `${typeName.value}.${fieldName.value}`;
+        const result = FieldNamePattern.matchAndConfigureFieldNamesOfAllTypeNamesExcludeTypeNames(
+          pattern,
+          typeName,
+          fieldName
+        );
+
+        it(`will not match because when expanded, '${typeName.value}.${fieldName.value}' was not specified in the pattern`, () => {
+          expect(result[key]?.matchFound).toBe(false);
+        });
+
+        it(`will be configured because when expanded, the pattern includes '${typeName.value}.${fieldName.value}'`, () => {
+          expect(result[key]?.shouldBeConfigured).toBe(true);
+        });
+      }
+    );
+
+    describe.each([
+      [Droid, friend],
+      [Droid, title],
+      [Droid, episode],
+      [Droid, length],
+
+      [Starship, friend],
+      [Starship, title],
+      [Starship, episode],
+      [Starship, length],
+
+      [Human, friend],
+      [Human, title],
+      [Human, episode],
+      [Human, length],
+
+      [Movie, friend],
+      [Movie, title],
+      [Movie, episode],
+      [Movie, length],
+    ])(
+      `%s.%s will not match neither will it be configured: using pattern: '${expectedPattern}'`,
+      (typeName, fieldName) => {
+        const key = `${typeName.value}.${fieldName.value}`;
+        const result = FieldNamePattern.matchAndConfigureFieldNamesOfAllTypeNamesExcludeTypeNames(
+          pattern,
+          typeName,
+          fieldName
+        );
+
+        it(`will not match because when expanded, '${typeName.value}.${fieldName.value}' was not specified in the pattern`, () => {
+          expect(result[key]?.matchFound).toBeUndefined();
+        });
+
+        it(`will be not configured because when expanded, '${typeName.value}.${fieldName.value}' was not specified in the pattern`, () => {
+          expect(result[key]?.shouldBeConfigured).toBeUndefined();
+        });
+      }
+    );
+  });
+});
+//#endregion
+
+//#region `'@*TypeNames-[excludeTypeNames].@*FieldNames;'`
+describe('Configuring all fields of all GraphQL Types except those specified in the exclusion list of TypeNames:', () => {
+  const [patternIndex, expectedPattern] = validPatterns[10];
+  const pattern = FieldNamePattern.forAllFieldNamesOfAllTypeNamesExcludeTypeNames([Droid, Human]);
+
+  describe('Pattern.forAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames:', () => {
+    describe('builds the expected pattern for the list of FieldNames:', () => {
+      expect(pattern.value).toBe(expectedPattern);
+    });
+  });
+
+  describe('Pattern.regexpForAllFieldNamesOfAllTypeNamesExcludeTypeNames:', () => {
+    const regexpForAllFieldNamesOfAllTypeNamesExcludeTypeNames =
+      FieldNamePattern.regexpForAllFieldNamesOfAllTypeNamesExcludeTypeNames;
+
+    test('integrity check: the RegExp is not modified accidentally', () => {
+      expect(regexpForAllFieldNamesOfAllTypeNamesExcludeTypeNames.source).toBe(
+        /@\*TypeNames-\[\s*(?<typeNames>(\w+,?\s*)*)\]\.@\*FieldNames;/gim.source
+      );
+    });
+
+    testRegexpAgainstPatterns(regexpForAllFieldNamesOfAllTypeNamesExcludeTypeNames, patternIndex);
+  });
+
+  describe(`Pattern.matchAndConfigureAllFieldNamesOfAllTypeNamesExcludeTypeNames: using pattern: '${expectedPattern}'`, () => {
+    describe.each([
+      [Droid, id],
+      [Droid, name],
+      [Droid, friends],
+      [Droid, friend],
+      [Droid, title],
+      [Droid, episode],
+      [Droid, length],
+
+      [Human, id],
+      [Human, name],
+      [Human, friends],
+      [Human, friend],
+      [Human, title],
+      [Human, episode],
+      [Human, length],
+    ])(`%s will match but it will not be configured: using pattern: '${expectedPattern}'`, (typeName, fieldName) => {
+      const key = `${typeName.value}.${fieldName.value}`;
+      const result = FieldNamePattern.matchAndConfigureAllFieldNamesOfAllTypeNamesExcludeTypeNames(
+        pattern,
+        typeName,
+        fieldName
+      );
+
+      it(`will match because '${typeName.value}' was specified in the pattern`, () => {
+        expect(result[key]?.matchFound).toBe(true);
+      });
+
+      it(`will not be configured match because the pattern excludes '${typeName.value}'`, () => {
+        expect(result[key]?.shouldBeConfigured).toBe(false);
+      });
+    });
+
+    describe.each([
+      [Starship, id],
+      [Starship, name],
+      [Starship, friends],
+      [Starship, friend],
+      [Starship, title],
+      [Starship, episode],
+      [Starship, length],
+
+      [Movie, id],
+      [Movie, name],
+      [Movie, friends],
+      [Movie, friend],
+      [Movie, title],
+      [Movie, episode],
+      [Movie, length],
+    ])(`%s will not match but it will be configured: using pattern: '${expectedPattern}'`, (typeName, fieldName) => {
+      const key = `${typeName.value}.${fieldName.value}`;
+      const result = FieldNamePattern.matchAndConfigureAllFieldNamesOfAllTypeNamesExcludeTypeNames(
+        pattern,
+        typeName,
+        fieldName
+      );
+
+      it(`will not match because '${typeName.value}' was not specified in the pattern`, () => {
+        expect(result[key]?.matchFound).toBe(false);
+      });
+
+      it(`will be configured match because the pattern includes '${typeName.value}'`, () => {
+        expect(result[key]?.shouldBeConfigured).toBe(true);
+      });
+    });
+  });
+});
+//#endregion
+
+//#region `'@*TypeNames-[excludeTypeNames].@*FieldNames-[excludeFieldNames];'`
+describe('Configuring all fields except those specified in the exclusion list of FieldNames of all GraphQL Types except those specified in the exclusion list of TypeNames:', () => {
+  const [patternIndex, expectedPattern] = validPatterns[11];
+  const pattern = FieldNamePattern.forAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames(
+    [Droid, Human],
+    [id, name, friends]
+  );
+
+  describe('Pattern.forAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames:', () => {
+    describe('builds the expected pattern for the list of FieldNames:', () => {
+      expect(pattern.value).toBe(expectedPattern);
+    });
+  });
+
+  describe('Pattern.regexpForAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames:', () => {
+    const regexpForAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames =
+      FieldNamePattern.regexpForAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames;
+
+    test('integrity check: the RegExp is not modified accidentally', () => {
+      expect(regexpForAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames.source).toBe(
+        /@\*TypeNames-\[\s*(?<typeNames>(\w+,?\s*)*)\]\.@\*FieldNames-\[\s*(?<fieldNames>(\w+,?\s*)*)\];/gim.source
+      );
+    });
+
+    testRegexpAgainstPatterns(regexpForAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames, patternIndex);
+  });
+
+  describe(`Pattern.matchAndConfigureAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames: using pattern: '${expectedPattern}'`, () => {
+    describe.each([
+      [Droid, id],
+      [Droid, name],
+      [Droid, friends],
+
+      [Human, id],
+      [Human, name],
+      [Human, friends],
+    ])(`%s.%s will match but it will not be configured: using pattern: '${expectedPattern}'`, (typeName, fieldName) => {
+      const key = `${typeName.value}.${fieldName.value}`;
+      const result = FieldNamePattern.matchAndConfigureAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames(
+        pattern,
+        typeName,
+        fieldName
+      );
+
+      it(`will match because when expanded, '${typeName.value}.${fieldName.value}' was specified in the pattern`, () => {
+        expect(result[key]?.matchFound).toBe(true);
+      });
+
+      it(`will not be configured because when expanded, the pattern excludes '${typeName.value}.${fieldName.value}'`, () => {
+        expect(result[key]?.shouldBeConfigured).toBe(false);
+      });
+    });
+
+    describe.each([
+      [Droid, friend],
+      [Droid, title],
+      [Droid, episode],
+      [Droid, length],
+
+      [Starship, id],
+      [Starship, name],
+      [Starship, friends],
+      [Starship, friend],
+      [Starship, title],
+      [Starship, episode],
+      [Starship, length],
+
+      [Human, friend],
+      [Human, title],
+      [Human, episode],
+      [Human, length],
+
+      [Movie, id],
+      [Movie, name],
+      [Movie, friends],
+      [Movie, friend],
+      [Movie, title],
+      [Movie, episode],
+      [Movie, length],
+    ])(`%s.%s will not match but it will be configured: using pattern: ${expectedPattern}`, (typeName, fieldName) => {
+      const key = `${typeName.value}.${fieldName.value}`;
+      const result = FieldNamePattern.matchAndConfigureAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames(
+        pattern,
+        typeName,
+        fieldName
+      );
+
+      it(`will not match because when expanded, '${typeName.value}.${fieldName.value}' was not specified in the pattern`, () => {
+        expect(result[key]?.matchFound).toBe(false);
+      });
+
+      it(`will be configured because when expanded, the pattern includes '${typeName.value}.${fieldName.value}'`, () => {
+        expect(result[key]?.shouldBeConfigured).toBe(true);
+      });
+    });
+  });
+});
+//#endregion
+//#endregion
+
+//#endregion
 
 //#region attemptMatchAndConfigure
 describe.skip('attemptMatchAndConfigure: runs through the matchList and attempt to match and configure a TypeName and/or a FieldName using a pattern', () => {
