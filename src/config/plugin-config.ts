@@ -6,7 +6,7 @@ import {
   FieldDefinitionNode,
   InputValueDefinitionNode,
 } from 'graphql';
-import { Pattern, TypeName } from './pattern';
+import { TypeNamePattern, TypeName, FieldNamePattern, Pattern } from './pattern-new';
 
 //#region PluginConfig
 /**
@@ -33,7 +33,6 @@ export type FlutterFreezedPluginConfig = {
    * ## Usage:
    * ```ts filename='codegen.ts'
    * import type { CodegenConfig } from '@graphql-codegen/cli';
-import { TypeNames } from '../../.history/src/config/type-field-name_20221205061035';
    *
    * const config: CodegenConfig = {
    *   // ...
@@ -57,15 +56,20 @@ import { TypeNames } from '../../.history/src/config/type-field-name_20221205061
 
   /**
    * @name copyWith
-   * @type {(boolean | TypeName[])}
+   * @type {(boolean | TypeNamePattern)}
    * @default undefined
    * @see {@link url Freezed copyWith helper method usage}
+   * @see {@link url TypeNamePattern}
    * @summary enables Freezed copyWith helper method
-   * @description The plugin by default generates immutable Freezed models using the `@freezed` decorator.
+   * @description The [`freezed`](url) library has this option enabled by default.
+   * Use this option to enable/disable this option completely.
    *
-   * If a boolean `value` is set, the plugin will generate immutable Freezed models using the `@Freezed(copyWith: value)` instead.
+   *  The plugin by default generates immutable Freezed models using the `@freezed` decorator.
    *
-   * You can also set this option to `true` for one or more GraphQL Types using any of these Pattern builders for TypeNames: `Pattern.forTypeNames`, `Pattern.forAllTypeNames` and `Pattern.forAllTypeNamesExcludeTypeNames`
+   * If this option is configured, the plugin will generate immutable Freezed models using the `@Freezed(copyWith: value)` instead.
+   *
+   * Setting a boolean value will enable/disable this option globally for every GraphQL Type
+   * but you can also set this option to `true` for one or more GraphQL Types using a `TypeNamePattern`.
    * @exampleMarkdown
    * ## Usage:
    * ```ts filename='codegen.ts'
@@ -79,8 +83,8 @@ import { TypeNames } from '../../.history/src/config/type-field-name_20221205061
    *         'flutter-freezed': {
    *           // ...
    *           copyWith: true,
-   *           // OR: enable for the following TypeNames
-   *           copyWith: [Droid, Starship],
+   *           // OR: enable it for only Droid and Starship GraphQL types
+   *           copyWith: TypeNamePattern.forTypeNames([Droid, Starship]),
    *         },
    *       },
    *     },
@@ -89,8 +93,7 @@ import { TypeNames } from '../../.history/src/config/type-field-name_20221205061
    * export default config;
    * ```
    */
-
-  copyWith?: boolean | Pattern;
+  copyWith?: boolean | TypeNamePattern;
 
   /**
    * @name customScalars
@@ -129,7 +132,8 @@ import { TypeNames } from '../../.history/src/config/type-field-name_20221205061
 
   /**
    * @name defaultValues
-   * @type {([pattern: Pattern, value: string, appliesOn: AppliesOnParameters[], directiveName?: string, directiveArgName?: string][])}
+   * @type {([pattern: FieldNamePattern, value: string, appliesOn: AppliesOnParameters[], directiveName?: string, directiveArgName?: string][])}
+   * @default undefined
    * @summary set the default value for a field.
    * @description This will annotate the generated parameter with a `@Default(value: defaultValue)` decorator.
    *
@@ -138,7 +142,6 @@ import { TypeNames } from '../../.history/src/config/type-field-name_20221205061
    * Use the `appliesOn` to specify where this option should be applied on
    *
    * If the `directiveName` and `directiveArgName` are passed, the value of the argument of the given directive specified in the Graphql Schema will be used as the defaultValue
-   * @default undefined
    * @exampleMarkdown
    * ## Usage:
    * ```ts filename='codegen.ts'
@@ -152,9 +155,9 @@ import { TypeNames } from '../../.history/src/config/type-field-name_20221205061
    *         'flutter-freezed': {
    *           // ...
    *           defaultValues: [
-   *             [Pattern.forFieldNamesOfTypeName(MovieCharacter, appearsIn), `Episode.jedi`, ['default_factory_parameter']],
+   *             [FieldNamePattern.forFieldNamesOfTypeName(MovieCharacter, appearsIn), `Episode.jedi`, ['default_factory_parameter']],
    *             // default value from directive. See Graphql Constraints: url
-   *             [Pattern.forFieldNamesOfAllTypeNames([age]), `18`, ['parameter'], 'constraint', min],
+   *             [FieldNamePattern.forFieldNamesOfAllTypeNames([age]), `18`, ['parameter'], 'constraint', min],
    *           ],
    *         },
    *       },
@@ -165,7 +168,7 @@ import { TypeNames } from '../../.history/src/config/type-field-name_20221205061
    * ```
    */
   defaultValues?: [
-    pattern: Pattern,
+    pattern: FieldNamePattern,
     value: string, // use backticks for string values
     appliesOn: AppliesOnParameters[],
     directiveName?: string,
@@ -177,11 +180,15 @@ import { TypeNames } from '../../.history/src/config/type-field-name_20221205061
    * @type {([pattern: Pattern, appliesOn: (AppliesOnFactory | AppliesOnParameters)[]][])}
    * @default undefined
    * @summary a list of Graphql Types(factory constructors) or fields(parameters) to be marked as deprecated.
-   * @description Using the TypeFieldNamePatterns, you can mark one or more fields as deprecated.
+   * @description Using a TypeNamePattern, you can mark an entire factory constructor for one or more GraphQL types as deprecated.
    *
-   * With the TypeNamePatterns, you can mark an entire factory constructor as deprecated.
+   * Likewise, using a FieldNamePattern, you can mark one or more fields as deprecated
    *
-   * Use the `appliesOn` to specify where this option should be applied on
+   * Since the first element in the tuple has a type signature of `Pattern`,
+   * you can use either TypeNamePattern or FieldNamePattern or use both
+   * by composing them with `Pattern.compose(...)`
+   *
+   * Use the `appliesOn` to specify which block this option should be applied on
    * @exampleMarkdown
    * ## Usage:
    *
@@ -196,10 +203,10 @@ import { TypeNames } from '../../.history/src/config/type-field-name_20221205061
    *         'flutter-freezed': {
    *           // ...
    *           deprecated: [
-   *             // using TypeFieldNamePatterns
-   *             ['MovieCharacter.[appearsIn, name]', ['default_factory_parameter']],
-   *             // using TypeNamePatterns
-   *             ['Starship,Droid,Human', ['named_factory_for_union_types']],
+   *             // using FieldNamePattern
+   *             [FieldNamePattern.forFieldNamesOfTypeName(MovieCharacter, [appearsIn, name]), ['default_factory_parameter']],
+   *             // using TypeNamePattern
+   *             [TypeNamePattern.forTypeNames([Starship,Droid,Human]), ['named_factory_for_union_types']],
    *           ],
    *         },
    *       },
@@ -213,12 +220,22 @@ import { TypeNames } from '../../.history/src/config/type-field-name_20221205061
 
   /**
    * @name equal
-   * @description set to false to disable Freezed equal method helper
+   * @type {(boolean | TypeNamePattern)}
    * @default undefined
+   * @see {@link url Freezed equal helper method usage}
+   * @see {@link url TypeNamePattern}
+   * @summary enables Freezed equal helper method
+   * @description The [`freezed`](url) library has this option enabled by default.
+   * Use this option to enable/disable this option completely.
    *
+   *  The plugin by default generates immutable Freezed models using the `@freezed` decorator.
+   *
+   * If this option is configured, the plugin will generate immutable Freezed models using the `@Freezed(equal: value)` instead.
+   *
+   * Setting a boolean value will enable/disable this option globally for every GraphQL Type
+   * but you can also set this option to `true` for one or more GraphQL Types using a `TypeNamePattern`.
    * @exampleMarkdown
    * ## Usage:
-   *
    * ```ts filename='codegen.ts'
    * import type { CodegenConfig } from '@graphql-codegen/cli';
    *
@@ -229,9 +246,9 @@ import { TypeNames } from '../../.history/src/config/type-field-name_20221205061
    *       plugins: {
    *         'flutter-freezed': {
    *           // ...
-   *           equal: false,
-   *           // OR: enable for the following TypeNames
-   *           equal: [Droid, Starship]
+   *           equal: true,
+   *           // OR: enable it for only Droid and Starship GraphQL types
+   *           equal: TypeNamePattern.forTypeNames([Droid, Starship]),
    *         },
    *       },
    *     },
@@ -240,7 +257,7 @@ import { TypeNames } from '../../.history/src/config/type-field-name_20221205061
    * export default config;
    * ```
    */
-  equal?: boolean | Pattern;
+  equal?: boolean | TypeNamePattern;
 
   /**
    * @name escapeDartKeywords
@@ -291,7 +308,13 @@ import { TypeNames } from '../../.history/src/config/type-field-name_20221205061
    */
   escapeDartKeywords?:
     | boolean
-    | [pattern: Pattern, prefix?: string, suffix?: string, casing?: DartIdentifierCasing, appliesOn?: AppliesOn[]][];
+    | [
+        pattern: FieldNamePattern,
+        prefix?: string,
+        suffix?: string,
+        casing?: DartIdentifierCasing,
+        appliesOn?: AppliesOn[]
+      ][];
 
   /**
    * @name final
@@ -326,7 +349,7 @@ import { TypeNames } from '../../.history/src/config/type-field-name_20221205061
    * export default config;
    * ```
    */
-  final?: [pattern: Pattern, appliesOn: AppliesOnParameters[]][];
+  final?: [pattern: FieldNamePattern, appliesOn: AppliesOnParameters[]][];
 
   /**
    *
@@ -403,7 +426,12 @@ import { TypeNames } from '../../.history/src/config/type-field-name_20221205061
    */
   fromJsonToJson?:
     | boolean
-    | [pattern: Pattern, classOrFunctionName: string, useClassConverter?: boolean, appliesOn?: AppliesOnParameters[]][];
+    | [
+        pattern: FieldNamePattern,
+        classOrFunctionName: string,
+        useClassConverter?: boolean,
+        appliesOn?: AppliesOnParameters[]
+      ][];
 
   /**
    * @name ignoreTypes
@@ -431,13 +459,21 @@ import { TypeNames } from '../../.history/src/config/type-field-name_20221205061
    * export default config;
    * ```
    */
-  ignoreTypes?: Pattern;
+  ignoreTypes?: TypeNamePattern;
 
   /**
    * @name immutable
+   * @type {(boolean | TypeNamePattern)}
+   * @default undefined
+   * @see {@link url Freezed immutable helper method usage}
+   * @see {@link url TypeNamePattern}
+   * @summary enables Freezed immutable helper method
    * @description  set to true to use the `@freezed` decorator or false to use the `@unfreezed` decorator
-   * @default true
+   * @description The [`freezed`](url) library  by default generates immutable models decorated with the `@freezed` decorator.
+   * This option if set to `false` the plugin will generate mutable Freezed models using the `@unfreezed` decorator instead.
    *
+   * Setting a boolean value will enable/disable this option globally for every GraphQL Type
+   * but you can also set this option to `true` for one or more GraphQL Types using a `TypeNamePattern`.
    * @exampleMarkdown
    * ## Usage:
    * ```ts filename='codegen.ts'
@@ -451,10 +487,8 @@ import { TypeNames } from '../../.history/src/config/type-field-name_20221205061
    *         'flutter-freezed': {
    *           // ...
    *           immutable: true,
-   *           // OR: a comma-separated string
-   *           immutable: 'Droid,Starship',
-   *           // OR: a list of GRaphQL Type names
-   *           immutable: ['Droid', 'Starship'],
+   *           // OR: enable it for all GraphQL types except Droid and Starship types
+   *           immutable: TypeNamePattern.forTypeNamesExcludeTypeNames([Droid, Starship]),
    *         },
    *       },
    *     },
@@ -463,7 +497,7 @@ import { TypeNames } from '../../.history/src/config/type-field-name_20221205061
    * export default config;
    * ```
    */
-  immutable?: boolean | Pattern;
+  immutable?: boolean | TypeNamePattern;
 
   /**
    * @name makeCollectionsUnmodifiable
@@ -495,7 +529,7 @@ import { TypeNames } from '../../.history/src/config/type-field-name_20221205061
    * export default config;
    * ```
    */
-  makeCollectionsUnmodifiable?: boolean | Pattern;
+  makeCollectionsUnmodifiable?: boolean | TypeNamePattern;
 
   /**
    * @name mergeInputs
@@ -512,7 +546,7 @@ import { TypeNames } from '../../.history/src/config/type-field-name_20221205061
    *      mergeInputs: ["Create$Input", "Update$Input", "Delete$Input"]
    * ```
    */
-  mergeInputs?: [pattern: Pattern, mergeWithTypeNames: Pattern];
+  mergeInputs?: [target: TypeNamePattern, mergeWith: TypeNamePattern];
 
   /**
    * @name mutableInputs
@@ -544,7 +578,7 @@ import { TypeNames } from '../../.history/src/config/type-field-name_20221205061
    * export default config;
    * ```
    */
-  mutableInputs?: boolean | Pattern;
+  mutableInputs?: boolean | TypeNamePattern;
 
   /**
    * @name privateEmptyConstructor
@@ -576,7 +610,7 @@ import { TypeNames } from '../../.history/src/config/type-field-name_20221205061
    * export default config;
    * ```
    */
-  privateEmptyConstructor?: boolean | Pattern;
+  privateEmptyConstructor?: boolean | TypeNamePattern;
 
   /**
    * @name unionClass
@@ -619,7 +653,7 @@ import { TypeNames } from '../../.history/src/config/type-field-name_20221205061
     /**
      * The name of the Graphql Union Type (or in the case of merged types, the base type on which other types are merged with)
      */
-    unionTypeName: Pattern | string,
+    unionTypeName: TypeNamePattern,
 
     /**
      * in a fromJSON/toJson encoding a response/object({key:value}), you can specify what name should be used as the key ?

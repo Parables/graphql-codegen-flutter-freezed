@@ -136,14 +136,28 @@ export class Pattern {
       );
     }
 
-    const regexpFor = (baseName: string): RegExp => Pattern[`regexpFor${baseName}`]; // TODO: Update these
+    const isTypeNamePattern = (baseName: string): boolean => {
+      if (baseName === 'TypeNames' || baseName === 'AllTypeNames' || baseName === 'AllTypeNamesExcludeTypeNames') {
+        return true;
+      }
+      return false;
+    };
+
+    const regexpFor = (baseName: string): RegExp => {
+      return isTypeNamePattern(baseName)
+        ? TypeNamePattern[`regexpFor${baseName}`]
+        : FieldNamePattern[`regexpFor${baseName}`];
+    };
 
     const matchAndConfigure = (
-      // TODO: Update these
       baseName: string,
       pattern: FieldNamePattern,
       ...args: (TypeName | FieldName)[]
-    ): MatchAndConfigure | undefined => Pattern[`matchAndConfigure${baseName}`](pattern, ...args);
+    ): MatchAndConfigure | undefined => {
+      return isTypeNamePattern(baseName)
+        ? TypeNamePattern[`matchAndConfigure${baseName}`](pattern, ...args)
+        : FieldNamePattern[`matchAndConfigure${baseName}`](pattern, ...args);
+    };
 
     const matchList: string[] = Pattern.getMatchList();
     for (let i = 0; i < matchList.length; i++) {

@@ -138,26 +138,32 @@ describe('integrity checks: ensures that the following are not modified accident
     it(`all ${expectedCount} pattern builders are accounted for`, () => {
       expect(definedBuilders.length).toBe(expectedCount);
     });
+
     it(`all ${expectedCount} pattern builders are  defined in order`, () => {
       expect(definedBuilders).toMatchObject(baseNames.map(baseName => `for${baseName}`));
     });
   });
+
   describe('Regular Expressions:', () => {
     it(`all ${expectedCount} Regular Expressions are accounted for`, () => {
       expect(definedRegExps.length).toBe(expectedCount);
     });
+
     it(`all ${expectedCount} Regular Expression are  defined in order`, () => {
       expect(definedRegExps).toMatchObject(baseNames.map(baseName => `regexpFor${baseName}`));
     });
   });
+
   describe('matchAndConfigure Methods:', () => {
     it(`all ${expectedCount} matchAndConfigure methods are accounted for and defined in order`, () => {
       expect(definedMatchAndConfigureMethods.length).toBe(expectedCount);
     });
+
     it(`all ${expectedCount} matchAndConfigure methods are  defined in order`, () => {
       expect(definedMatchAndConfigureMethods).toMatchObject(baseNames.map(baseName => `matchAndConfigure${baseName}`));
     });
   });
+
   describe('baseNames(hard-coded) vrs matchList(dynamically-generated):', () => {
     it('baseNames is equal to matchList', () => {
       expect(baseNames.reverse()).toMatchObject(matchList);
@@ -165,7 +171,7 @@ describe('integrity checks: ensures that the following are not modified accident
   });
 
   describe(`TypeName, FieldName and Pattern: Value Objects that ensures that the value set is valid and can only be set using special methods that initialize the class with a valid value `, () => {
-    describe('throws an error if value is an empty string', () => {
+    describe('Exception Throwers:', () => {
       it('TypeName.fromString: throws when TypeName is created from an empty string', () => {
         expect(() => TypeName.fromString('')).toThrow();
       });
@@ -203,11 +209,19 @@ describe('integrity checks: ensures that the following are not modified accident
         expect(() => FieldNamePattern.forAllFieldNamesOfAllTypeNamesExcludeTypeNames([])).toThrow();
       });
 
+      it('FieldNamePattern.forFieldNamesOfAllTypeNames: throws when it receives an empty array as parameter', () => {
+        expect(() => FieldNamePattern.forFieldNamesOfAllTypeNames([])).toThrow();
+      });
+
       it('FieldNamePattern.forFieldNamesOfTypeName: throws when it receives an empty array as parameter', () => {
         expect(() => FieldNamePattern.forFieldNamesOfTypeName([])).toThrow();
         expect(() => FieldNamePattern.forFieldNamesOfTypeName([[Droid, []]])).toThrow();
         expect(() => FieldNamePattern.forFieldNamesOfTypeName([[[], id]])).toThrow();
         expect(() => FieldNamePattern.forFieldNamesOfTypeName([[[], []]])).toThrow();
+      });
+
+      it('FieldNamePattern.forAllFieldNamesExcludeFieldNamesOfAllTypeNames: throws when it receives an empty array as parameter', () => {
+        expect(() => FieldNamePattern.forAllFieldNamesExcludeFieldNamesOfAllTypeNames([])).toThrow();
       });
 
       it('FieldNamePattern.forAllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames: throws when it receives an empty array as parameter', () => {
@@ -1368,46 +1382,50 @@ describe('Configuring all fields except those specified in the exclusion list of
 //#endregion
 
 //#region attemptMatchAndConfigure
-describe.skip('attemptMatchAndConfigure: runs through the matchList and attempt to match and configure a TypeName and/or a FieldName using a pattern', () => {
-  // it('will return the result of Pattern.matchAndConfigureAllFieldNamesExcludeFieldNamesOfAllTypeNames:', () => {
-  //   const pattern = Pattern.forAllFieldNamesExcludeFieldNamesOfAllTypeNames([id, name, friends]);
-  //   expect(Pattern.attemptMatchAndConfigure(pattern, id)).toMatchObject(
-  //     Pattern.matchAndConfigureAllFieldNamesExcludeFieldNamesOfAllTypeNames(pattern, id)
-  //   );
-  // });
-  // it('will throw an error if the pattern contains multiple patterns', () => {
-  //   const pattern = Pattern.forTypeNames([Droid, Human]);
-  //   expect(() => Pattern.attemptMatchAndConfigure(pattern, Droid)).toThrow();
-  // });
-  // it('will return undefined if the RegExp.test(pattern) fails meaning that the Pattern is not valid:', () => {
-  //   const invalidPattern = { value: '@*TypeName' } as Pattern; //TypeNames not TypeName
-  //   expect(Pattern.attemptMatchAndConfigure(invalidPattern, id)).toBeUndefined();
-  // });
+describe('attemptMatchAndConfigure: runs through the matchList and attempt to match and configure a TypeName and/or a FieldName using a pattern', () => {
+  it('will return the result of Pattern.matchAndConfigureAllFieldNamesExcludeFieldNamesOfAllTypeNames:', () => {
+    const pattern = FieldNamePattern.forAllFieldNamesExcludeFieldNamesOfAllTypeNames([id, name, friends]);
+    expect(Pattern.attemptMatchAndConfigure(pattern, Droid, id)).toMatchObject(
+      FieldNamePattern.matchAndConfigureAllFieldNamesExcludeFieldNamesOfAllTypeNames(pattern, Droid, id)
+    );
+  });
+
+  it('will throw an error if the pattern contains multiple patterns', () => {
+    const pattern = TypeNamePattern.forTypeNames([Droid, Human]);
+    expect(() => Pattern.attemptMatchAndConfigure(pattern, Droid)).toThrow();
+  });
+
+  it('will return undefined if the RegExp.test(pattern) fails meaning that the Pattern is not valid:', () => {
+    const invalidPattern = { value: '@*TypeName' } as Pattern; //TypeNames not TypeName
+    expect(Pattern.attemptMatchAndConfigure(invalidPattern, Droid, id)).toBeUndefined();
+  });
 });
 //#endregion
 
 //#region helper methods
-describe.skip('Pattern helper methods:', () => {
-  // const pattern1 = Pattern.forTypeNames([Droid, Movie]);
-  // const pattern2 = Pattern.forAllFieldNamesExcludeFieldNamesOfAllTypeNames([id, title]);
-  // const expected = { value: pattern1.value + pattern2.value } as Pattern;
-  // describe('Pattern.compose: takes a list of Patterns and joins them into one single valid pattern:', () => {
-  //   it('throws an error if an empty array is passed as a parameter', () => {
-  //     expect(() => Pattern.compose([])).toThrow();
-  //   });
-  //   it('returns a new valid pattern', () => {
-  //     console.log(expected.value);
-  //     expect(Pattern.compose([pattern1, pattern2]).value).toBe(expected.value);
-  //   });
-  // });
-  // describe('Pattern.split: splits a pattern into individual patterns', () => {
-  //   it('returns a list of patterns', () => {
-  //     expect(Pattern.split(expected)).toMatchObject([
-  //       Pattern.forTypeNames(Droid),
-  //       Pattern.forTypeNames(Movie),
-  //       pattern2,
-  //     ]);
-  //   });
-  // });
+describe('Pattern helper methods:', () => {
+  const pattern1 = TypeNamePattern.forTypeNames([Droid, Movie]);
+  const pattern2 = FieldNamePattern.forAllFieldNamesExcludeFieldNamesOfAllTypeNames([id, title]);
+  const expected = { value: pattern1.value + pattern2.value } as Pattern;
+  describe('Pattern.compose: takes a list of Patterns and joins them into one single valid pattern:', () => {
+    it('throws an error if an empty array is passed as a parameter', () => {
+      expect(() => Pattern.compose([])).toThrow();
+    });
+
+    it('returns a new valid pattern', () => {
+      console.log(expected.value);
+      expect(Pattern.compose([pattern1, pattern2]).value).toBe(expected.value);
+    });
+  });
+
+  describe('Pattern.split: splits a pattern into individual patterns', () => {
+    it('returns a list of patterns', () => {
+      expect(Pattern.split(expected)).toMatchObject([
+        TypeNamePattern.forTypeNames(Droid),
+        TypeNamePattern.forTypeNames(Movie),
+        pattern2,
+      ]);
+    });
+  });
 });
 //#endregion
