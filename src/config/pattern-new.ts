@@ -156,7 +156,7 @@ export class Pattern {
     ): MatchAndConfigure | undefined => {
       return isTypeNamePattern(baseName)
         ? TypeNamePattern[`matchAndConfigure${baseName}`](pattern, ...args)
-        : FieldNamePattern[`matchAndConfigure${baseName}`](pattern, ...args);
+        : FieldNamePattern[`matchAndConfigure${baseName}`](pattern, ...args); // check if fieldName is passed in ...args
     };
 
     const matchList: string[] = Pattern.getMatchList();

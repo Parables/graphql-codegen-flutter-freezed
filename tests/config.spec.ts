@@ -1,6 +1,6 @@
 import { DART_KEYWORDS, DART_SCALARS, defaultFreezedPluginConfig } from '../src/config/plugin-config';
 import { Config } from '../src/config/config-value';
-// import { FieldName, Pattern, TypeName } from '../src/config/pattern-new';
+import { FieldName, FieldNamePattern, Pattern, TypeName, TypeNamePattern } from '../src/config/pattern-new';
 
 describe("integrity checks: ensures that these values don't change and if they do, they're updated accordingly", () => {
   test('integrity check: DART_SCALARS contains corresponding Dart Types mapping for built-in Graphql Scalars', () => {
@@ -121,18 +121,18 @@ describe("integrity checks: ensures that these values don't change and if they d
 });
 
 // TODO: Uncomment these tests ... v
-// const Droid = TypeName.fromString('Droid');
-// const Starship = TypeName.fromString('Starship');
-// const Human = TypeName.fromString('Human');
+const Droid = TypeName.fromString('Droid');
+const Starship = TypeName.fromString('Starship');
+const Human = TypeName.fromString('Human');
 // const Movie = TypeName.fromString('Movie');
 
-// const id = FieldName.fromString('id');
-// const name = FieldName.fromString('name');
-// const friends = FieldName.fromString('friends');
+const id = FieldName.fromString('id');
+const name = FieldName.fromString('name');
+const friends = FieldName.fromString('friends');
 // const friend = FieldName.fromString('friend');
 // const title = FieldName.fromString('title');
 // const episode = FieldName.fromString('episode');
-// const length = FieldName.fromString('length');
+const length = FieldName.fromString('length');
 
 describe('Config: has methods that returns a ready-to-use value for all the config options', () => {
   const config = Config.create({});
@@ -270,21 +270,31 @@ describe('Config: has methods that returns a ready-to-use value for all the conf
     //     expect(Config.findLastConfiguration(patterns, typeName, fieldName)).toBeUndefined();
     //   });
     // });
-    // const findLastConfiguration = jest.fn((pattern: Pattern, typeName: TypeName, fieldName?: FieldName) => {
-    //   Pattern.split(pattern).map(pattern => {
-    //     const result = Pattern.attemptMatchAndConfigure(pattern, typeName, fieldName);
-    //     console.log(result);
-    //   });
-    // });
-    // const pattern = Pattern.compose([
-    //   Pattern.forFieldNamesOfTypeName([
-    //     [
-    //       [Droid, Human],
-    //       [name, friends],
-    //     ],
-    //   ]),
-    //   Pattern.forAllTypeNamesExcludeTypeNames([Starship, Droid]),
-    // ]);
-    // expect(findLastConfiguration());
+    const findLastConfiguration = jest.fn((pattern: Pattern, typeName: TypeName, fieldName?: FieldName) => {
+      console.log('🚀 ~ file: config.spec.ts:274 ~ findLastConfiguration ~ pattern', pattern);
+      const key = fieldName ? `${typeName.value}.${fieldName.value}` : typeName.value;
+      Pattern.split(pattern)
+        .map(pattern => {
+          const result = Pattern.attemptMatchAndConfigure(pattern, typeName, fieldName);
+          console.log('🚀 ~ file: config.spec.ts:278 ~ Pattern.split ~ result', result);
+          return result?.[key]?.shouldBeConfigured;
+        })
+        .filter(value => value !== undefined)
+        .reduce((acc, value) => {
+          return value;
+        }, false);
+    });
+
+    const pattern = Pattern.compose([
+      FieldNamePattern.forFieldNamesOfTypeName([
+        [
+          [Droid, Human],
+          [name, friends],
+        ],
+      ]),
+      TypeNamePattern.forAllTypeNamesExcludeTypeNames([Starship, Droid]),
+      FieldNamePattern.forAllFieldNamesExcludeFieldNamesOfAllTypeNames([id, length, name, friends]),
+    ]);
+    expect(findLastConfiguration(pattern, Droid)).toBe(true);
   });
 });

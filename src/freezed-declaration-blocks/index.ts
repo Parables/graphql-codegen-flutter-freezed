@@ -51,14 +51,15 @@ export const buildBlock = (config: FlutterFreezedPluginConfig, node: NodeType, n
 
 export const buildComment = (node?: NodeType | EnumValueDefinitionNode): string => {
   const comment = node?.description?.value;
+  console.log('🚀 ~ file: index.ts:54 ~ buildComment ~ comment', comment);
 
   return comment && comment?.length > 0 // TODO: Test this
     ? `${comment
-        .replace(/^\s*#/gm, '///')
+        .trim()
         .split(/\n/gm)
-        .map(c => `/// ${c}\n`)
+        .map(c => `/// ${c.trim()}\n`)
         .join('')
-        .replace(/"/gm, '')} \n`
+        .replace(/\s*(#|""")\s*/gm, ' ')}`
     : '';
 };
 //#endregion

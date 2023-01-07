@@ -117,7 +117,45 @@ describe('The Flutter Freezed plugin produces Freezed models using a GraphQL Sch
         part 'app_models.freezed.dart';
         part 'app_models.g.dart';
 
+        /// I start comment here
+        /// This is a Person Entity
+        /// 
+        /// People are need in movies to be the actors
+        /// and make us laugh
         @freezed
+        class PersonType with _$PersonType {
+          const PersonType._();
+
+        ==>factory==>PersonType==>factory,default_factory
+          factory PersonType.fromJson(Map<String, dynamic> json) => _$PersonTypeFromJson(json);
+        }"
+      `);
+    });
+
+    it('customized freezed: generates the expected output', () => {
+      const output = plugin(
+        baseSchema,
+        [],
+        Config.create({
+          copyWith: false,
+          makeCollectionsUnmodifiable: true,
+        })
+      );
+      expect(output).toMatchInlineSnapshot(`
+        "import 'package:freezed_annotation/freezed_annotation.dart';
+        import 'package:flutter/foundation.dart';
+
+        part 'app_models.freezed.dart';
+        part 'app_models.g.dart';
+
+        /// I start comment here
+        /// This is a Person Entity
+        /// 
+        /// People are need in movies to be the actors
+        /// and make us laugh
+        @Freezed(
+          copyWith: false,
+        )
         class PersonType with _$PersonType {
           const PersonType._();
 

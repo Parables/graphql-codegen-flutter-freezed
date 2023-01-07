@@ -20,8 +20,15 @@ export const enumSchema = buildSchema(/* GraphQL */ `
 `);
 
 export const baseSchema = buildSchema(/* GraphQL */ `
+  """
+      I start comment here
+        This is a Person Entity
+
+  #     People are need in movies to be the actors
+  and make us laugh
+  """
   type PersonType {
-    # I am a single line comment
+    #I am a single line comment
     # There is nothing stopping you from using more of me
     id: String
     """
