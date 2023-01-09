@@ -133,7 +133,7 @@ describe('integrity checks: ensures that the following are not modified accident
     'AllFieldNamesExcludeFieldNamesOfAllTypeNamesExcludeTypeNames',
   ];
   // dynamically generated baseNames
-  const matchList: string[] = Pattern.getMatchList();
+  const matchList: string[] = Pattern.getMatchList('Pattern');
   describe('pattern builders:', () => {
     it(`all ${expectedCount} pattern builders are accounted for`, () => {
       expect(definedBuilders.length).toBe(expectedCount);
@@ -166,7 +166,7 @@ describe('integrity checks: ensures that the following are not modified accident
 
   describe('baseNames(hard-coded) vrs matchList(dynamically-generated):', () => {
     it('baseNames is equal to matchList', () => {
-      expect(baseNames.reverse()).toMatchObject(matchList);
+      expect(baseNames).toMatchObject(matchList);
     });
   });
 

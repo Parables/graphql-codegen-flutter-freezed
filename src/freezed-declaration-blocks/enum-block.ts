@@ -31,7 +31,7 @@ export class EnumBlock {
   };
 
   public static buildHeader = (config: FlutterFreezedPluginConfig, typeName: TypeName): string => {
-    return `enum ${BlockName.asEnumTypeName(config, typeName)} {\n`;
+    return `enum ${BlockName.asEnumTypeName(config, typeName).value} {\n`;
   };
 
   public static buildBody = (config: FlutterFreezedPluginConfig, node: EnumTypeDefinitionNode): string => {
@@ -39,7 +39,7 @@ export class EnumBlock {
     return (node.values ?? [])
       ?.map((enumValue: EnumValueDefinitionNode) => {
         const fieldName = FieldName.fromString(enumValue.name.value);
-        const blockName = BlockName.asEnumValueName(config, typeName, fieldName);
+        const blockName = BlockName.asEnumValueName(config, typeName, fieldName).value;
 
         // const decorators = buildBlockDecorators(config, enumValue, ['enum_value'] as AppliesOnEnumValue[]);
 

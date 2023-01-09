@@ -1,4 +1,7 @@
+import { appliesOnBlock } from '../utils';
+import { FieldName, Pattern, TypeName, TypeNamePattern } from './pattern-new';
 import {
+  AppliesOnParameters,
   DartIdentifierCasing,
   DART_SCALARS,
   defaultFreezedPluginConfig,
@@ -17,32 +20,42 @@ export class Config {
     return _camelCasedEnums;
   };
 
-  static copyWith = (config: FlutterFreezedPluginConfig /* typeName?: TypeName */) => {
-    const copyWith = config.copyWith;
-    if (typeof copyWith === 'boolean') {
-      return copyWith;
-    }
-    // TODO: handle Pattern configuration
-    return undefined;
+  static copyWith = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
+    return Config.enableWithBooleanOrTypeFieldName(config.copyWith, typeName);
   };
 
   static customScalars = (config: FlutterFreezedPluginConfig, graphqlScalar: string): string => {
     return config.customScalars?.[graphqlScalar] ?? DART_SCALARS[graphqlScalar] ?? graphqlScalar;
   };
 
-  static defaultValues = () =>
-    /*    config: FlutterFreezedPluginConfig,
+  static defaultValues = (
+    config: FlutterFreezedPluginConfig,
     typeName: TypeName,
     fieldName: FieldName,
-    blockAppliesOn: ReadonlyArray<AppliesOnParameters> = [] */
-    {
-      // TODO: Use this decorator function in the blocks instead
-      // const decorator = (defaultValue: string) => `@Default(${defaultValue})\n`;
+    blockAppliesOn: ReadonlyArray<AppliesOnParameters> = []
+  ) => {
+    // TODO: Use this decorator function in the blocks instead
+    // const decorator = (defaultValue: string) => `@Default(${defaultValue})\n`;
 
-      // const defaultValues = config.defaultValues;
-
-      return undefined;
-    };
+    return config.defaultValues
+      ?.map(([pattern, value, configAppliesOn, ...directives]) => {
+        const configure =
+          Pattern.findLastConfiguration(pattern, typeName, fieldName) &&
+          appliesOnBlock(configAppliesOn, blockAppliesOn);
+        return [configure, value, ...directives] as [
+          configure: boolean,
+          value: string,
+          directiveName?: string,
+          directiveArgName?: string
+        ];
+      })
+      .reduce((_acc, cur) => {
+        if (cur[0] === true) {
+          return cur;
+        }
+        return undefined;
+      });
+  };
 
   static deprecated = () =>
     /*   config: FlutterFreezedPluginConfig,
@@ -55,8 +68,8 @@ export class Config {
       return undefined;
     };
 
-  static equal = (/* config: FlutterFreezedPluginConfig, typeName?: TypeName */) => {
-    return undefined;
+  static equal = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
+    return Config.enableWithBooleanOrTypeFieldName(config.equal, typeName);
   };
 
   static escapeDartKeywords = (
@@ -103,24 +116,24 @@ export class Config {
     return [];
   };
 
-  static immutable = (/* config: FlutterFreezedPluginConfig, typeName?: TypeName */) => {
-    return true;
+  static immutable = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
+    return Config.enableWithBooleanOrTypeFieldName(config.immutable, typeName);
   };
 
-  static makeCollectionsUnmodifiable = (/* config: FlutterFreezedPluginConfig, typeName?: TypeName */) => {
-    return undefined;
+  static makeCollectionsUnmodifiable = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
+    return Config.enableWithBooleanOrTypeFieldName(config.makeCollectionsUnmodifiable, typeName);
   };
 
   static mergeTypes = (/* config: FlutterFreezedPluginConfig, typeName: TypeName */) => {
     return [];
   };
 
-  static mutableInputs = (/* config: FlutterFreezedPluginConfig, typeName?: TypeName */) => {
-    return true;
+  static mutableInputs = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
+    return Config.enableWithBooleanOrTypeFieldName(config.mutableInputs, typeName);
   };
 
-  static privateEmptyConstructor = (/* config: FlutterFreezedPluginConfig, typeName?: TypeName */) => {
-    return true;
+  static privateEmptyConstructor = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
+    return Config.enableWithBooleanOrTypeFieldName(config.privateEmptyConstructor, typeName);
   };
 
   static unionClass = (/* config: FlutterFreezedPluginConfig, index: number, unionTypeName: TypeName */) => {
@@ -144,6 +157,15 @@ export class Config {
     {
       return undefined;
     };
+
+  static enableWithBooleanOrTypeFieldName = (value?: boolean | TypeNamePattern, typeName?: TypeName) => {
+    if (typeof value === 'boolean') {
+      return value;
+    } else if (value !== undefined && typeName !== undefined) {
+      return Pattern.findLastConfiguration(value, typeName);
+    }
+    return undefined;
+  };
 
   public static create = (...config: Partial<FlutterFreezedPluginConfig>[]): FlutterFreezedPluginConfig => {
     return Object.assign({}, defaultFreezedPluginConfig, ...config);

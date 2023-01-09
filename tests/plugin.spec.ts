@@ -2,25 +2,6 @@ import { plugin } from '../src/index';
 import { enumSchema, baseSchema } from './schema';
 import { Config } from '../src/config/config-value';
 
-/**
- * tests that ensures that the generated output has the required import statements
- * @param output the generated output by the plugin
- */
-// const expectImportStatements = (output: string) => {
-//   describe('output has import statements:', () => {
-//     it('imports freezed_annotation:', () => {
-//       expect(output).toContain(
-//         [
-//           "import 'package:freezed_annotation/freezed_annotation.dart';\n",
-//           "import 'package:flutter/foundation.dart';\n\n",
-//           "part 'app_models.freezed.dart';\n",
-//           "part 'app_models.g.dart';\n\n",
-//         ].join('')
-//       );
-//     });
-//   });
-// };
-
 describe('The Flutter Freezed plugin produces Freezed models using a GraphQL Schema:', () => {
   describe('Enum Block: will generate a valid Enum block', () => {
     it('using the default plugin configuration: Enum values are camelCased and values that are keywords are escaped by suffixing the value with an `_`', () => {
@@ -155,6 +136,7 @@ describe('The Flutter Freezed plugin produces Freezed models using a GraphQL Sch
         /// and make us laugh
         @Freezed(
           copyWith: false,
+          makeCollectionsUnmodifiable: true,
         )
         class PersonType with _$PersonType {
           const PersonType._();

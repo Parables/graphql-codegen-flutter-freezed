@@ -137,7 +137,10 @@ export class Pattern {
     }
 
     const isTypeNamePattern = (baseName: string): boolean => {
-      if (baseName === 'TypeNames' || baseName === 'AllTypeNames' || baseName === 'AllTypeNamesExcludeTypeNames') {
+      if (
+        fieldName === undefined &&
+        (baseName === 'TypeNames' || baseName === 'AllTypeNames' || baseName === 'AllTypeNamesExcludeTypeNames')
+      ) {
         return true;
       }
       return false;
@@ -159,7 +162,7 @@ export class Pattern {
         : FieldNamePattern[`matchAndConfigure${baseName}`](pattern, ...args); // check if fieldName is passed in ...args
     };
 
-    const matchList: string[] = Pattern.getMatchList();
+    const matchList: string[] = Pattern.getMatchList(fieldName === undefined ? 'TypeNamePattern' : 'FieldNamePattern');
     for (let i = 0; i < matchList.length; i++) {
       const baseName = matchList[i];
 
@@ -192,14 +195,40 @@ export class Pattern {
   //#endregion
 
   //#region helper methods
-  static getMatchList = () =>
-    Object.getOwnPropertyNames(TypeNamePattern)
-      .concat(Object.getOwnPropertyNames(FieldNamePattern))
-      .filter(property => TypeNamePattern[property] instanceof RegExp || FieldNamePattern[property] instanceof RegExp)
-      .map(regexpForName => regexpForName.slice(9))
-      .reverse(); // runs more specific patterns first(in asc order)
+  static getMatchList = (patternType: 'TypeNamePattern' | 'FieldNamePattern' | 'Pattern') => {
+    const baseNamesForTypeNamePattern = Object.getOwnPropertyNames(TypeNamePattern)
+      .filter(property => TypeNamePattern[property] instanceof RegExp)
+      .map(regexpForName => regexpForName.slice(9));
 
+    const baseNamesForFieldNamePattern = Object.getOwnPropertyNames(FieldNamePattern)
+      .filter(property => FieldNamePattern[property] instanceof RegExp)
+      .map(regexpForName => regexpForName.slice(9));
+
+    return patternType === 'TypeNamePattern'
+      ? baseNamesForTypeNamePattern
+      : patternType === 'FieldNamePattern'
+      ? baseNamesForFieldNamePattern
+      : [...baseNamesForTypeNamePattern, ...baseNamesForFieldNamePattern];
+  };
   //#endregion
+
+  /**
+   * finds the last pattern that configures the typeName and/or fieldName given
+   * @param pattern
+   * @param typeName
+   * @param fieldName
+   * @returns true if a pattern marks the typeName and or fieldName given to be configured, otherwise false
+   */
+  static findLastConfiguration = (pattern: Pattern, typeName: TypeName, fieldName?: FieldName): boolean => {
+    const key = fieldName ? `${typeName.value}.${fieldName.value}` : typeName.value;
+    return Pattern.split(pattern)
+      .map(pattern => {
+        const result = Pattern.attemptMatchAndConfigure(pattern, typeName, fieldName);
+        return result?.[key]?.shouldBeConfigured;
+      })
+      .filter(value => value !== undefined)
+      .reduce((_acc, value) => value, false);
+  };
 }
 
 /**

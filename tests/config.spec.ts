@@ -1,4 +1,9 @@
-import { DART_KEYWORDS, DART_SCALARS, defaultFreezedPluginConfig } from '../src/config/plugin-config';
+import {
+  APPLIES_ON_PARAMETERS,
+  DART_KEYWORDS,
+  DART_SCALARS,
+  defaultFreezedPluginConfig,
+} from '../src/config/plugin-config';
 import { Config } from '../src/config/config-value';
 import { FieldName, FieldNamePattern, Pattern, TypeName, TypeNamePattern } from '../src/config/pattern-new';
 
@@ -124,14 +129,14 @@ describe("integrity checks: ensures that these values don't change and if they d
 const Droid = TypeName.fromString('Droid');
 const Starship = TypeName.fromString('Starship');
 const Human = TypeName.fromString('Human');
-// const Movie = TypeName.fromString('Movie');
+const Movie = TypeName.fromString('Movie');
 
 const id = FieldName.fromString('id');
 const name = FieldName.fromString('name');
 const friends = FieldName.fromString('friends');
-// const friend = FieldName.fromString('friend');
-// const title = FieldName.fromString('title');
-// const episode = FieldName.fromString('episode');
+const friend = FieldName.fromString('friend');
+const title = FieldName.fromString('title');
+const episode = FieldName.fromString('episode');
 const length = FieldName.fromString('length');
 
 describe('Config: has methods that returns a ready-to-use value for all the config options', () => {
@@ -218,73 +223,26 @@ describe('Config: has methods that returns a ready-to-use value for all the conf
     });
   });
 
-  describe('Config.findLastConfiguration(...): returns the index of the pattern in the list of patterns where the Pattern.matchedAndConfigure returned `shouldBeConfigured:true`', () => {
-    // describe('find last configuration: using pattern: `Droid;`', () => {
-    //   const patterns = [Pattern.forTypeNames(Droid)];
-    //   it.each([Droid])(`%s was last configured at index: 0`, typeName => {
-    //     expect(Config.findLastConfiguration(patterns, typeName)).toBe(0);
-    //   });
-    //   it.each([Starship, Human, Movie])(`%s was not configured`, typeName => {
-    //     expect(Config.findLastConfiguration(patterns, typeName)).toBeUndefined();
-    //   });
-    // });
-    // describe('find last configuration: using pattern: `@*TypeNames;`', () => {
-    //   const patterns = [Pattern.forAllTypeNames()];
-    //   it.each([Droid, Starship, Human, Movie])(`%s was last configured at index: 0`, typeName => {
-    //     expect(Config.findLastConfiguration(patterns, typeName)).toBe(0);
-    //   });
-    // });
-    // describe('find last configuration: using pattern: `@*TypeNames-[Human,Movie];`', () => {
-    //   const patterns = [Pattern.forAllTypeNamesExcludeTypeNames([Human, Movie])];
-    //   it.each([Droid, Starship])(`%s was last configured at index: 0`, typeName => {
-    //     expect(Config.findLastConfiguration(patterns, typeName)).toBe(0);
-    //   });
-    //   it.each([Human, Movie])(`%s was not configured`, typeName => {
-    //     expect(Config.findLastConfiguration(patterns, typeName)).toBeUndefined();
-    //   });
-    // });
-    // describe('find last configuration: using pattern: `Droid.[name,friends];`', () => {
-    //   const patterns = [
-    //     Pattern.forFieldNamesOfTypeName([
-    //       [
-    //         [Droid, Human],
-    //         [name, friends],
-    //       ],
-    //     ]),
-    //   ];
-    //   it.each([
-    //     [Droid, name],
-    //     [Droid, friends],
-    //     [Human, name],
-    //     [Human, friends],
-    //   ])(`%s.%s was last configured at index: 0`, (typeName, fieldName) => {
-    //     expect(Config.findLastConfiguration(patterns, typeName, fieldName)).toBe(0);
-    //   });
-    //   it.each([
-    //     [Droid, id],
-    //     [Droid, friend],
-    //     [Droid, title],
-    //     [Droid, episode],
-    //     [Droid, length],
-    //   ])(`%s.%s was not configured`, (typeName, fieldName) => {
-    //     expect(Config.findLastConfiguration(patterns, typeName, fieldName)).toBeUndefined();
-    //   });
-    // });
-    const findLastConfiguration = jest.fn((pattern: Pattern, typeName: TypeName, fieldName?: FieldName) => {
-      console.log('🚀 ~ file: config.spec.ts:274 ~ findLastConfiguration ~ pattern', pattern);
-      const key = fieldName ? `${typeName.value}.${fieldName.value}` : typeName.value;
-      Pattern.split(pattern)
-        .map(pattern => {
-          const result = Pattern.attemptMatchAndConfigure(pattern, typeName, fieldName);
-          console.log('🚀 ~ file: config.spec.ts:278 ~ Pattern.split ~ result', result);
-          return result?.[key]?.shouldBeConfigured;
-        })
-        .filter(value => value !== undefined)
-        .reduce((acc, value) => {
-          return value;
-        }, false);
-    });
+  describe('Config.defaultValue(...): sets the default value of a parameter/field', () => {
+    it('set different values using different appliesOn', () => {
+      config.defaultValues = [
+        [
+          FieldNamePattern.forFieldNamesOfTypeName([[[Human, Droid], friends]]),
+          '[]', // an empty list
+          ['named_factory_parameter_for_merged_types'],
+        ],
+        [
+          FieldNamePattern.forFieldNamesOfTypeName([[[Human, Droid], friends]]),
+          '[]', // an empty list
+          ['default_factory_parameter'],
+        ],
+      ];
 
+      expect(Config.defaultValues(config, Human, friends, APPLIES_ON_PARAMETERS)).toMatchObject([true, '[]']);
+    });
+  });
+
+  describe('Config.findLastConfiguration(...): runs through the pattern given and returns true if the typeName and/or fieldName should be configured:`', () => {
     const pattern = Pattern.compose([
       FieldNamePattern.forFieldNamesOfTypeName([
         [
@@ -293,8 +251,63 @@ describe('Config: has methods that returns a ready-to-use value for all the conf
         ],
       ]),
       TypeNamePattern.forAllTypeNamesExcludeTypeNames([Starship, Droid]),
-      FieldNamePattern.forAllFieldNamesExcludeFieldNamesOfAllTypeNames([id, length, name, friends]),
+      FieldNamePattern.forFieldNamesOfAllTypeNames([id, title]),
     ]);
-    expect(findLastConfiguration(pattern, Droid)).toBe(true);
+
+    describe.each([Human, Movie])('the following typeNames will be configured:', typeName => {
+      it(`${typeName.value} will be configured`, () => {
+        expect(Pattern.findLastConfiguration(pattern, typeName)).toBe(true);
+      });
+    });
+
+    describe.each([Droid, Starship])('the following typeNames will not be configured:', typeName => {
+      it(`${typeName.value} will not be configured`, () => {
+        expect(Pattern.findLastConfiguration(pattern, typeName)).toBe(false);
+      });
+    });
+
+    describe.each([
+      [Droid, id],
+      [Droid, name],
+      [Droid, friends],
+      [Droid, title],
+
+      [Starship, id],
+      [Starship, title],
+
+      [Human, id],
+      [Human, name],
+      [Human, friends],
+      [Human, title],
+
+      [Movie, id],
+      [Movie, title],
+    ])('the following typeName.fieldName will be configured:', (typeName, fieldName) => {
+      it(`${typeName.value}.${fieldName.value} will be configured`, () => {
+        expect(Pattern.findLastConfiguration(pattern, typeName, fieldName)).toBe(true);
+      });
+    });
+
+    describe.each([
+      [Droid, friend],
+      [Droid, episode],
+      [Droid, length],
+
+      [Starship, friend],
+      [Starship, episode],
+      [Starship, length],
+
+      [Human, friend],
+      [Human, episode],
+      [Human, length],
+
+      [Movie, friend],
+      [Movie, episode],
+      [Movie, length],
+    ])('the following typeNames will not be configured:', (typeName, fieldName) => {
+      it(`${typeName.value}.${fieldName.value} will not be configured`, () => {
+        expect(Pattern.findLastConfiguration(pattern, typeName, fieldName)).toBe(false);
+      });
+    });
   });
 });

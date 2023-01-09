@@ -39,9 +39,9 @@ export class ClassBlock {
 
   static decorateAsUnfreezed = (config: FlutterFreezedPluginConfig, node: NodeType) => {
     const typeName = TypeName.fromString(node.name.value);
-    const immutable = Config.immutable();
-    const mutableInputs = Config.mutableInputs();
-    const mutable = !immutable || (node.kind === Kind.INPUT_OBJECT_TYPE_DEFINITION && mutableInputs);
+    const immutable = Config.immutable(config, typeName);
+    const mutableInputs = Config.mutableInputs(config, typeName);
+    const mutable = immutable !== true || (node.kind === Kind.INPUT_OBJECT_TYPE_DEFINITION && mutableInputs);
 
     return mutable ? '@unfreezed\n' : ClassBlock.decorateAsFreezed(config, typeName);
   };
@@ -81,9 +81,9 @@ export class ClassBlock {
   };
 
   static isCustomizedFreezed = (config: FlutterFreezedPluginConfig, typeName: TypeName) => {
-    const copyWith = Config.copyWith(config);
-    const equal = Config.equal();
-    const makeCollectionsUnmodifiable = Config.makeCollectionsUnmodifiable();
+    const copyWith = Config.copyWith(config, typeName);
+    const equal = Config.equal(config, typeName);
+    const makeCollectionsUnmodifiable = Config.makeCollectionsUnmodifiable(config, typeName);
     const unionKey = Config.unionKey();
     const unionValueCase = Config.unionValueCase();
     const isCustomized =
@@ -96,9 +96,9 @@ export class ClassBlock {
   };
 
   public static buildHeader = (config: FlutterFreezedPluginConfig, typeName: TypeName): string => {
-    const className = BlockName.asClassName(config, typeName);
+    const className = BlockName.asClassName(config, typeName).value;
 
-    const privateEmptyConstructor = Config.privateEmptyConstructor(/* config, typeName */)
+    const privateEmptyConstructor = Config.privateEmptyConstructor(config, typeName)
       ? indent(`const ${className}._();\n\n`)
       : '';
 
@@ -132,7 +132,7 @@ export class ClassBlock {
   };
 
   public static buildFooter = (config: FlutterFreezedPluginConfig, typeName: TypeName): string => {
-    const blockName = BlockName.asClassName(config, typeName);
+    const blockName = BlockName.asClassName(config, typeName).value;
     const fromJsonToJson = Config.fromJsonToJson();
 
     if (fromJsonToJson) {
