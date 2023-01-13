@@ -1,5 +1,5 @@
 import { plugin } from '../src/index';
-import { enumSchema, mergeSchema, simpleSchema } from './schema';
+import { enumSchema, mergeSchema, simpleSchema, unionSchema } from './schema';
 import { Config } from '../src/config/config-value';
 
 describe('The Flutter Freezed plugin produces Freezed models using a GraphQL Schema:', () => {
@@ -298,5 +298,111 @@ describe('The Flutter Freezed plugin produces Freezed models using a GraphQL Sch
         }"
       `);
     });
+
+    it('using unionTypes: generates the expected output', () => {
+      const output = plugin(unionSchema, [], Config.create({}));
+      expect(output).toMatchInlineSnapshot(`
+        "import 'package:freezed_annotation/freezed_annotation.dart';
+        import 'package:flutter/foundation.dart';
+
+        part 'app_models.freezed.dart';
+        part 'app_models.g.dart';
+
+        enum Episode {
+          @JsonKey(name: 'NEWHOPE') newhope,
+          @JsonKey(name: 'EMPIRE') empire,
+          @JsonKey(name: 'JEDI') jedi,
+        }
+
+        @freezed
+        class Actor with _$Actor {
+          const Actor._();
+
+          const factory Actor({
+            required String name,
+            required List<Episode?> appearsIn,
+          }) = _Actor;
+
+          factory Actor.fromJson(Map<String, dynamic> json) => _$ActorFromJson(json);
+        }
+
+        @freezed
+        class Starship with _$Starship {
+          const Starship._();
+
+          const factory Starship({
+            required String id,
+            required String name,
+            double? length,
+          }) = _Starship;
+
+          factory Starship.fromJson(Map<String, dynamic> json) => _$StarshipFromJson(json);
+        }
+
+        @freezed
+        class Human with _$Human {
+          const Human._();
+
+          const factory Human({
+            required String id,
+            required String name,
+            List<Actor?>? friends,
+            required List<Episode?> appearsIn,
+            int? totalCredits,
+          }) = _Human;
+
+          factory Human.fromJson(Map<String, dynamic> json) => _$HumanFromJson(json);
+        }
+
+        @freezed
+        class Droid with _$Droid {
+          const Droid._();
+
+          const factory Droid({
+            required String id,
+            required String name,
+            List<Actor?>? friends,
+            required List<Episode?> appearsIn,
+            String? primaryFunction,
+          }) = _Droid;
+
+          factory Droid.fromJson(Map<String, dynamic> json) => _$DroidFromJson(json);
+        }
+
+        @freezed
+        class SearchResult with _$SearchResult {
+          const SearchResult._();
+
+          const factory SearchResult.human({
+            required String id,
+            required String name,
+            List<Actor?>? friends,
+            required List<Episode?> appearsIn,
+            int? totalCredits,
+          }) = Human;
+
+          const factory SearchResult.droid({
+            required String id,
+            required String name,
+            List<Actor?>? friends,
+            required List<Episode?> appearsIn,
+            String? primaryFunction,
+          }) = Droid;
+
+          const factory SearchResult.starship({
+            required String id,
+            required String name,
+            double? length,
+          }) = Starship;
+
+          factory SearchResult.fromJson(Map<String, dynamic> json) => _$SearchResultFromJson(json);
+        }"
+      `);
+    });
+
+    // it('using mergedTypes: generates the expected output', () => {
+    //   const output = plugin(unionSchema, [], Config.create({}));
+    //   // expect(output).toMatchInlineSnapshot(``)
+    // });
   });
 });

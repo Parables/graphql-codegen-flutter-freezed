@@ -125,15 +125,15 @@ export class FactoryBlock {
     return `${Block.tokens.defaultFactory}${typeName.value}==>${APPLIES_ON_DEFAULT_FACTORY.join(',')}\n`;
   };
 
-  public static serializeUnionFactory = (targetTypeName: TypeName, unionTypeName: TypeName): string => {
-    return `${Block.tokens.unionFactory}${
-      targetTypeName.value
-    }==>${unionTypeName}==>${APPLIES_ON_NAMED_FACTORY_FOR_UNION_TYPES.join(',')}\n`;
+  public static serializeUnionFactory = (className: TypeName, factoryName: TypeName): string => {
+    return `${Block.tokens.unionFactory}${className.value}==>${
+      factoryName.value
+    }==>${APPLIES_ON_NAMED_FACTORY_FOR_UNION_TYPES.join(',')}\n`;
   };
 
-  public static serializeMergedFactory = (typeName: TypeName, mergedTypeName: TypeName): string => {
-    return `${Block.tokens.mergedFactory}${typeName.value}==>${
-      mergedTypeName.value
+  public static serializeMergedFactory = (className: TypeName, factoryName: TypeName): string => {
+    return `${Block.tokens.mergedFactory}${className.value}==>${
+      factoryName.value
     }==>${APPLIES_ON_NAMED_FACTORY_FOR_MERGED_TYPES.join(',')}\n`;
   };
 
