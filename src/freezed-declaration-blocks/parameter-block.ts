@@ -14,13 +14,13 @@ export class ParameterBlock {
   ): string {
     let block = '';
 
-    block += Block.buildComment(node);
+    block += Block.buildComment(field);
 
     block += this.buildDecorators();
 
-    block += this.buildParameter(config, node, field, appliesOn);
+    block += this.buildBody(config, node, field, appliesOn);
 
-    return block;
+    return indent(block, 2);
   }
 
   //#region Step 03.04. Build Parameter Block
@@ -32,7 +32,7 @@ export class ParameterBlock {
     return '';
   };
 
-  public static buildParameter = (
+  public static buildBody = (
     config: FlutterFreezedPluginConfig,
     node: NodeType,
     field: FieldType,
@@ -46,7 +46,7 @@ export class ParameterBlock {
     const dartType = this.parameterType(config, field.type);
     const name = Block.buildBlockName(config, fieldName.value, typeName, fieldName, 'camelCase', blockAppliesOn);
 
-    return indent(`${required}${final}${dartType} ${name},\n`, 2);
+    return `${required}${final}${dartType} ${name},\n`;
   };
 
   public static parameterType = (config: FlutterFreezedPluginConfig, type: TypeNode, parentType?: TypeNode): string => {

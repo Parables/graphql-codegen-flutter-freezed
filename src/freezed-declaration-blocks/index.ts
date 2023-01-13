@@ -7,6 +7,7 @@ import {
   AppliesOnDefaultFactory,
   AppliesOnNamedFactory,
   DartIdentifierCasing,
+  FieldType,
   FlutterFreezedPluginConfig,
   NodeType,
 } from '../config/plugin-config';
@@ -54,16 +55,15 @@ export class Block {
     return node.kind === Kind.ENUM_TYPE_DEFINITION ? EnumBlock.build(config, node) : ClassBlock.build(config, node);
   };
 
-  static buildComment = (node?: NodeType | EnumValueDefinitionNode): string => {
+  static buildComment = (node?: NodeType | FieldType | EnumValueDefinitionNode): string => {
     const comment = node?.description?.value;
 
     return comment && comment?.length > 0
       ? `${comment
           .trim()
           .split(/\n/gm)
-          .map(c => `/// ${c.trim()}\n`)
-          .join('')
-          .replace(/\s*(#|""")\s*/gm, ' ')}`
+          .map(c => `/// ${c.trim().replace(/^#/, '')}\n`)
+          .join('')}`
       : '';
   };
 
@@ -88,38 +88,39 @@ export class Block {
     return identifier;
   };
 
-  static replaceTokens = {
+  static tokens = {
     defaultFactory: '==>default_factory==>',
     unionFactory: '==>union_factory==>',
     mergedFactory: '==>merged_factory==>',
     fromJsonToJson: '==>from_json_to_json==>',
   };
 
-  static regexpForReplaceToken = <T = keyof typeof Block.replaceTokens>(tokenName: T) => {
-    return RegExp(`${Block.replaceTokens[tokenName as string]}.+\n`, 'gm');
+  static regexpForToken = <T = keyof typeof Block.tokens>(tokenName: T) => {
+    return RegExp(`${Block.tokens[tokenName as string]}.+\n`, 'gm');
   };
 
-  static transformReplaceTokens = (
+  static replaceTokens = (
     config: FlutterFreezedPluginConfig,
     nodeRepository: NodeRepository,
     generatedBlocks: string[]
-  ): string => generatedBlocks.map(block => Block.replaceBlockTokens(block, config, nodeRepository)).join('');
-
-  static replaceBlockTokens = (block: string, config: FlutterFreezedPluginConfig, nodeRepository: NodeRepository) => {
-    block = Block.replaceDefaultFactoryToken(block, config, nodeRepository);
-    block = Block.replaceNamedFactoryToken(block, config, nodeRepository, 'unionFactory');
-    block = Block.replaceNamedFactoryToken(block, config, nodeRepository, 'mergedFactory');
-    // TODO: one more for parameter fromJson and toJson tokens inside @JsonKey
-    return block;
-  };
+  ): string =>
+    generatedBlocks
+      .map(block => {
+        block = Block.replaceDefaultFactoryToken(block, config, nodeRepository);
+        block = Block.replaceNamedFactoryToken(block, config, nodeRepository, 'unionFactory');
+        block = Block.replaceNamedFactoryToken(block, config, nodeRepository, 'mergedFactory');
+        // TODO: one more for parameter fromJson and toJson tokens inside @JsonKey
+        return block;
+      })
+      .join('');
 
   static replaceDefaultFactoryToken = (
     block: string,
     config: FlutterFreezedPluginConfig,
     nodeRepository: NodeRepository
   ) =>
-    block.replace(Block.regexpForReplaceToken('defaultFactory'), token => {
-      const pattern = token.replace(Block.replaceTokens.defaultFactory, '').trim();
+    block.replace(Block.regexpForToken('defaultFactory'), token => {
+      const pattern = token.replace(Block.tokens.defaultFactory, '').trim();
       const [typeName, appliesOn] = pattern.split('==>');
       return FactoryBlock.deserializeFactory(
         config,
@@ -135,8 +136,8 @@ export class Block {
     nodeRepository: NodeRepository,
     blockType: 'unionFactory' | 'mergedFactory'
   ) =>
-    block.replace(Block.regexpForReplaceToken(blockType), token => {
-      const pattern = token.replace(Block.replaceTokens[blockType], '').trim();
+    block.replace(Block.regexpForToken(blockType), token => {
+      const pattern = token.replace(Block.tokens[blockType], '').trim();
       const [typeName, namedFactory, appliesOn] = pattern.split('==>');
       return FactoryBlock.deserializeNamedFactory(
         config,

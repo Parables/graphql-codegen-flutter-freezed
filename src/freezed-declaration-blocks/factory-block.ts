@@ -54,6 +54,8 @@ export class FactoryBlock {
     blockAppliesOn?: readonly AppliesOnFactory[]
   ) => {
     const immutable = Config.immutable(config, className);
+    // const mutableInputs = Config.mutableInputs(config, factoryName);
+    // const mutable = immutable !== true || (node.kind === Kind.INPUT_OBJECT_TYPE_DEFINITION && mutableInputs);
     const constFactory = immutable ? indent('const factory') : indent('factory');
     const _className = Block.buildBlockName(
       config,
@@ -63,16 +65,16 @@ export class FactoryBlock {
       'PascalCase',
       blockAppliesOn
     );
-    const _factoryName = Block.buildBlockName(
-      config,
-      factoryName.value,
-      factoryName,
-      undefined,
-      'camelCase',
-      blockAppliesOn
-    );
 
     if (factoryName) {
+      const _factoryName = Block.buildBlockName(
+        config,
+        factoryName.value,
+        factoryName,
+        undefined,
+        'camelCase',
+        blockAppliesOn
+      );
       return `${constFactory} ${_className}.${_factoryName}({\n`;
     }
 
@@ -120,17 +122,17 @@ export class FactoryBlock {
   };
 
   public static serializeDefaultFactory = (typeName: TypeName): string => {
-    return `${Block.replaceTokens.defaultFactory}${typeName.value}==>${APPLIES_ON_DEFAULT_FACTORY.join(',')}\n`;
+    return `${Block.tokens.defaultFactory}${typeName.value}==>${APPLIES_ON_DEFAULT_FACTORY.join(',')}\n`;
   };
 
   public static serializeUnionFactory = (targetTypeName: TypeName, unionTypeName: TypeName): string => {
-    return `${Block.replaceTokens.unionFactory}${
+    return `${Block.tokens.unionFactory}${
       targetTypeName.value
     }==>${unionTypeName}==>${APPLIES_ON_NAMED_FACTORY_FOR_UNION_TYPES.join(',')}\n`;
   };
 
   public static serializeMergedFactory = (typeName: TypeName, mergedTypeName: TypeName): string => {
-    return `${Block.replaceTokens.mergedFactory}${typeName.value}==>${
+    return `${Block.tokens.mergedFactory}${typeName.value}==>${
       mergedTypeName.value
     }==>${APPLIES_ON_NAMED_FACTORY_FOR_MERGED_TYPES.join(',')}\n`;
   };
@@ -169,19 +171,19 @@ export class FactoryBlock {
   public static buildFromFactory = (
     config: FlutterFreezedPluginConfig,
     node: ObjectType,
-    typeName: TypeName,
+    className: TypeName,
     appliesOn: AppliesOnDefaultFactory[]
   ): string => {
-    return FactoryBlock.build(config, node, appliesOn, typeName);
+    return FactoryBlock.build(config, node, appliesOn, className);
   };
 
   public static buildFromNamedFactory = (
     config: FlutterFreezedPluginConfig,
     node: ObjectType,
-    typeName: TypeName,
-    namedFactory: TypeName,
+    className: TypeName,
+    factoryName: TypeName,
     appliesOn: AppliesOnNamedFactory[]
   ): string => {
-    return FactoryBlock.build(config, node, appliesOn, typeName, namedFactory);
+    return FactoryBlock.build(config, node, appliesOn, className, factoryName);
   };
 }

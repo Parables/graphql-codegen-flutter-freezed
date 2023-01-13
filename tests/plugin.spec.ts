@@ -1,5 +1,5 @@
 import { plugin } from '../src/index';
-import { enumSchema, baseSchema } from './schema';
+import { enumSchema, mergeSchema, simpleSchema } from './schema';
 import { Config } from '../src/config/config-value';
 
 describe('The Flutter Freezed plugin produces Freezed models using a GraphQL Schema:', () => {
@@ -89,8 +89,8 @@ describe('The Flutter Freezed plugin produces Freezed models using a GraphQL Sch
   });
 
   describe('simple Freezed model:', () => {
-    it('using the default plugin configuration: generates the expected output', () => {
-      const output = plugin(baseSchema, [], Config.create());
+    it('@freezed: using the default plugin configuration: generates the expected output', () => {
+      const output = plugin(simpleSchema, [], Config.create());
       expect(output).toMatchInlineSnapshot(`
         "import 'package:freezed_annotation/freezed_annotation.dart';
         import 'package:flutter/foundation.dart';
@@ -98,27 +98,27 @@ describe('The Flutter Freezed plugin produces Freezed models using a GraphQL Sch
         part 'app_models.freezed.dart';
         part 'app_models.g.dart';
 
-        /// I start comment here
-        /// This is a Person Entity
-        /// 
-        /// People are need in movies to be the actors
-        /// and make us laugh
         @freezed
-        class PersonType with _$PersonType {
-          const PersonType._();
+        class Person with _$Person {
+          const Person._();
 
-        ==>default_factory==>PersonType==>factory,default_factory
-          factory PersonType.fromJson(Map<String, dynamic> json) => _$PersonTypeFromJson(json);
+          const factory Person({
+            String? id,
+            required String name,
+          }) = _Person;
+
+          factory Person.fromJson(Map<String, dynamic> json) => _$PersonFromJson(json);
         }"
       `);
     });
 
-    it('customized freezed: generates the expected output', () => {
+    it('@Freezed: generates the expected output', () => {
       const output = plugin(
-        baseSchema,
+        simpleSchema,
         [],
         Config.create({
           copyWith: false,
+          equal: true,
           makeCollectionsUnmodifiable: true,
         })
       );
@@ -129,20 +129,172 @@ describe('The Flutter Freezed plugin produces Freezed models using a GraphQL Sch
         part 'app_models.freezed.dart';
         part 'app_models.g.dart';
 
-        /// I start comment here
-        /// This is a Person Entity
-        /// 
-        /// People are need in movies to be the actors
-        /// and make us laugh
         @Freezed(
           copyWith: false,
+          equal: true,
           makeCollectionsUnmodifiable: true,
         )
-        class PersonType with _$PersonType {
-          const PersonType._();
+        class Person with _$Person {
+          const Person._();
 
-        ==>default_factory==>PersonType==>factory,default_factory
-          factory PersonType.fromJson(Map<String, dynamic> json) => _$PersonTypeFromJson(json);
+          const factory Person({
+            String? id,
+            required String name,
+          }) = _Person;
+
+          factory Person.fromJson(Map<String, dynamic> json) => _$PersonFromJson(json);
+        }"
+      `);
+    });
+
+    it('unfreeze: generates the expected output', () => {
+      const output = plugin(
+        simpleSchema,
+        [],
+        Config.create({
+          immutable: false,
+        })
+      );
+      expect(output).toMatchInlineSnapshot(`
+        "import 'package:freezed_annotation/freezed_annotation.dart';
+        import 'package:flutter/foundation.dart';
+
+        part 'app_models.freezed.dart';
+        part 'app_models.g.dart';
+
+        @unfreezed
+        class Person with _$Person {
+          const Person._();
+
+          factory Person({
+            String? id,
+            required String name,
+          }) = _Person;
+
+          factory Person.fromJson(Map<String, dynamic> json) => _$PersonFromJson(json);
+        }"
+      `);
+    });
+
+    it('@Freezed has precedence over @unfreezed over @freezed: generates the expected output', () => {
+      const output = plugin(
+        simpleSchema,
+        [],
+        Config.create({
+          immutable: false,
+          copyWith: false,
+        })
+      );
+      expect(output).toMatchInlineSnapshot(`
+        "import 'package:freezed_annotation/freezed_annotation.dart';
+        import 'package:flutter/foundation.dart';
+
+        part 'app_models.freezed.dart';
+        part 'app_models.g.dart';
+
+        @Freezed(
+          copyWith: false,
+        )
+        class Person with _$Person {
+          const Person._();
+
+          factory Person({
+            String? id,
+            required String name,
+          }) = _Person;
+
+          factory Person.fromJson(Map<String, dynamic> json) => _$PersonFromJson(json);
+        }"
+      `);
+    });
+
+    it('using mergedTypes: generates the expected output', () => {
+      const output = plugin(
+        mergeSchema,
+        [],
+        Config.create({
+          mergeTypes: {
+            Movie: ['CreateMovieInput', 'UpdateMovieInput', 'UpsertMovieInput'],
+          },
+        })
+      );
+      expect(output).toMatchInlineSnapshot(`
+        "import 'package:freezed_annotation/freezed_annotation.dart';
+        import 'package:flutter/foundation.dart';
+
+        part 'app_models.freezed.dart';
+        part 'app_models.g.dart';
+
+        @freezed
+        class Movie with _$Movie {
+          const Movie._();
+
+          const factory Movie({
+            required String id,
+            required String title,
+          }) = _Movie;
+
+          const factory Movie.createMovieInput({
+            required String title,
+          }) = CreateMovieInput;
+
+          const factory Movie.updateMovieInput({
+            required String id,
+            String? title,
+          }) = UpdateMovieInput;
+
+          const factory Movie.upsertMovieInput({
+            required String id,
+            required String title,
+          }) = UpsertMovieInput;
+
+          factory Movie.fromJson(Map<String, dynamic> json) => _$MovieFromJson(json);
+        }
+
+        @unfreezed
+        class CreateMovieInput with _$CreateMovieInput {
+          const CreateMovieInput._();
+
+          const factory CreateMovieInput({
+            required String title,
+          }) = _CreateMovieInput;
+
+          factory CreateMovieInput.fromJson(Map<String, dynamic> json) => _$CreateMovieInputFromJson(json);
+        }
+
+        @unfreezed
+        class UpsertMovieInput with _$UpsertMovieInput {
+          const UpsertMovieInput._();
+
+          const factory UpsertMovieInput({
+            required String id,
+            required String title,
+          }) = _UpsertMovieInput;
+
+          factory UpsertMovieInput.fromJson(Map<String, dynamic> json) => _$UpsertMovieInputFromJson(json);
+        }
+
+        @unfreezed
+        class UpdateMovieInput with _$UpdateMovieInput {
+          const UpdateMovieInput._();
+
+          const factory UpdateMovieInput({
+            required String id,
+            String? title,
+          }) = _UpdateMovieInput;
+
+          factory UpdateMovieInput.fromJson(Map<String, dynamic> json) => _$UpdateMovieInputFromJson(json);
+        }
+
+        @unfreezed
+        class DeleteMovieInput with _$DeleteMovieInput {
+          const DeleteMovieInput._();
+
+          const factory DeleteMovieInput({
+            required String id,
+          }) = _DeleteMovieInput;
+
+          factory DeleteMovieInput.fromJson(Map<String, dynamic> json) => _$DeleteMovieInputFromJson(json);
         }"
       `);
     });

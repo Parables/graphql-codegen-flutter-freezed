@@ -1,11 +1,11 @@
 import { transformSchemaAST } from '@graphql-codegen/schema-ast';
-import { starWarsSchema } from './schema';
+import { unionSchema } from './schema';
 import { appliesOnBlock, arrayWrap, dartCasing, nodeIsObjectType } from '../src/utils';
 import { defaultFreezedPluginConfig, APPLIES_ON_PARAMETERS } from '../src/config/plugin-config';
 
 const {
   ast: { definitions: nodes },
-} = transformSchemaAST(starWarsSchema, defaultFreezedPluginConfig);
+} = transformSchemaAST(unionSchema, defaultFreezedPluginConfig);
 
 describe('arrayWrap:', () => {
   it('wraps the value in array if the value is not an array', () => {
@@ -22,7 +22,7 @@ describe('arrayWrap:', () => {
 });
 
 test('method: nodeIsObjectType() => returns true if node is an ObjectType', () => {
-  const expected = [false, true, true, true, true, true, true, false, true, true, true, false];
+  const expected = [false, true, true, false, true, true, false];
   expect(nodes.map(nodeIsObjectType)).toEqual(expected);
 });
 

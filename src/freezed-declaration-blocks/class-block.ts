@@ -5,6 +5,7 @@ import { APPLIES_ON_CLASS, FlutterFreezedPluginConfig, NodeType } from '../confi
 import { FactoryBlock } from './factory-block';
 import { TypeName } from '../config/pattern-new';
 import { Block } from './index';
+import { nodeIsObjectType } from '../utils';
 
 export class ClassBlock {
   public static build(config: FlutterFreezedPluginConfig, node: NodeType): string {
@@ -34,19 +35,11 @@ export class ClassBlock {
 
   static buildFreezedDecorator = (config: FlutterFreezedPluginConfig, node: NodeType): string => {
     // this is the start of the pipeline of decisions to determine which Freezed decorator to use
-    return ClassBlock.decorateAsUnfreezed(config, node);
+    return ClassBlock.decorateAsFreezed(config, node);
   };
 
-  static decorateAsUnfreezed = (config: FlutterFreezedPluginConfig, node: NodeType) => {
+  static decorateAsFreezed = (config: FlutterFreezedPluginConfig, node: NodeType): string => {
     const typeName = TypeName.fromString(node.name.value);
-    const immutable = Config.immutable(config, typeName);
-    const mutableInputs = Config.mutableInputs(config, typeName);
-    const mutable = immutable !== true || (node.kind === Kind.INPUT_OBJECT_TYPE_DEFINITION && mutableInputs);
-
-    return mutable ? '@unfreezed\n' : ClassBlock.decorateAsFreezed(config, typeName);
-  };
-
-  static decorateAsFreezed = (config: FlutterFreezedPluginConfig, typeName: TypeName): string => {
     const { isCustomized, copyWith, equal, makeCollectionsUnmodifiable, unionKey, unionValueCase } =
       this.isCustomizedFreezed(config, typeName);
     if (isCustomized) {
@@ -77,7 +70,16 @@ export class ClassBlock {
       return atFreezed;
     }
     // else fallback to the normal `@freezed` decorator
-    return '@freezed\n';
+    return ClassBlock.decorateAsUnfreezed(config, node);
+  };
+
+  static decorateAsUnfreezed = (config: FlutterFreezedPluginConfig, node: NodeType) => {
+    const typeName = TypeName.fromString(node.name.value);
+    const immutable = Config.immutable(config, typeName);
+    const mutableInputs = Config.mutableInputs(config, typeName);
+    const mutable = immutable !== true || (node.kind === Kind.INPUT_OBJECT_TYPE_DEFINITION && mutableInputs);
+
+    return mutable ? '@unfreezed\n' : '@freezed\n';
   };
 
   static isCustomizedFreezed = (config: FlutterFreezedPluginConfig, typeName: TypeName) => {
@@ -108,7 +110,7 @@ export class ClassBlock {
 
     let body = '';
 
-    if (node.kind === Kind.OBJECT_TYPE_DEFINITION) {
+    if (nodeIsObjectType(node)) {
       body += FactoryBlock.serializeDefaultFactory(typeName);
     } else if (node.kind === Kind.UNION_TYPE_DEFINITION) {
       body += (node.types ?? [])

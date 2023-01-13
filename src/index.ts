@@ -21,11 +21,8 @@ export const plugin: PluginFunction<FlutterFreezedPluginConfig> = (
 
   const generated: string[] = visitorResult.definitions.filter((def: any) => typeof def === 'string' && def.length > 0);
 
-  return (
-    Block.buildImportStatements(info?.outputFile ?? 'app_models') +
-    generated // TODO: replace placeholders with factory blocks
+  const output = Block.replaceTokens(config, nodeRepository, generated);
 
-      .join('')
-      .trim()
-  );
+  const importStatements = Block.buildImportStatements(info?.outputFile ?? 'app_models');
+  return [importStatements, output].join('').trim();
 };
