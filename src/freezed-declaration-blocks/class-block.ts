@@ -1,27 +1,27 @@
 import { indent } from '@graphql-codegen/visitor-plugin-common';
 import { Kind } from 'graphql';
 import { Config } from '../config/config-value';
-import { FlutterFreezedPluginConfig, NodeType } from '../config/plugin-config';
-import { buildComment } from '.';
-import { BlockName } from './block-name';
+import { APPLIES_ON_CLASS, FlutterFreezedPluginConfig, NodeType } from '../config/plugin-config';
 import { FactoryBlock } from './factory-block';
 import { TypeName } from '../config/pattern-new';
+import { Block } from './index';
 
 export class ClassBlock {
   public static build(config: FlutterFreezedPluginConfig, node: NodeType): string {
     const typeName = TypeName.fromString(node.name.value);
+    const className = Block.buildBlockName(config, typeName.value, typeName, undefined, 'PascalCase', APPLIES_ON_CLASS);
 
     let block = '';
 
-    block += buildComment(node);
+    block += Block.buildComment(node);
 
     block += this.buildDecorators(config, node);
 
-    block += this.buildHeader(config, typeName);
+    block += this.buildHeader(config, typeName, className);
 
     block += this.buildBody(config, node);
 
-    block += this.buildFooter(config, typeName);
+    block += this.buildFooter(config, typeName, className);
 
     return block;
   }
@@ -95,9 +95,7 @@ export class ClassBlock {
     return { copyWith, equal, makeCollectionsUnmodifiable, unionKey, unionValueCase, isCustomized };
   };
 
-  public static buildHeader = (config: FlutterFreezedPluginConfig, typeName: TypeName): string => {
-    const className = BlockName.asClassName(config, typeName).value;
-
+  public static buildHeader = (config: FlutterFreezedPluginConfig, typeName: TypeName, className: string): string => {
     const privateEmptyConstructor = Config.privateEmptyConstructor(config, typeName)
       ? indent(`const ${className}._();\n\n`)
       : '';
@@ -111,32 +109,31 @@ export class ClassBlock {
     let body = '';
 
     if (node.kind === Kind.OBJECT_TYPE_DEFINITION) {
-      body += FactoryBlock.serializeFactory(typeName, ['factory', 'default_factory']);
+      body += FactoryBlock.serializeDefaultFactory(typeName);
     } else if (node.kind === Kind.UNION_TYPE_DEFINITION) {
       body += (node.types ?? [])
         .map(value => {
-          const namedConstructor = value.name.value;
-          return FactoryBlock.serializeNamedFactory(typeName, namedConstructor, [
-            'factory',
-            'named_factory',
-            'named_factory_for_union_types',
-          ]);
+          const unionTypeName = TypeName.fromString(value.name.value);
+          return FactoryBlock.serializeUnionFactory(typeName, unionTypeName);
         })
         .join('');
     }
 
-    // const mergeWithTypeNames = Config.mergeTypes(/* config, typeName */);
-    // TODO: Handle mergeTypes: TODO: Rename to mergeWith
+    body += Config.mergeTypes(config, typeName)
+      .map(value => {
+        const mergedTypeName = TypeName.fromString(value);
+        return FactoryBlock.serializeMergedFactory(typeName, mergedTypeName);
+      })
+      .join('');
 
     return body;
   };
 
-  public static buildFooter = (config: FlutterFreezedPluginConfig, typeName: TypeName): string => {
-    const blockName = BlockName.asClassName(config, typeName).value;
-    const fromJsonToJson = Config.fromJsonToJson();
+  public static buildFooter = (config: FlutterFreezedPluginConfig, typeName: TypeName, className: string): string => {
+    const fromJsonToJson = Config.fromJsonToJson(config, typeName);
 
     if (fromJsonToJson) {
-      return indent(`factory ${blockName}.fromJson(Map<String, dynamic> json) => _$${blockName}FromJson(json);\n}\n\n`);
+      return indent(`factory ${className}.fromJson(Map<String, dynamic> json) => _$${className}FromJson(json);\n}\n\n`);
     }
     return '}\n\n';
   };

@@ -45,16 +45,16 @@ describe('The Flutter Freezed plugin produces Freezed models using a GraphQL Sch
           EMPIRE,
           JEDI,
           VOID,
-          void_,
+          @JsonKey(name: 'void') void_,
           IN,
-          in_,
-          String_,
+          @JsonKey(name: 'in') in_,
+          @JsonKey(name: 'String') String_,
           ELSE,
-          else_,
+          @JsonKey(name: 'else') else_,
           SWITCH,
-          switch_,
+          @JsonKey(name: 'switch') switch_,
           FACTORY,
-          factory_,
+          @JsonKey(name: 'factory') factory_,
         }"
       `);
     });
@@ -107,7 +107,7 @@ describe('The Flutter Freezed plugin produces Freezed models using a GraphQL Sch
         class PersonType with _$PersonType {
           const PersonType._();
 
-        ==>factory==>PersonType==>factory,default_factory
+        ==>default_factory==>PersonType==>factory,default_factory
           factory PersonType.fromJson(Map<String, dynamic> json) => _$PersonTypeFromJson(json);
         }"
       `);
@@ -141,7 +141,7 @@ describe('The Flutter Freezed plugin produces Freezed models using a GraphQL Sch
         class PersonType with _$PersonType {
           const PersonType._();
 
-        ==>factory==>PersonType==>factory,default_factory
+        ==>default_factory==>PersonType==>factory,default_factory
           factory PersonType.fromJson(Map<String, dynamic> json) => _$PersonTypeFromJson(json);
         }"
       `);

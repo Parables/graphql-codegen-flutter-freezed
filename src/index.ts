@@ -2,7 +2,7 @@ import { oldVisit, PluginFunction, Types } from '@graphql-codegen/plugin-helpers
 import { transformSchemaAST } from '@graphql-codegen/schema-ast';
 import { GraphQLSchema } from 'graphql';
 import { defaultFreezedPluginConfig, FlutterFreezedPluginConfig } from './config/plugin-config';
-import { buildImportStatements } from './freezed-declaration-blocks';
+import { Block } from './freezed-declaration-blocks';
 import { schemaVisitor } from './schema-visitor';
 
 export const plugin: PluginFunction<FlutterFreezedPluginConfig> = (
@@ -22,7 +22,7 @@ export const plugin: PluginFunction<FlutterFreezedPluginConfig> = (
   const generated: string[] = visitorResult.definitions.filter((def: any) => typeof def === 'string' && def.length > 0);
 
   return (
-    buildImportStatements(info?.outputFile ?? 'app_models') +
+    Block.buildImportStatements(info?.outputFile ?? 'app_models') +
     generated // TODO: replace placeholders with factory blocks
 
       .join('')

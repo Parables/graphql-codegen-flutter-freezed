@@ -3,19 +3,18 @@ import { ListTypeNode, NamedTypeNode, NonNullTypeNode, TypeNode } from 'graphql'
 import { Config } from '../config/config-value';
 import { FieldName, TypeName } from '../config/pattern-new';
 import { AppliesOnParameters, FieldType, FlutterFreezedPluginConfig, NodeType } from '../config/plugin-config';
-import { BlockName } from './block-name';
-import { buildComment } from './index';
+import { Block } from './index';
 
 export class ParameterBlock {
   public static build(
     config: FlutterFreezedPluginConfig,
     node: NodeType,
-    appliesOn: AppliesOnParameters[],
-    field: FieldType
+    field: FieldType,
+    appliesOn: AppliesOnParameters[]
   ): string {
     let block = '';
 
-    block += buildComment(node);
+    block += Block.buildComment(node);
 
     block += this.buildDecorators();
 
@@ -27,6 +26,9 @@ export class ParameterBlock {
   //#region Step 03.04. Build Parameter Block
   public static buildDecorators = (): string => {
     // TODO: add decorator for unionValueName
+    // TODO: @deprecated
+    // TODO: @Default
+    // TODO: @JsonKey(name: 'name', fromJson: someClassOrFunc, toJson: someClassOrFunc)
     return '';
   };
 
@@ -34,15 +36,15 @@ export class ParameterBlock {
     config: FlutterFreezedPluginConfig,
     node: NodeType,
     field: FieldType,
-    appliesOn: AppliesOnParameters[]
+    blockAppliesOn: AppliesOnParameters[]
   ): string => {
     const typeName = TypeName.fromString(node.name.value);
     const fieldName = FieldName.fromString(field.name.value);
 
     const required = this.isNonNullType(field.type) ? 'required ' : '';
-    const final = Config.final() ? 'final ' : '';
+    const final = Config.final(config, typeName, fieldName, blockAppliesOn) ? 'final ' : '';
     const dartType = this.parameterType(config, field.type);
-    const name = BlockName.asParameterName(config, typeName, fieldName);
+    const name = Block.buildBlockName(config, fieldName.value, typeName, fieldName, 'camelCase', blockAppliesOn);
 
     return indent(`${required}${final}${dartType} ${name},\n`, 2);
   };

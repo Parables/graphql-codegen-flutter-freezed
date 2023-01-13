@@ -1,9 +1,10 @@
 import { EnumTypeDefinitionNode, EnumValueDefinitionNode } from 'graphql';
 import { TypeName, FieldName } from '../config/pattern-new';
 import { FlutterFreezedPluginConfig } from '../config/plugin-config';
-import { buildComment } from '.';
-import { BlockName } from './block-name';
 import { indent } from '@graphql-codegen/visitor-plugin-common';
+import { Block } from './index';
+import { Config } from '../config/config-value';
+import { atJsonKeyDecorator } from '../utils';
 
 export class EnumBlock {
   public static build(config: FlutterFreezedPluginConfig, node: EnumTypeDefinitionNode): string {
@@ -11,7 +12,7 @@ export class EnumBlock {
 
     let block = '';
 
-    block += buildComment(node);
+    block += Block.buildComment(node);
 
     block += this.buildDecorators();
 
@@ -24,14 +25,13 @@ export class EnumBlock {
     return block;
   }
 
-  //#region Step 03.01. Build Enum Block
-
   public static buildDecorators = (): string => {
     return '';
   };
 
   public static buildHeader = (config: FlutterFreezedPluginConfig, typeName: TypeName): string => {
-    return `enum ${BlockName.asEnumTypeName(config, typeName).value} {\n`;
+    const enumTypeName = Block.buildBlockName(config, typeName.value, typeName, undefined, 'PascalCase', ['enum']);
+    return `enum ${enumTypeName} {\n`;
   };
 
   public static buildBody = (config: FlutterFreezedPluginConfig, node: EnumTypeDefinitionNode): string => {
@@ -39,12 +39,18 @@ export class EnumBlock {
     return (node.values ?? [])
       ?.map((enumValue: EnumValueDefinitionNode) => {
         const fieldName = FieldName.fromString(enumValue.name.value);
-        const blockName = BlockName.asEnumValueName(config, typeName, fieldName).value;
+        const enumValueName = Block.buildBlockName(
+          config,
+          fieldName.value,
+          typeName,
+          fieldName,
+          Config.camelCasedEnums(config),
+          ['enum_value']
+        );
 
-        // const decorators = buildBlockDecorators(config, enumValue, ['enum_value'] as AppliesOnEnumValue[]);
-
-        // return indentMultiline(`${decorators}${buildComment(enumValue)}${blockName},\n`);
-        return indent(`${buildComment(enumValue)}${blockName},\n`);
+        const comment = Block.buildComment(enumValue);
+        const decorators = [atJsonKeyDecorator(fieldName.value, enumValueName)].join('');
+        return indent(`${comment}${decorators}${enumValueName},\n`);
       })
       .join('');
   };
@@ -52,6 +58,4 @@ export class EnumBlock {
   public static buildFooter = (): string => {
     return '}\n\n';
   };
-
-  //#endregion
 }

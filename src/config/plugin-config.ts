@@ -306,15 +306,7 @@ export type FlutterFreezedPluginConfig = {
    * export default config;
    * ```
    */
-  escapeDartKeywords?:
-    | boolean
-    | [
-        pattern: FieldNamePattern,
-        prefix?: string,
-        suffix?: string,
-        casing?: DartIdentifierCasing,
-        appliesOn?: AppliesOn[]
-      ][];
+  escapeDartKeywords?: boolean | [pattern: Pattern, prefix?: string, suffix?: string, appliesOn?: AppliesOn[]][];
 
   /**
    * @name final
@@ -426,6 +418,7 @@ export type FlutterFreezedPluginConfig = {
    */
   fromJsonToJson?:
     | boolean
+    | TypeNamePattern // TODO: Implement this in config-value
     | [
         pattern: FieldNamePattern,
         classOrFunctionName: string,
@@ -435,8 +428,9 @@ export type FlutterFreezedPluginConfig = {
 
   /**
    * @name ignoreTypes
+   * @type {(TypeNamePattern)}
+   * @default undefined
    * @description names of GraphQL types to ignore when generating Freezed classes
-   * @default []
    *
    * @exampleMarkdown
    * ## Usage:
@@ -533,9 +527,11 @@ export type FlutterFreezedPluginConfig = {
 
   /**
    * @name mergeTypes
-   * @description merges other GraphQL Types as a named factory constructor inside a class generated for the target GraphQL ObjectType.
    * @default undefined
-   *
+   * @description merges other GraphQL Types as a named factory constructor inside a class generated for the target GraphQL ObjectType.
+   * This option takes an array of strings that are expected to be valid typeNames of GraphQL Types to be merged with the GraphQL Type used as the key.
+   * The array is mapped and each string is converted into a TypeName so please ensure that the strings are valid GraphQL TypeNames
+   * A string that contains any invalid characters will throw an exception.
    * @exampleMarkdown
    * ```yaml
    * generates:
@@ -546,7 +542,7 @@ export type FlutterFreezedPluginConfig = {
    *      mergeTypes: ["Create$Input", "Update$Input", "Delete$Input"]
    * ```
    */
-  mergeTypes?: [target: TypeNamePattern, mergeWith: TypeNamePattern];
+  mergeTypes?: Record<string, string[]>;
 
   /**
    * @name mutableInputs

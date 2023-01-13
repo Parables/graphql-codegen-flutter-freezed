@@ -238,7 +238,7 @@ describe('Config: has methods that returns a ready-to-use value for all the conf
         ],
       ];
 
-      expect(Config.defaultValues(config, Human, friends, APPLIES_ON_PARAMETERS)).toMatchObject([true, '[]']);
+      expect(Config.defaultValues(config, Human, friends, APPLIES_ON_PARAMETERS)).toMatchObject(['[]']);
     });
   });
 
