@@ -69,21 +69,16 @@ export class Block {
 
   static buildBlockName = (
     config: FlutterFreezedPluginConfig,
+    blockAppliesOn: readonly AppliesOn[],
     identifier: string,
     typeName: TypeName,
     fieldName?: FieldName,
-    blockCasing?: DartIdentifierCasing,
-    blockAppliesOn: readonly AppliesOn[] = []
+    blockCasing?: DartIdentifierCasing
   ): string => {
-    // step 1: escape the identifier
-    // identifier = escapeDartKeyword(config, identifier, typeName, fieldName, blockAppliesOn);
-
-    // step 2: apply the block casing
     identifier = dartCasing(identifier, blockCasing);
 
-    // step 3: if identifier is a dart keyword...
     if (isDartKeyword(identifier)) {
-      return escapeDartKeyword(config, identifier, typeName, fieldName, blockAppliesOn);
+      return escapeDartKeyword(config, blockAppliesOn, identifier, typeName, fieldName);
     }
     return identifier;
   };
@@ -121,12 +116,12 @@ export class Block {
   ) =>
     block.replace(Block.regexpForToken('defaultFactory'), token => {
       const pattern = token.replace(Block.tokens.defaultFactory, '').trim();
-      const [typeName, appliesOn] = pattern.split('==>');
+      const [className, blockAppliesOn] = pattern.split('==>');
       return FactoryBlock.deserializeFactory(
         config,
         nodeRepository,
-        TypeName.fromString(typeName),
-        appliesOn.split(',') as AppliesOnDefaultFactory[]
+        blockAppliesOn.split(',') as readonly AppliesOnDefaultFactory[],
+        TypeName.fromString(className)
       );
     });
 
@@ -138,13 +133,13 @@ export class Block {
   ) =>
     block.replace(Block.regexpForToken(blockType), token => {
       const pattern = token.replace(Block.tokens[blockType], '').trim();
-      const [typeName, namedFactory, appliesOn] = pattern.split('==>');
+      const [className, factoryName, blockAppliesOn] = pattern.split('==>');
       return FactoryBlock.deserializeNamedFactory(
         config,
         nodeRepository,
-        TypeName.fromString(typeName),
-        TypeName.fromString(namedFactory),
-        appliesOn.split(',') as AppliesOnNamedFactory[]
+        blockAppliesOn.split(',') as readonly AppliesOnNamedFactory[],
+        TypeName.fromString(className),
+        TypeName.fromString(factoryName)
       );
     });
 }

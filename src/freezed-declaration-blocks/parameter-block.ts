@@ -1,52 +1,80 @@
-import { indent } from '@graphql-codegen/visitor-plugin-common';
+// import { indent } from '@graphql-codegen/visitor-plugin-common';
 import { ListTypeNode, NamedTypeNode, NonNullTypeNode, TypeNode } from 'graphql';
+import { atJsonKeyDecorator, stringIsNotEmpty } from '../utils';
 import { Config } from '../config/config-value';
 import { FieldName, TypeName } from '../config/pattern-new';
 import { AppliesOnParameters, FieldType, FlutterFreezedPluginConfig, NodeType } from '../config/plugin-config';
 import { Block } from './index';
+import { indent } from '@graphql-codegen/visitor-plugin-common';
 
 export class ParameterBlock {
   public static build(
     config: FlutterFreezedPluginConfig,
     node: NodeType,
     field: FieldType,
-    appliesOn: AppliesOnParameters[]
+    blockAppliesOn: readonly AppliesOnParameters[]
   ): string {
+    const typeName = TypeName.fromString(node.name.value);
+    const fieldName = FieldName.fromString(field.name.value);
+    const parameterName = Block.buildBlockName(
+      config,
+      blockAppliesOn,
+      fieldName.value,
+      typeName,
+      fieldName,
+      'camelCase'
+    );
+
     let block = '';
 
     block += Block.buildComment(field);
 
-    block += this.buildDecorators();
+    block += this.buildDecorators(config, typeName, fieldName, parameterName, blockAppliesOn);
 
-    block += this.buildBody(config, node, field, appliesOn);
+    block += this.buildBody(config, field, typeName, fieldName, parameterName, blockAppliesOn);
 
-    return indent(block, 2);
+    // return indentMultiline(block, 2);
+    return block;
   }
 
-  //#region Step 03.04. Build Parameter Block
-  public static buildDecorators = (): string => {
-    // TODO: add decorator for unionValueName
-    // TODO: @deprecated
-    // TODO: @Default
-    // TODO: @JsonKey(name: 'name', fromJson: someClassOrFunc, toJson: someClassOrFunc)
-    return '';
+  public static buildDecorators = (
+    config: FlutterFreezedPluginConfig,
+    typeName: TypeName,
+    fieldName: FieldName,
+    parameterName: string,
+    blockAppliesOn: readonly AppliesOnParameters[]
+  ): string => {
+    const deprecatedDecorator = Config.deprecated(config, blockAppliesOn, typeName, fieldName);
+
+    const defaultValueDecorator = Config.defaultValues(config, blockAppliesOn, typeName, fieldName);
+
+    const jsonKeyDecorator = atJsonKeyDecorator({
+      name: fieldName.value !== parameterName ? fieldName.value : undefined,
+    });
+
+    const decorators = [
+      deprecatedDecorator,
+      defaultValueDecorator,
+      jsonKeyDecorator,
+      // TODO: add decorator for unionValueName
+    ].join('');
+
+    return stringIsNotEmpty(decorators) ? indent(decorators, 2) : decorators;
   };
 
   public static buildBody = (
     config: FlutterFreezedPluginConfig,
-    node: NodeType,
     field: FieldType,
-    blockAppliesOn: AppliesOnParameters[]
+    typeName: TypeName,
+    fieldName: FieldName,
+    parameterName: string,
+    blockAppliesOn: readonly AppliesOnParameters[]
   ): string => {
-    const typeName = TypeName.fromString(node.name.value);
-    const fieldName = FieldName.fromString(field.name.value);
-
     const required = this.isNonNullType(field.type) ? 'required ' : '';
-    const final = Config.final(config, typeName, fieldName, blockAppliesOn) ? 'final ' : '';
+    const final = Config.final(config, blockAppliesOn, typeName, fieldName) ? 'final ' : '';
     const dartType = this.parameterType(config, field.type);
-    const name = Block.buildBlockName(config, fieldName.value, typeName, fieldName, 'camelCase', blockAppliesOn);
 
-    return `${required}${final}${dartType} ${name},\n`;
+    return indent(`${required}${final}${dartType} ${parameterName},\n`, 2);
   };
 
   public static parameterType = (config: FlutterFreezedPluginConfig, type: TypeNode, parentType?: TypeNode): string => {
@@ -71,6 +99,4 @@ export class ParameterBlock {
   public static isNonNullType = (type?: TypeNode): type is NonNullTypeNode => type?.kind === 'NonNullType';
 
   public static isNamedType = (type?: TypeNode): type is NamedTypeNode => type?.kind === 'NamedType';
-
-  //#endregion
 }

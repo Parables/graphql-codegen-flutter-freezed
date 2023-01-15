@@ -24,11 +24,19 @@ type FieldNames = FieldName | FieldName[];
  * ```ts filename:"config.ts"
  * // returns a TypeName
  * let typeName: TypeName = TypeName.fromString('Droid');
- *
+ * 
+ * // to configure a FactoryBlock, use the `TypeName.fromUnionOfTypeNames(className, factoryName)`
+ * let typeName: TypeName = TypeName.fromUnionOfTypeNames(SearchResult, Droid);
+ 
  * // the following will throw an error
- * let typeName: TypeName = FieldName.fromString('Droid, Starship');
+ * // can contain only a single value...
+ * let typeName: TypeName = TypeName.fromString('Droid, Human'); // throws an Error
  *
- *  let typeName: TypeName = TypeName.fromString('');
+ * // value can not be an empty string...
+ * let typeName: TypeName = TypeName.fromString(''); // throws an Error
+ * 
+ * // value must contain only AlphaNumeric characters only...
+ * let typeName: TypeName = TypeName.fromString('Invalid.Name'); // throws an Error
  * ```
  */
 @frozen
@@ -46,7 +54,8 @@ export class TypeName {
     return '@*TypeNames';
   }
 
-  static fromAllTypeNames = (): TypeName => new TypeName(TypeName.allTypeNames);
+  static fromUnionOfTypeNames = (className: TypeName, factoryName: TypeName): TypeName =>
+    new TypeName(`${className.value}_${factoryName.value}`);
 
   static fromString = (value: string) => {
     if (value === undefined || value.length < 1) {
@@ -67,9 +76,14 @@ export class TypeName {
  * let fieldName: FieldName = FieldName.fromString('id');
  *
  * // the following will throw an error
- * let fieldName: FieldName = FieldName.fromString('id, name');
+ * // can contain only a single value...
+ * let fieldName: FieldName = FieldName.fromString('id, name'); // throws an Error
  *
- * let fieldName: FieldName = FieldName.fromString('');
+ * // value can not be an empty string...
+ * let fieldName: FieldName = FieldName.fromString(''); // throws an Error
+ *
+ * // value must contain only AlphaNumeric characters only...
+ * let fieldName: FieldName = FieldName.fromString('Invalid.Name'); // throws an Error
  * ```
  */
 @frozen
@@ -87,8 +101,6 @@ export class FieldName {
   static get allFieldNames(): string {
     return '@*FieldNames';
   }
-
-  static fromAllFieldNames = (): FieldName => new FieldName(FieldName.allFieldNames);
 
   static fromString = (value: string) => {
     if (value === undefined || value.length < 1) {

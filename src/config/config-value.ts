@@ -31,44 +31,37 @@ export class Config {
 
   static defaultValues = (
     config: FlutterFreezedPluginConfig,
+    blockAppliesOn: readonly AppliesOnParameters[],
     typeName: TypeName,
-    fieldName: FieldName,
-    blockAppliesOn: ReadonlyArray<AppliesOnParameters> = []
+    fieldName: FieldName
   ) => {
-    // TODO: Use this decorator function in the blocks instead
-    // const decorator = (defaultValue: string) => `@Default(${defaultValue})\n`;
+    const decorator = (defaultValue: string) => (defaultValue ? `@Default(${defaultValue})\n` : '');
 
-    const initialValue: [value: string, directiveName?: string, directiveArgName?: string] = undefined;
+    const defaultValue = config.defaultValues
+      ?.filter(
+        ([pattern, , configAppliesOn]) =>
+          Pattern.findLastConfiguration(pattern, typeName, fieldName) && appliesOnBlock(configAppliesOn, blockAppliesOn)
+      )
+      ?.slice(-1)?.[0]?.[1];
 
-    return config.defaultValues
-      ?.map(([pattern, value, configAppliesOn, ...directives]) => {
-        const shouldEnable =
-          Pattern.findLastConfiguration(pattern, typeName, fieldName) &&
-          appliesOnBlock(configAppliesOn, blockAppliesOn);
-        return [shouldEnable, value, ...directives];
-      })
-      ?.reduce((_acc, cur) => {
-        if (cur[0]) {
-          return cur;
-        }
-        return initialValue;
-      }, initialValue)
-      .slice(1) as typeof initialValue;
+    return decorator(defaultValue);
   };
 
   static deprecated = (
     config: FlutterFreezedPluginConfig,
+    blockAppliesOn: readonly (AppliesOnFactory | AppliesOnParameters)[],
     typeName: TypeName,
-    fieldName?: FieldName,
-    blockAppliesOn: ReadonlyArray<AppliesOnFactory | AppliesOnParameters> = []
+    fieldName?: FieldName
   ) => {
-    const initialValue = false;
-    return config.deprecated
-      ?.map(
-        ([pattern, configAppliesOn]) =>
-          Pattern.findLastConfiguration(pattern, typeName, fieldName) && appliesOnBlock(configAppliesOn, blockAppliesOn)
-      )
-      ?.reduce((_acc, cur) => cur, initialValue);
+    const isDeprecated =
+      config.deprecated
+        ?.filter(
+          ([pattern, configAppliesOn]) =>
+            Pattern.findLastConfiguration(pattern, typeName, fieldName) &&
+            appliesOnBlock(configAppliesOn, blockAppliesOn)
+        )
+        ?.slice(-1)?.[0] !== undefined;
+    return isDeprecated ? '@deprecated\n' : '';
   };
 
   static equal = (config: FlutterFreezedPluginConfig, typeName?: TypeName) => {
@@ -77,82 +70,68 @@ export class Config {
 
   static escapeDartKeywords = (
     config: FlutterFreezedPluginConfig,
-    typeName: TypeName,
-    fieldName?: FieldName,
-    blockAppliesOn: ReadonlyArray<AppliesOn> = []
+    blockAppliesOn: readonly AppliesOn[],
+    typeName?: TypeName,
+    fieldName?: FieldName
   ): [prefix?: string, suffix?: string] => {
     const escapeDartKeywords = config.escapeDartKeywords;
-    const initialValue: [prefix?: string, suffix?: string] = ['', ''];
     if (escapeDartKeywords === true) {
       return ['', '_']; // use a suffix `_`
-    } else if (escapeDartKeywords === false) {
-      return initialValue; // no suffix
     }
     // else escapeDartKeywords was configured using a pattern
-    return escapeDartKeywords
-      ?.map(([pattern, prefix, suffix, configAppliesOn]) => {
-        const shouldEnable =
-          Pattern.findLastConfiguration(pattern, typeName, fieldName) &&
-          appliesOnBlock(configAppliesOn, blockAppliesOn);
-        return [shouldEnable, prefix, suffix] as [shouldEnable: boolean, prefix?: string, suffix?: string];
-      })
-      ?.reduce(
-        (_acc, cur) => {
-          if (cur[0] === true) {
-            return cur;
-          }
-          return [false, ...initialValue];
-        },
-        [false, ...initialValue]
-      )
-      ?.slice(1) as typeof initialValue;
+    else if (typeName && typeof escapeDartKeywords !== 'boolean') {
+      const [, prefix, suffix] = escapeDartKeywords
+        ?.filter(
+          ([pattern, , , configAppliesOn]) =>
+            Pattern.findLastConfiguration(pattern, typeName, fieldName) &&
+            appliesOnBlock(configAppliesOn, blockAppliesOn)
+        )
+        ?.slice(-1)?.[0];
+      return [prefix, suffix];
+    }
+    return ['', '']; // no suffix
   };
 
   static final = (
     config: FlutterFreezedPluginConfig,
+    blockAppliesOn: readonly AppliesOnParameters[],
     typeName: TypeName,
-    fieldName: FieldName,
-    blockAppliesOn: ReadonlyArray<AppliesOnParameters> = []
+    fieldName: FieldName
   ): boolean => {
-    return config.final
-      ?.map(
-        ([pattern, configAppliesOn]) =>
-          Pattern.findLastConfiguration(pattern, typeName, fieldName) && appliesOnBlock(configAppliesOn, blockAppliesOn)
-      )
-      ?.reduce((_acc, cur) => cur, false);
+    return (
+      config.final
+        ?.filter(
+          ([pattern, configAppliesOn]) =>
+            Pattern.findLastConfiguration(pattern, typeName, fieldName) &&
+            appliesOnBlock(configAppliesOn, blockAppliesOn)
+        )
+        ?.slice(-1)?.[0] !== undefined
+    );
   };
 
-  static fromJsonToJson = (
+  /*  static fromJsonToJson = ( // TODO: @next-version
     config: FlutterFreezedPluginConfig,
+    blockAppliesOn?: readonly AppliesOnParameters[],
     typeName?: TypeName,
-    fieldName?: FieldName,
-    blockAppliesOn: ReadonlyArray<AppliesOnParameters> = []
+    fieldName?: FieldName
   ) => {
     const fromJsonToJson = config.fromJsonToJson;
 
     if (typeName && fieldName && Array.isArray(fromJsonToJson)) {
-      return fromJsonToJson
-        .map(([pattern, classOrFunctionName, useClassConverter, appliesOn]) => {
-          const shouldEnable =
-            Pattern.findLastConfiguration(pattern, typeName, fieldName) && appliesOnBlock(appliesOn, blockAppliesOn);
-          return [shouldEnable, classOrFunctionName, useClassConverter];
-        })
-        .reduce((_acc, cur) => {
-          if (cur[0]) {
-            return cur;
-          }
-          return undefined;
-        })
-        ?.slice(1) as [classOrFunctionName: string, useClassConverter?: boolean];
+      const [, classOrFunctionName, useClassConverter] = (fromJsonToJson ?? [])
+        ?.filter(
+          ([pattern, , , appliesOn]) =>
+            Pattern.findLastConfiguration(pattern, typeName, fieldName) && appliesOnBlock(appliesOn, blockAppliesOn)
+        )
+        ?.slice(-1)?.[0];
+      return [classOrFunctionName, useClassConverter] as [classOrFunctionName: string, useClassConverter?: boolean];
     } else if (typeName && fromJsonToJson instanceof TypeNamePattern) {
       return Pattern.findLastConfiguration(fromJsonToJson, typeName);
     }
-    // else if(typeof fromJsonToJson === 'boolean'){
-    //   return fromJsonToJson
-    // }
+
     return fromJsonToJson as boolean;
   };
-
+ */
   static ignoreTypes = (config: FlutterFreezedPluginConfig, typeName: TypeName): string[] => {
     const ignoreTypes = config.ignoreTypes;
     if (ignoreTypes) {

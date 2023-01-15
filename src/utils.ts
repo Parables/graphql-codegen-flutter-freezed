@@ -18,15 +18,8 @@ export const nodeIsObjectType = (
 ): node is ObjectTypeDefinitionNode | InputObjectTypeDefinitionNode =>
   node.kind === Kind.OBJECT_TYPE_DEFINITION || node.kind === Kind.INPUT_OBJECT_TYPE_DEFINITION;
 
-export const appliesOnBlock = <T extends AppliesOn>(
-  configAppliesOn: T[],
-  blockAppliesOn: readonly T[],
-  matchSome = false
-) => {
-  return matchSome
-    ? configAppliesOn.some(a => blockAppliesOn.includes(a))
-    : configAppliesOn.every(a => blockAppliesOn.includes(a));
-};
+export const appliesOnBlock = <T extends AppliesOn>(configAppliesOn: T[], blockAppliesOn: readonly T[]) =>
+  configAppliesOn.some(a => blockAppliesOn.includes(a));
 
 export const dartCasing = (name: string, casing?: DartIdentifierCasing): string => {
   if (casing === 'camelCase') {
@@ -55,24 +48,57 @@ export const isDartKeyword = (identifier: string) => Object.hasOwn(DART_KEYWORDS
  */
 export const escapeDartKeyword = (
   config: FlutterFreezedPluginConfig,
+  blockAppliesOn: readonly AppliesOn[],
   identifier: string,
   typeName?: TypeName,
-  fieldName?: FieldName,
-  blockAppliesOn: readonly AppliesOn[] = []
+  fieldName?: FieldName
 ): string => {
   if (isDartKeyword(identifier)) {
-    const [prefix, suffix] = Config.escapeDartKeywords(config, typeName, fieldName, blockAppliesOn);
+    const [prefix, suffix] = Config.escapeDartKeywords(config, blockAppliesOn, typeName, fieldName);
     return `${prefix}${identifier}${suffix}`;
   }
   return identifier;
 };
 
-export const atJsonKeyDecorator = (originalIdentifier: string, transformedIdentifier: string, replaceToken = '') => {
-  if (originalIdentifier === transformedIdentifier) {
-    return ``;
-  }
-  // insert a leading comma if it is missing
-  replaceToken = replaceToken.length > 0 && !replaceToken.startsWith(',') ? `, ${replaceToken}` : replaceToken;
-  return `@JsonKey(name: '${originalIdentifier}'${replaceToken}) `;
+// TODO: Add this option to the plugin-config
+type JsonKeyOptions = {
+  defaultValue?: string;
+  disallowNullValue?: boolean;
+  fromJson?: string;
+  ignore?: boolean;
+  includeIfNull?: boolean;
+  name?: string;
+  // readValue?: string,
+  required?: boolean;
+  toJson?: string;
+  // unknownEnumValue?: string
 };
+export const atJsonKeyDecorator = ({
+  defaultValue,
+  disallowNullValue,
+  fromJson,
+  ignore,
+  includeIfNull,
+  name,
+  required,
+  toJson,
+}: JsonKeyOptions): string => {
+  const body = [
+    stringIsNotEmpty(defaultValue) ? `defaultValue: ${defaultValue}` : undefined,
+    disallowNullValue ? `disallowNullValue: ${disallowNullValue}` : undefined,
+    stringIsNotEmpty(fromJson) ? `fromJson: ${fromJson}` : undefined,
+    ignore ? `ignore: ${ignore}` : undefined,
+    includeIfNull ? `includeIfNull: ${includeIfNull}` : undefined,
+    stringIsNotEmpty(name) ? `name: '${name}'` : undefined,
+    required ? `required: ${required}` : undefined,
+    stringIsNotEmpty(toJson) ? `toJson: ${toJson}` : undefined,
+  ]
+    .filter(value => value !== undefined)
+    .join(',');
+
+  return stringIsNotEmpty(body) ? `@JsonKey(${body})\n` : '';
+};
+
+export const stringIsNotEmpty = (str: string) => str?.length > 0;
+
 //#endregion

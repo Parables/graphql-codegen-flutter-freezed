@@ -114,7 +114,7 @@ export const cyclicSchema = buildSchema(/* GraphQL */ `
 `);
 
 export const escapedSchema = buildSchema(/* GraphQL */ `
-  input String {
+  input Enum {
     is: String
     in: String
   }
@@ -125,7 +125,7 @@ export const escapedSchema = buildSchema(/* GraphQL */ `
     extends: String!
   }
 
-  union Object = String | List
+  union Object = Enum | List
 `);
 
 export const nonNullableListWithCustomScalars = buildSchema(/* GraphQL */ `

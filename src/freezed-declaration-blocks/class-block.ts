@@ -10,19 +10,27 @@ import { nodeIsObjectType } from '../utils';
 export class ClassBlock {
   public static build(config: FlutterFreezedPluginConfig, node: NodeType): string {
     const typeName = TypeName.fromString(node.name.value);
-    const className = Block.buildBlockName(config, typeName.value, typeName, undefined, 'PascalCase', APPLIES_ON_CLASS);
+    const _className = Block.buildBlockName(
+      config,
+      APPLIES_ON_CLASS,
+      typeName.value,
+      typeName,
+      undefined,
+      'PascalCase'
+    );
 
     let block = '';
 
-    block += Block.buildComment(node);
+    // the comments should be  on the factory block instead
+    // block += Block.buildComment(node);
 
     block += this.buildDecorators(config, node);
 
-    block += this.buildHeader(config, typeName, className);
+    block += this.buildHeader(config, typeName, _className);
 
     block += this.buildBody(config, node);
 
-    block += this.buildFooter(config, typeName, className);
+    block += this.buildFooter(config, typeName, _className);
 
     return block;
   }
@@ -97,46 +105,41 @@ export class ClassBlock {
     return { copyWith, equal, makeCollectionsUnmodifiable, unionKey, unionValueCase, isCustomized };
   };
 
-  public static buildHeader = (config: FlutterFreezedPluginConfig, typeName: TypeName, className: string): string => {
+  public static buildHeader = (config: FlutterFreezedPluginConfig, typeName: TypeName, _className: string): string => {
     const privateEmptyConstructor = Config.privateEmptyConstructor(config, typeName)
-      ? indent(`const ${className}._();\n\n`)
+      ? indent(`const ${_className}._();\n\n`)
       : '';
 
-    return `class ${className} with _$${className} {\n${privateEmptyConstructor}`;
+    return `class ${_className} with _$${_className} {\n${privateEmptyConstructor}`;
   };
 
   public static buildBody = (config: FlutterFreezedPluginConfig, node: NodeType): string => {
-    const typeName = TypeName.fromString(node.name.value);
+    const className = TypeName.fromString(node.name.value);
 
     let body = '';
 
     if (nodeIsObjectType(node)) {
-      body += FactoryBlock.serializeDefaultFactory(typeName);
+      body += FactoryBlock.serializeDefaultFactory(className);
     } else if (node.kind === Kind.UNION_TYPE_DEFINITION) {
       body += (node.types ?? [])
         .map(value => {
-          const unionTypeName = TypeName.fromString(value.name.value);
-          return FactoryBlock.serializeUnionFactory(typeName, unionTypeName);
+          const factoryName = TypeName.fromString(value.name.value);
+          return FactoryBlock.serializeUnionFactory(className, factoryName);
         })
         .join('');
     }
 
-    body += Config.mergeTypes(config, typeName)
+    body += Config.mergeTypes(config, className)
       .map(value => {
-        const mergedTypeName = TypeName.fromString(value);
-        return FactoryBlock.serializeMergedFactory(typeName, mergedTypeName);
+        const factoryName = TypeName.fromString(value);
+        return FactoryBlock.serializeMergedFactory(className, factoryName);
       })
       .join('');
 
     return body;
   };
 
-  public static buildFooter = (config: FlutterFreezedPluginConfig, typeName: TypeName, className: string): string => {
-    const fromJsonToJson = Config.fromJsonToJson(config, typeName);
-
-    if (fromJsonToJson) {
-      return indent(`factory ${className}.fromJson(Map<String, dynamic> json) => _$${className}FromJson(json);\n}\n\n`);
-    }
-    return '}\n\n';
+  public static buildFooter = (config: FlutterFreezedPluginConfig, typeName: TypeName, _className: string): string => {
+    return indent(`factory ${_className}.fromJson(Map<String, dynamic> json) => _$${_className}FromJson(json);\n}\n\n`);
   };
 }

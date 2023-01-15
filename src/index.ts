@@ -21,10 +21,12 @@ export const plugin: PluginFunction<FlutterFreezedPluginConfig> = (
 
   const importStatements = Block.buildImportStatements(info?.outputFile ?? 'app_models');
 
-  const generated: string[] = visitorResult.definitions.filter((def: any) => typeof def === 'string' && def.length > 0);
-  // return [importStatements, ...generated].join('').trim();
+  const generatedBlocks: string[] = visitorResult.definitions.filter(
+    (def: any) => typeof def === 'string' && def.length > 0
+  );
+  // return [importStatements, ...generatedBlocks].join('').trim();
 
-  const output = Block.replaceTokens(config, nodeRepository, generated);
+  const output = Block.replaceTokens(config, nodeRepository, generatedBlocks);
 
   return [importStatements, output].join('').trim();
 };

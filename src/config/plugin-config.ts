@@ -170,9 +170,7 @@ export type FlutterFreezedPluginConfig = {
   defaultValues?: [
     pattern: FieldNamePattern,
     value: string, // use backticks for string values
-    appliesOn: AppliesOnParameters[],
-    directiveName?: string,
-    directiveArgName?: string
+    appliesOn: AppliesOnParameters[]
   ][];
 
   /**
@@ -206,7 +204,7 @@ export type FlutterFreezedPluginConfig = {
    *             // using FieldNamePattern
    *             [FieldNamePattern.forFieldNamesOfTypeName(MovieCharacter, [appearsIn, name]), ['default_factory_parameter']],
    *             // using TypeNamePattern
-   *             [TypeNamePattern.forTypeNames([Starship,Droid,Human]), ['named_factory_for_union_types']],
+   *             [TypeNamePattern.forTypeNames([Starship,Droid,Human]), ['union_factory']],
    *           ],
    *         },
    *       },
@@ -416,15 +414,15 @@ export type FlutterFreezedPluginConfig = {
    * }
    * ```
    */
-  fromJsonToJson?:
+  /* fromJsonToJson?: // TODO: @next-version
     | boolean
-    | TypeNamePattern // TODO: Implement this in config-value
+    | TypeNamePattern
     | [
         pattern: FieldNamePattern,
         classOrFunctionName: string,
         useClassConverter?: boolean,
         appliesOn?: AppliesOnParameters[]
-      ][];
+      ][]; */
 
   /**
    * @name ignoreTypes
@@ -683,91 +681,64 @@ export type AppliesOn =
   | 'factory' // applies on all class factory constructor
   | 'default_factory' // applies on the main default factory constructor
   | 'named_factory' // applies on all of the named factory constructors in a class
-  | 'named_factory_for_union_types' // applies on the named factory constructors for a specified(or all when the `*` is used as the key) GraphQL Object Type when it appears in a class as a named factory constructor and that class was generated for a GraphQL Union Type. E.g: `Droid` in `SearchResult` in the StarWars Schema
-  | 'named_factory_for_merged_types' // applies on the named factory constructors for a GraphQL Input Type when it appears in a class as a named factory constructor and that class was generated for a GraphQL Object Type and it Type is to be merged with the GraphQL Object Type. E.g: `CreateMovieInput` merged with `Movie` in the StarWars Schema
+  | 'union_factory' // applies on the named factory constructors for a specified(or all when the `*` is used as the key) GraphQL Object Type when it appears in a class as a named factory constructor and that class was generated for a GraphQL Union Type. E.g: `Droid` in `SearchResult` in the StarWars Schema
+  | 'merged_factory' // applies on the named factory constructors for a GraphQL Input Type when it appears in a class as a named factory constructor and that class was generated for a GraphQL Object Type and it Type is to be merged with the GraphQL Object Type. E.g: `CreateMovieInput` merged with `Movie` in the StarWars Schema
   | 'parameter' // applies on all parameters for both default constructors and named factory constructors
   | 'default_factory_parameter' // applies on parameters for ONLY default constructors for a specified(or all when the `*` is used as the key) field on a GraphQL Object/Input Type
   | 'named_factory_parameter' // applies on parameters for all named factory constructors for a specified(or all when the `*` is used as the key) field on a GraphQL Object/Input Type
-  | 'named_factory_parameter_for_union_types' // like `named_factory_parameters` but ONLY for a parameter in a named factory constructor which for a GraphQL Union Type
-  | 'named_factory_parameter_for_merged_types'; // like `named_factory_parameters` but ONLY for a parameter in a named factory constructor which for a GraphQL Input Type that is merged inside an a class generated for a GraphQL Object Type
+  | 'union_factory_parameter' // like `named_factory_parameters` but ONLY for a parameter in a named factory constructor which for a GraphQL Union Type
+  | 'merged_factory_parameter'; // like `named_factory_parameters` but ONLY for a parameter in a named factory constructor which for a GraphQL Input Type that is merged inside an a class generated for a GraphQL Object Type
 
 export const APPLIES_ON_ENUM = <const>['enum'];
-
 export type AppliesOnEnum = typeof APPLIES_ON_ENUM[number];
 
 export const APPLIES_ON_ENUM_VALUE = <const>['enum_value'];
-
 export type AppliesOnEnumValue = typeof APPLIES_ON_ENUM_VALUE[number];
 
 export const APPLIES_ON_CLASS = <const>['class'];
-
 export type AppliesOnClass = typeof APPLIES_ON_CLASS[number];
 
 export const APPLIES_ON_DEFAULT_FACTORY = <const>['factory', 'default_factory'];
-
 export type AppliesOnDefaultFactory = typeof APPLIES_ON_DEFAULT_FACTORY[number];
 
-export const APPLIES_ON_NAMED_FACTORY_FOR_UNION_TYPES = <const>[
-  'factory',
-  'named_factory',
-  'named_factory_for_union_types',
-];
-export type AppliesOnNamedFactoryForUnionTypes = typeof APPLIES_ON_NAMED_FACTORY_FOR_UNION_TYPES[number];
+export const APPLIES_ON_UNION_FACTORY = <const>['factory', 'named_factory', 'union_factory'];
+export type AppliesOnUnionFactory = typeof APPLIES_ON_UNION_FACTORY[number];
 
-export const APPLIES_ON_NAMED_FACTORY_FOR_MERGED_TYPES = <const>[
-  'factory',
-  'named_factory',
-  'named_factory_for_merged_types',
-];
-export type AppliesOnNamedFactoryForMergedTypes = typeof APPLIES_ON_NAMED_FACTORY_FOR_MERGED_TYPES[number];
+export const APPLIES_ON_MERGED_FACTORY = <const>['factory', 'named_factory', 'merged_factory'];
+export type AppliesOnMergedFactory = typeof APPLIES_ON_MERGED_FACTORY[number];
 
-export type AppliesOnNamedFactory = AppliesOnNamedFactoryForUnionTypes | AppliesOnNamedFactoryForMergedTypes;
+export type AppliesOnNamedFactory = AppliesOnUnionFactory | AppliesOnMergedFactory;
 
+export const APPLIES_ON_FACTORY = ['factory', 'default_factory', 'named_factory', 'merged_factory', 'union_factory'];
 export type AppliesOnFactory = AppliesOnDefaultFactory | AppliesOnNamedFactory;
 
-export const APPLIES_ON_FACTORY = [
-  'factory',
-  'default_factory',
-  'named_factory',
-  'named_factory_for_merged_types',
-  'named_factory_for_union_types',
-];
+export const APPLIES_ON_DEFAULT_FACTORY_PARAMETERS = <const>['parameter', 'default_factory_parameter'];
+export type AppliesOnDefaultFactoryParameters = typeof APPLIES_ON_DEFAULT_FACTORY_PARAMETERS[number];
 
-export const APPLIES_ON_DEFAULT_PARAMETERS = <const>['parameter', 'default_factory_parameter'];
-
-export type AppliesOnDefaultParameters = typeof APPLIES_ON_DEFAULT_PARAMETERS[number];
-
-export const APPLIES_ON_NAMED_FACTORY_PARAMETERS_FOR_UNION_TYPES = <const>[
+export const APPLIES_ON_UNION_FACTORY_PARAMETERS = <const>[
   'parameter',
   'named_factory_parameter',
-  'named_factory_parameter_for_union_types',
+  'union_factory_parameter',
 ];
+export type AppliesOnUnionFactoryParameters = typeof APPLIES_ON_UNION_FACTORY_PARAMETERS[number];
 
-export type AppliesOnNamedFactoryParametersForUnionTypes =
-  typeof APPLIES_ON_NAMED_FACTORY_PARAMETERS_FOR_UNION_TYPES[number];
-
-export const APPLIES_ON_NAMED_FACTORY_PARAMETERS_FOR_MERGED_TYPES = <const>[
+export const APPLIES_ON_MERGED_FACTORY_PARAMETERS = <const>[
   'parameter',
   'named_factory_parameter',
-  'named_factory_parameter_for_merged_types',
+  'merged_factory_parameter',
 ];
+export type AppliesOnMergedFactoryParameters = typeof APPLIES_ON_MERGED_FACTORY_PARAMETERS[number];
 
-export type AppliesOnNamedFactoryParametersForMergedTypes =
-  typeof APPLIES_ON_NAMED_FACTORY_PARAMETERS_FOR_MERGED_TYPES[number];
-
-export type AppliesOnNamedParameters =
-  | AppliesOnNamedFactoryParametersForUnionTypes
-  | AppliesOnNamedFactoryParametersForMergedTypes;
-
-export type AppliesOnParameters = AppliesOnDefaultParameters | AppliesOnNamedParameters;
+export type AppliesOnNamedParameters = AppliesOnUnionFactoryParameters | AppliesOnMergedFactoryParameters;
 
 export const APPLIES_ON_PARAMETERS = <const>[
   'parameter',
   'default_factory_parameter',
   'named_factory_parameter',
-  'named_factory_parameter_for_union_types',
-  'named_factory_parameter_for_merged_types',
+  'union_factory_parameter',
+  'merged_factory_parameter',
 ];
+export type AppliesOnParameters = AppliesOnDefaultFactoryParameters | AppliesOnNamedParameters;
 
 export type DartIdentifierCasing = 'snake_case' | 'camelCase' | 'PascalCase';
 
@@ -900,7 +871,7 @@ export const defaultFreezedPluginConfig: FlutterFreezedPluginConfig = {
   equal: undefined,
   escapeDartKeywords: true,
   final: undefined,
-  fromJsonToJson: true,
+  // fromJsonToJson: true, // TODO: @next-version
   ignoreTypes: undefined,
   immutable: true,
   makeCollectionsUnmodifiable: undefined,
