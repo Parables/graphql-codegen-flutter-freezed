@@ -1,5 +1,6 @@
 import { plugin } from '../src/index';
 import {
+  authSchema,
   cyclicSchema,
   enumSchema,
   escapedSchema,
@@ -763,6 +764,61 @@ describe('The Flutter Freezed plugin produces Freezed models using a GraphQL Sch
           }) = Starship;
 
           factory SearchResult.fromJson(Map<String, dynamic> json) => _$SearchResultFromJson(json);
+        }"
+      `);
+    });
+
+    it('demo', () => {
+      const output = plugin(authSchema, [], {});
+
+      expect(output).toMatchInlineSnapshot(`
+        "import 'package:freezed_annotation/freezed_annotation.dart';
+        import 'package:flutter/foundation.dart';
+
+        part 'app_models.freezed.dart';
+        part 'app_models.g.dart';
+
+        @unfreezed
+        class RequestOtpInput with _$RequestOtpInput {
+          const RequestOtpInput._();
+
+          const factory RequestOtpInput({
+            String? email,
+            String? phoneNumber,
+          }) = _RequestOtpInput;
+
+          factory RequestOtpInput.fromJson(Map<String, dynamic> json) => _$RequestOtpInputFromJson(json);
+        }
+
+        @unfreezed
+        class VerifyOtpInput with _$VerifyOtpInput {
+          const VerifyOtpInput._();
+
+          const factory VerifyOtpInput({
+            String? email,
+            String? phoneNumber,
+            required String otpCode,
+          }) = _VerifyOtpInput;
+
+          factory VerifyOtpInput.fromJson(Map<String, dynamic> json) => _$VerifyOtpInputFromJson(json);
+        }
+
+        @freezed
+        class AuthWithOtpInput with _$AuthWithOtpInput {
+          const AuthWithOtpInput._();
+
+          const factory AuthWithOtpInput.requestOtpInput({
+            String? email,
+            String? phoneNumber,
+          }) = RequestOtpInput;
+
+          const factory AuthWithOtpInput.verifyOtpInput({
+            String? email,
+            String? phoneNumber,
+            required String otpCode,
+          }) = VerifyOtpInput;
+
+          factory AuthWithOtpInput.fromJson(Map<String, dynamic> json) => _$AuthWithOtpInputFromJson(json);
         }"
       `);
     });

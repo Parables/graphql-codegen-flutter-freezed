@@ -145,3 +145,18 @@ export const nonNullableListWithCustomScalars = buildSchema(/* GraphQL */ `
     i: UUID!
   }
 `);
+
+export const authSchema = buildSchema(/* GraphQL*/ `
+      input RequestOTPInput {
+  email: String
+  phoneNumber: String
+}
+
+input VerifyOTPInput {
+  email: String
+  phoneNumber: String
+  otpCode: String!
+}
+
+union AuthWithOTPInput = RequestOTPInput | VerifyOTPInput
+`)
