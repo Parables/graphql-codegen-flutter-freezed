@@ -707,6 +707,7 @@ export type AppliesOnUnionFactory = typeof APPLIES_ON_UNION_FACTORY[number];
 export const APPLIES_ON_MERGED_FACTORY = <const>['factory', 'named_factory', 'merged_factory'];
 export type AppliesOnMergedFactory = typeof APPLIES_ON_MERGED_FACTORY[number];
 
+export const APPLIES_ON_NAMED_FACTORY = <const>['factory', 'named_factory', 'merged_factory', 'union_factory'];
 export type AppliesOnNamedFactory = AppliesOnUnionFactory | AppliesOnMergedFactory;
 
 export const APPLIES_ON_FACTORY = ['factory', 'default_factory', 'named_factory', 'merged_factory', 'union_factory'];
@@ -729,6 +730,12 @@ export const APPLIES_ON_MERGED_FACTORY_PARAMETERS = <const>[
 ];
 export type AppliesOnMergedFactoryParameters = typeof APPLIES_ON_MERGED_FACTORY_PARAMETERS[number];
 
+export const APPLIES_ON_NAMED_FACTORY_PARAMETERS = <const>[
+  'parameter',
+  'named_factory_parameter',
+  'merged_factory_parameter',
+  'union_factory_parameter',
+];
 export type AppliesOnNamedParameters = AppliesOnUnionFactoryParameters | AppliesOnMergedFactoryParameters;
 
 export const APPLIES_ON_PARAMETERS = <const>[
